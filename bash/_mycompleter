@@ -1,9 +1,15 @@
 _mycompleter() {
-    COMPREPLY=( alpha beta gamma )
-    COMPREPLY=( alpha )
+    #COMPREPLY=( alpha beta gamma )
+    #COMPREPLY=( alpha )
+    #echo 
     #echo 0: $0 -> bash
     #echo 1: $1 -> mycompleter
     #echo 2: $2 -> cur command
     #echo 3: $3 -> prev command
+    #echo 
+
+
+    #COMPREPLY=( $1 $2 $3)
+    #COMPREPLY=${COMP_WORDS[@]}
     return 0
 }

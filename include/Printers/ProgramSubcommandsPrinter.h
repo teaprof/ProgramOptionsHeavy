@@ -97,7 +97,9 @@ class ProgramSubcommandsPrinter
         auto res = std::make_shared<Section>();
         res->title = grp.groupName();
         res->add_paragraph(grp.description.str());
-        res->add_paragraph(grp.detailedList().str());
+        std::stringstream options_list;
+        options_list << grp.visible;
+        res->add_paragraph(options_list.str());
         return res;
     }
     std::set<std::string> options_groups_printed_already_;

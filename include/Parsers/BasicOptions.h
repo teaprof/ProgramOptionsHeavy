@@ -2,7 +2,7 @@
 #define BASIC_OPTIONS_H
 
 #include <Printers/PrettyPrinter.h>
-#include <ProgramOptionsHeavy.h>
+#include <Parsers/OptionsGroup.h>
 #include <boost/optional.hpp>
 #include <iostream>
 #include <thread>

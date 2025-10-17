@@ -72,12 +72,12 @@ class OptionsGroup
     boost::program_options::options_description visible;
     boost::program_options::options_description hidden;
 
-    std::stringstream detailedList() const
+    /*std::stringstream detailedList() const
     {
         std::stringstream res;
         res << visible;
         return res;
-    }
+    }*/
 
     void setGroupName(std::string str)
     {
