@@ -4,13 +4,17 @@
 #include <Parsers/ProgramOptionsParser.h>
 #include <Printers/PrettyPrinter.h>
 
-namespace program_options_heavy {
+namespace program_options_heavy
+{
 
-namespace printers {
+namespace printers
+{
 
-class ProgramOptionsPrinter {
-    public:
-    std::shared_ptr<Section> print(ProgramOptionsParser& parser) {
+class ProgramOptionsPrinter
+{
+  public:
+    std::shared_ptr<Section> print(ProgramOptionsParser &parser)
+    {
         auto res = std::make_shared<Section>();
         auto usage = std::make_shared<Section>();
         usage->title = "Usage";
@@ -22,7 +26,8 @@ class ProgramOptionsPrinter {
 
         auto details = std::make_shared<Section>();
         details->title = "Details:";
-        for(auto& group : parser.groups()) {
+        for (auto &group : parser.groups())
+        {
             details->items.push_back(print(*group));
         }
 
@@ -31,21 +36,24 @@ class ProgramOptionsPrinter {
         res->items.push_back(details);
         return res;
     }
-    std::string shortHelp(ProgramOptionsParser& parser) const {
+    std::string shortHelp(ProgramOptionsParser &parser) const
+    {
         std::stringstream str;
-        str<<parser.exename<<" ";
-        for(auto group : parser.groups()) {
-            str<<"["<<group->groupName()<<"] ";
-        }        
+        str << parser.exename << " ";
+        for (auto group : parser.groups())
+        {
+            str << "[" << group->groupName() << "] ";
+        }
         return str.str();
     }
-    std::shared_ptr<Section> print(OptionsGroup& grp) const {
+    std::shared_ptr<Section> print(OptionsGroup &grp) const
+    {
         auto res = std::make_shared<Section>();
         res->title = grp.groupName();
         res->add_paragraph(grp.description.str());
         res->add_paragraph(grp.detailedList().str());
         return res;
-    }    
+    }
     std::set<std::string> options_groups_printed_already_;
 };
 
