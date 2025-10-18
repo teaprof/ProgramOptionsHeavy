@@ -22,6 +22,9 @@ class SubcommandsParser : public AbstractOptionsParser
     SubcommandsParser(int argc, const char *argv[]) : AbstractOptionsParser(argc, argv)
     {
     }
+    subcommands_t getSubcommands() {
+        return subcommands_;
+    }
     std::shared_ptr<ProgramOptionsParser> push_back(const std::string &subcommand_name,
                                                     std::shared_ptr<ProgramOptionsParser> val)
     {

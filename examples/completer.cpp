@@ -1,16 +1,37 @@
 #include "completer.h"
-#include <iostream>
-#include <cstdlib>
 
-int main(int argc, char* argv[]) {
-    std::vector<std::string> names{"COMP_LINE", "COMP_WORDS", "COMP_CWORD", "COMP_POINT", "COMP_KEY", "COMP_TYPE"};
-    for(const auto& it : names) {
-        if(auto str = getenv(it.c_str())) {
-            std::cout<<it<<"="<<str<<"\n";
-        } else {
-            std::cout<<it<<"=NULL\n";
-        }
+using program_options_heavy::SubcommandsParser;
+using program_options_heavy::OptionsGroup;
+using program_options_heavy::Completer;
+
+
+int main() {
+
+    std::optional<std::string> a, b;
+    a = "a";
+    b = "a";
+    if(a == b) {
+        std::cout<<"="<<std::endl;
     }
-    std::cout<<"runsn\njoke\ncollect\n";
+
+    namespace po = boost::program_options;
+    auto subcommands_parser = std::make_shared<SubcommandsParser>();
+    auto runOptions = std::make_shared<OptionsGroup>("run group");
+    size_t dim;
+    runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2), "hypercube dimension");
+    auto gatherOptions= std::make_shared<OptionsGroup>("gather group");
+    size_t gather_opt;
+    gatherOptions->addPartialVisible("gather,g", po::value<size_t>(&gather_opt)->default_value(2), "some option for gathering");
+    auto commonOptions = std::make_shared<OptionsGroup>("common group");
+    size_t common_value;
+    commonOptions->addPartialVisible("common,c", po::value<size_t>(&common_value)->default_value(2), "common value");
+
+    //subcommands_parser->"run"
+
+    Completer completer(subcommands_parser);
+    std::vector<std::string> variants = completer.complete();
+    for(const auto& it : variants) {
+        std::cout<<it<<"\n";
+    }
     return 0;
 }
