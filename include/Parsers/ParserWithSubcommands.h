@@ -10,16 +10,16 @@ namespace program_options_heavy
 
 class ProgramSubcommandsPrinter;
 
-class SubcommandsParser : public AbstractOptionsParser
+class ParserWithSubcommands : public AbstractOptionsParser
 {
   public:
     using value_t = std::shared_ptr<ProgramOptionsParser>;
     using subcommands_t = std::map<std::string, value_t>;
 
-    SubcommandsParser(const std::string &exename = "") : AbstractOptionsParser(exename)
+    ParserWithSubcommands(const std::string &exename = "") : AbstractOptionsParser(exename)
     {
     }
-    SubcommandsParser(int argc, const char *argv[]) : AbstractOptionsParser(argc, argv)
+    ParserWithSubcommands(int argc, const char *argv[]) : AbstractOptionsParser(argc, argv)
     {
     }
     subcommands_t getSubcommands() {

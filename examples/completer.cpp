@@ -7,7 +7,7 @@ using program_options_heavy::Completer;
 
 int main() {
     namespace po = boost::program_options;
-    auto commands_parser = std::make_shared<ParserWithSubcommands>("aa");
+    auto commands_parser = std::make_shared<ParserWithSubcommands>("compl");
     auto runOptions = std::make_shared<OptionsGroup>("run group");
     size_t dim;
     runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(), "hypercube dimension");
@@ -24,7 +24,7 @@ int main() {
     (*commands_parser)["gather"]->addGroup(gatherOptions);
     (*commands_parser)["gather"]->addGroup(commonOptions);
 
-    const char* argv[] = {"aa", "run", "-d10"};
+    const char* argv[] = {"compl", "run", "-d10"};
     commands_parser->parse(3, argv);
 
     //commands_parser->"run"

@@ -5,7 +5,7 @@
 #include <Parsers/HelpSubcommand.h>
 #include <Parsers/OptionsGroup.h>
 #include <Parsers/ProgramOptionsParser.h>
-#include <Parsers/SubcommandsParser.h>
+#include <Parsers/ParserWithSubcommands.h>
 #include <Printers/PrettyPrinter.h>
 #include <Printers/ProgramOptionsPrinter.h>
 #include <Printers/ProgramSubcommandsPrinter.h>

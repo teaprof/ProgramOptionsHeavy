@@ -1,7 +1,7 @@
 #ifndef __COMPLETER_H__
 #define __COMPLETER_H__
 
-#include <Parsers/SubcommandsParser.h>
+#include <Parsers/ParserWithSubcommands.h>
 
 #include <string>
 #include <optional>
@@ -12,7 +12,7 @@
 
 namespace program_options_heavy {
 
-inline std::vector<std::string> complete(const std::string &program, const std::string &curargument,
+inline std::vector<std::string> getCompletionVariants(const std::string &program, const std::string &curargument,
                                          const std::string &prevargument)
 {
     return {"run", "collect"};
@@ -20,79 +20,185 @@ inline std::vector<std::string> complete(const std::string &program, const std::
 
 
 class Completer {
+    /// TODOLIST:
+    /// 1. Process the values passed for options
+    /// 2. Take into account that any option can have different names
     public:
-        Completer(std::shared_ptr<SubcommandsParser>& parser) : parser_{parser} {}
+        Completer(std::shared_ptr<ParserWithSubcommands>& parser) : parser_{parser} {
+            all_variants_ = getAllVariants();
+            for(const auto& it : all_variants_)
+                all_command_names.push_back(it.first);
+        }
 
-        std::vector<std::string> complete() {
-            auto completion_line = getCompletionLine();
-            auto words = splitCompletionLine(completion_line);
-            return complete(words);
+        std::vector<std::string> getCompletionVariants() {            
+            auto completion_line = getLineForCompletion();
+            if(completion_line.has_value())
+                return getCompletionVariants(completion_line.value());
+            return {};
+        }
+
+        std::vector<std::string> getCompletionVariants(const std::string& completion_line) {
+            auto words = split(completion_line);
+            return getCompletionVariants(words);
         }
 
     private:
-        std::shared_ptr<SubcommandsParser> parser_;
+        std::shared_ptr<ParserWithSubcommands> parser_;
 
-        struct Subcommand {
+        struct Command {
             std::string name;
-            std::vector<std::string> params;
+            std::vector<std::vector<std::string>> options;
+            std::vector<std::string> canonical_options; // same size as options
         };        
+        std::map<std::string, Command> all_variants_;
+        std::vector<std::string> all_command_names;
 
-        std::vector<std::string> complete(std::vector<std::string_view> words) {
-            auto all_variants = getAllVariants();
-            if(words.empty()) {
-                //completion line should contain at least executable name
-                return {};
-            }
-            if(!parser_->exename.empty() && words[1] != parser_->exename) {
-                // name of the executable doesn't correspond to the first arg
-                return {};
-            }
-            if(words.size() == 1) {
-                //list all possible subcommands
-                std::vector<std::string> res;
-                for(const auto& subcmd: all_variants) {
-                    res.push_back(subcmd.name);
-                }
-                return res;
-            }
-            const auto& selected_subcmd_str = words[1];
-            
-            std::vector<Subcommand>::iterator subcommand = std::find_if(all_variants.begin(), all_variants.end(), [&selected_subcmd_str](auto it)
-            {
-                return it.name == selected_subcmd_str;
-            });
-            if(subcommand == all_variants.end()) {
-                // unknown subcommand
-                return {};
-            }
-            for(size_t n = 2; n < words.size(); n++) {
-                const auto& curparam = words[n];
-                auto it = std::find(subcommand->params.begin(), subcommand->params.end(), curparam);
-                if(it == subcommand->params.end())  {
-                    //incorrect param found
-                    return {};
-                }
-                subcommand->params.erase(it);
-            }
-            return subcommand->params;
-        }
+        struct MatchResults {
+            std::optional<std::size_t> whole_match_idx;
+            std::vector<std::string> variants;
+            std::vector<std::size_t> variants_idx;
+        };
 
-        std::vector<Subcommand> getAllVariants() {
-            std::vector<Subcommand> res;
-            for(auto it : parser_->getSubcommands()) {
-                std::shared_ptr<ProgramOptionsParser> parser = it.second;
-                Subcommand subcmd;
-                subcmd.name = it.first;
-                for(auto grp : parser->groups()) {
-                    for(auto opt: grp->visible.options()) {
-                        subcmd.params.push_back(opt->long_name());
+        MatchResults getCompletionVariants(const std::string_view& word, const std::vector<std::string>& variants) {
+            MatchResults res;
+            for(size_t n = 0; n < variants.size(); n++) {
+                if(variants[n].find(word) == 0) {
+                    res.variants.push_back(variants[n]);
+                    res.variants_idx.push_back(n);
+                    if(variants[n] == word) {
+                        res.whole_match_idx = n;
                     }
                 }
-                res.push_back(std::move(subcmd));
+            }
+            return res;
+        }
+
+        MatchResults getCompletionVariants(const std::string_view& word, const std::vector<std::vector<std::string>>& variants) {
+            MatchResults res;
+            for(size_t n = 0; n < variants.size(); n++) {
+                MatchResults tmp = getCompletionVariants(word, variants[n]);
+                if(tmp.variants.size() > 0) {
+                    res.variants.push_back(tmp.variants.front());
+                    res.variants_idx.push_back(n);
+                }
+                if(tmp.whole_match_idx.has_value()) {
+                    res.whole_match_idx = n;
+                }
+            }
+            return res;
+        }
+
+        std::tuple<std::string_view, std::string_view, std::vector<std::string_view>> byRoles(const std::vector<std::string_view>& words) {
+            std::string_view exec_name;
+            std::string_view command_name;
+            std::vector<std::string_view> options;
+            size_t processed = 0;
+            if(!parser_->exename.empty() && words.size() > 0) {
+                exec_name = words[0];
+                processed++;
+            }
+            if(words.size() > processed && words[processed].find('-') != 0) {
+                command_name = words[processed];
+                processed++;
+            }
+            for(size_t n = processed; n < words.size(); n++) {
+                options.push_back(words[n]);
+            }
+            return {exec_name, command_name, options};
+        }
+
+        std::vector<std::string> getCompletionVariants(const std::vector<std::string_view>& words) {
+            auto [exec_name, command_name, options] = byRoles(words);
+
+            // match the name of the executable
+            std::vector<std::string> exe_variants{parser_->exename};
+            if(!parser_->exename.empty()) {                                
+                MatchResults exe_match_results = getCompletionVariants(exec_name, exe_variants);
+                if(exe_match_results.whole_match_idx.has_value() == false)
+                    return exe_match_results.variants;
+            }            
+
+            // match the name of the command
+            MatchResults command_match_results = getCompletionVariants(command_name, all_command_names);
+            if(command_match_results.whole_match_idx.has_value() == false)
+                return command_match_results.variants;
+            
+            const std::string& subcommand = all_command_names[command_match_results.whole_match_idx.value()];
+
+            std::vector<std::vector<std::string>> rest_options = all_variants_[subcommand].options;
+            std::vector<std::string> canonical_rest_options = all_variants_[subcommand].canonical_options;
+            // match command options
+            if(options.size() > 0) {
+                bool last_option_full_match = false;
+
+                // remove all used options
+                std::vector<size_t> remove_idx;
+                for(size_t idx = 0; idx < options.size(); idx++) {
+                    MatchResults match_results = getCompletionVariants(options[idx], rest_options);
+                    if(match_results.whole_match_idx.has_value()) {
+                        size_t rest_idx = match_results.whole_match_idx.value();
+                        remove_idx.push_back(rest_idx);
+                        if(idx + 1 == options.size()) {
+                            last_option_full_match = true;
+                        }
+                    };
+                }
+                for(auto it = remove_idx.rbegin(); it != remove_idx.rend(); it++) {
+                    rest_options.erase(rest_options.begin() + *it);
+                    canonical_rest_options.erase(canonical_rest_options.begin() + *it);
+                }
+                // last option should be processed separately
+                if(!last_option_full_match) {
+                    const std::string_view& last_option = options.back();
+                    MatchResults match_results = getCompletionVariants(last_option, rest_options);
+                    return match_results.variants;
+                }
+            }
+            return canonical_rest_options;
+        }
+
+        std::map<std::string, Command> getAllVariants() {
+            std::map<std::string, Command> res;
+            for(auto it : parser_->getSubcommands()) {
+                std::shared_ptr<ProgramOptionsParser> parser = it.second;
+                Command cmd;
+                cmd.name = it.first;
+                for(auto grp : parser->groups()) {
+                    for(auto opt: grp->visible.options()) {
+                        auto& oopt = *opt;
+                        cmd.options.push_back(getOptionNames(oopt));
+                        cmd.canonical_options.push_back(getCanonicalName(oopt));
+                    }
+                }
+                res[cmd.name] = std::move(cmd);
 
             }
             return res;
+        }
 
+
+        std::string getCanonicalName(const boost::program_options::option_description& opt) {
+            const std::vector<std::string>& all_names = getOptionNames(opt);
+            assert(!all_names.empty());
+            return all_names.front();
+        }
+        std::vector<std::string> getOptionNames(const boost::program_options::option_description& opt) {
+            /// \todo: move to OptionsGroup
+            std::vector<std::string> res;
+            const std::pair<const std::string*, size_t> long_names = opt.long_names();
+            for(size_t n = 0; n < long_names.second; n++) {
+                std::string str = std::string("--") + *(long_names.first + n);
+                res.push_back(str);
+            }
+            //extract short name:
+            std::string short_name = opt.canonical_display_name(boost::program_options::command_line_style::allow_dash_for_short);
+            if(!short_name.empty()) {
+                if(short_name.size() == 1) {
+                    short_name = std::string("-") + short_name;
+                }
+                res.push_back(short_name);
+            }
+            return res;
         }
 
         std::string_view trim(std::string_view str) {
@@ -106,16 +212,13 @@ class Completer {
             return str.substr(0, 0); //empty string view
         }
 
-        std::vector<std::string_view> splitCompletionLine(const std::optional<std::string>& line) {
-            if(!line.has_value())
-                return {};
-            std::vector<std::string_view> res;
-            std::string_view source = line.value();
+        std::vector<std::string_view> split(std::string_view line) {
+            std::vector<std::string_view> res;            
             size_t start = 0;
             size_t finish;            
             do {
-                finish = source.find(' ', start+1);
-                auto substr = source.substr(start, finish - start);
+                finish = line.find(' ', start+1);
+                auto substr = line.substr(start, finish - start);
                 substr = trim(substr);
                 if(substr.length() > 0) {
                     res.push_back(substr);
@@ -125,7 +228,7 @@ class Completer {
             return res;
         }
 
-        std::optional<std::string> getCompletionLine() {
+        std::optional<std::string> getLineForCompletion() {
             if(const char* cstr = getenv("COMP_LINE")) {
                 return std::string(cstr);
             } else {

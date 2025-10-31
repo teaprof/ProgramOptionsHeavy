@@ -57,7 +57,8 @@ class ProgramOptionsParser : public AbstractOptionsParser
             }
         }
         boost::program_options::variables_map vm;
-        po::store(po::command_line_parser(argc, argv).options(partial).positional(positional).run(), vm);
+        auto parse_results = po::command_line_parser(argc, argv).options(partial).positional(positional).run();
+        po::store(parse_results, vm);
         boost::program_options::notify(vm);
         for (auto it : groups_)
         {

@@ -1,7 +1,7 @@
 #ifndef __PROGRAM_SUBCOMMANDS_PRINTER_H__
 #define __PROGRAM_SUBCOMMANDS_PRINTER_H__
 
-#include <Parsers/SubcommandsParser.h>
+#include <Parsers/ParserWithSubcommands.h>
 #include <Printers/PrettyPrinter.h>
 
 namespace program_options_heavy
@@ -13,7 +13,7 @@ namespace printers
 class ProgramSubcommandsPrinter
 {
   public:
-    std::shared_ptr<Section> print(SubcommandsParser &parser)
+    std::shared_ptr<Section> print(ParserWithSubcommands &parser)
     {
         auto res = std::make_shared<Section>();
         auto usage = std::make_shared<Section>();
@@ -47,7 +47,7 @@ class ProgramSubcommandsPrinter
         res->items.push_back(details);
         return res;
     }
-    std::string shortHelp(SubcommandsParser &parser, SubcommandsParser::subcommands_t::iterator it) const
+    std::string shortHelp(ParserWithSubcommands &parser, ParserWithSubcommands::subcommands_t::iterator it) const
     {
         std::stringstream str;
         str << parser.exename << " ";
@@ -69,7 +69,7 @@ class ProgramSubcommandsPrinter
         }
         return str.str();
     }
-    std::string subcommandDescription(SubcommandsParser &parser, SubcommandsParser::subcommands_t::iterator it) const
+    std::string subcommandDescription(ParserWithSubcommands &parser, ParserWithSubcommands::subcommands_t::iterator it) const
     {
         std::stringstream str;
         if (it->first != parser.defaultSubcommandName() || !parser.hideDefaultSubcommandName())

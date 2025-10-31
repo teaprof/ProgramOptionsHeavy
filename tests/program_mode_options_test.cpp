@@ -1,7 +1,7 @@
 #include <ProgramOptionsHeavy.h>
 #include <gtest/gtest.h>
 
-using program_options_heavy::SubcommandsParser;
+using program_options_heavy::ParserWithSubcommands;
 using program_options_heavy::OptionsGroup;
 using program_options_heavy::printers::ProgramSubcommandsPrinter;
 using program_options_heavy::printers::PrettyPrinter;
@@ -9,7 +9,7 @@ using program_options_heavy::printers::PrettyPrinter;
 
 TEST(PROGRAMMODEOPTIONS, PARSE) {
     namespace po = boost::program_options;
-    SubcommandsParser subcommands_parser("programname");
+    ParserWithSubcommands subcommands_parser("programname");
     auto runOptions = std::make_shared<OptionsGroup>("run group");
     size_t dim;
     runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2), "hypercube dimension");
