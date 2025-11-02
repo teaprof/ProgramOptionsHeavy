@@ -76,7 +76,7 @@ class Completer {
         MatchResults getCompletionVariants(const std::string_view& word, const std::vector<std::vector<std::string>>& variants) {
             MatchResults res;
             for(size_t n = 0; n < variants.size(); n++) {
-                MatchResults tmp = getCompletionVariants(word, variants[n]);
+                MatchResults tmp = getCompletionVariants(word, variants[n]);                
                 if(tmp.variants.size() > 0) {
                     res.variants.push_back(tmp.variants.front());
                     res.variants_idx.push_back(n);
@@ -197,6 +197,8 @@ class Completer {
                     short_name = std::string("-") + short_name;
                 }
                 res.push_back(short_name);
+            } else {
+                res.push_back("empty");
             }
             return res;
         }
