@@ -1,7 +1,7 @@
 #ifndef __PROGRAM_OPTIONS_PRINTER_H__
 #define __PROGRAM_OPTIONS_PRINTER_H__
 
-#include <Parsers/ProgramOptionsParser.h>
+#include <Parsers/Parser.h>
 #include <Printers/PrettyPrinter.h>
 
 namespace program_options_heavy
@@ -13,7 +13,7 @@ namespace printers
 class ProgramOptionsPrinter
 {
   public:
-    std::shared_ptr<Section> print(ProgramOptionsParser &parser)
+    std::shared_ptr<Section> print(Parser &parser)
     {
         auto res = std::make_shared<Section>();
         auto usage = std::make_shared<Section>();
@@ -36,7 +36,7 @@ class ProgramOptionsPrinter
         res->items.push_back(details);
         return res;
     }
-    std::string shortHelp(ProgramOptionsParser &parser) const
+    std::string shortHelp(Parser &parser) const
     {
         std::stringstream str;
         str << parser.exename << " ";

@@ -160,7 +160,7 @@ class Completer {
         std::map<std::string, Command> getAllVariants() {
             std::map<std::string, Command> res;
             for(auto it : parser_->getSubcommands()) {
-                std::shared_ptr<ProgramOptionsParser> parser = it.second;
+                std::shared_ptr<Parser> parser = it.second;
                 Command cmd;
                 cmd.name = it.first;
                 for(auto grp : parser->groups()) {

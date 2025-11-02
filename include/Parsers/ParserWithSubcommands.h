@@ -3,7 +3,7 @@
 
 #include <Parsers/AbstractOptionsParser.h>
 #include <Parsers/OptionsGroup.h>
-#include <Parsers/ProgramOptionsParser.h>
+#include <Parsers/Parser.h>
 
 namespace program_options_heavy
 {
@@ -13,7 +13,7 @@ class ProgramSubcommandsPrinter;
 class ParserWithSubcommands : public AbstractOptionsParser
 {
   public:
-    using value_t = std::shared_ptr<ProgramOptionsParser>;
+    using value_t = std::shared_ptr<Parser>;
     using subcommands_t = std::map<std::string, value_t>;
 
     ParserWithSubcommands(const std::string &exename = "") : AbstractOptionsParser(exename)
@@ -25,8 +25,8 @@ class ParserWithSubcommands : public AbstractOptionsParser
     subcommands_t getSubcommands() {
         return subcommands_;
     }
-    std::shared_ptr<ProgramOptionsParser> push_back(const std::string &subcommand_name,
-                                                    std::shared_ptr<ProgramOptionsParser> val)
+    std::shared_ptr<Parser> push_back(const std::string &subcommand_name,
+                                                    std::shared_ptr<Parser> val)
     {
         auto res = subcommands_.emplace(subcommand_name, val);
         if (!res.second)
@@ -37,23 +37,23 @@ class ParserWithSubcommands : public AbstractOptionsParser
         subcommands_order_.push_back(subcommands_.find(subcommand_name));
         return res.first->second;
     }
-    std::shared_ptr<ProgramOptionsParser> operator[](const std::string &subcommand_name)
+    std::shared_ptr<Parser> operator[](const std::string &subcommand_name)
     {
         auto pos = subcommands_.find(subcommand_name);
         if (pos == subcommands_.end())
         {
-            pos = subcommands_.emplace(subcommand_name, std::make_shared<ProgramOptionsParser>(exename)).first;
+            pos = subcommands_.emplace(subcommand_name, std::make_shared<Parser>(exename)).first;
             subcommands_order_.push_back(subcommands_.find(subcommand_name));
         }
         return pos->second;
     }
-    std::shared_ptr<ProgramOptionsParser> at(const std::string &subcommand_name)
+    std::shared_ptr<Parser> at(const std::string &subcommand_name)
     {
         auto pos = subcommands_.find(subcommand_name);
         assert(pos != subcommands_.end());
         return pos->second;
     }
-    std::shared_ptr<ProgramOptionsParser> defaultSubcommand()
+    std::shared_ptr<Parser> defaultSubcommand()
     {
         return at(default_subcommand_name_);
     }
@@ -69,7 +69,7 @@ class ParserWithSubcommands : public AbstractOptionsParser
     {
         return default_subcommand_name_;
     }
-    std::shared_ptr<ProgramOptionsParser> selectedSubcommand()
+    std::shared_ptr<Parser> selectedSubcommand()
     {
         return selected_subcommand_->second;
     }

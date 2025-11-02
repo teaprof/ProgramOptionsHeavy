@@ -62,7 +62,7 @@ class ProgramSubcommandsPrinter
         {
             str << it->first << " ";
         }
-        const std::shared_ptr<ProgramOptionsParser> opts = it->second;
+        const std::shared_ptr<Parser> opts = it->second;
         for (auto group : opts->groups())
         {
             str << "[" << group->groupName() << "] ";
@@ -79,7 +79,7 @@ class ProgramSubcommandsPrinter
         str << it->second->program_description;
         return str.str();
     }
-    std::vector<std::shared_ptr<Section>> print(ProgramOptionsParser &parser)
+    std::vector<std::shared_ptr<Section>> print(Parser &parser)
     {
         std::vector<std::shared_ptr<Section>> res;
         for (auto it : parser.groups())

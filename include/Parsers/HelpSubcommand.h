@@ -2,15 +2,15 @@
 #define __HELP_SUBCOMMAND_H__
 
 #include <Parsers/BasicOptions.h>
-#include <Parsers/ProgramOptionsParser.h>
+#include <Parsers/Parser.h>
 
 namespace program_options_heavy
 {
 
-class HelpSubcommand : public ProgramOptionsParser
+class HelpSubcommand : public Parser
 {
   public:
-    HelpSubcommand() : ProgramOptionsParser()
+    HelpSubcommand() : Parser()
     {
         help_options = std::make_shared<program_options_heavy::HelpOptions>();
         addGroup(help_options);
