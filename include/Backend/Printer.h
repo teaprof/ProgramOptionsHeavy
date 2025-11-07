@@ -41,6 +41,10 @@ class Printer : public AbstractOptionVisitor {
             }
             prefix = old_prefix;
         }
+        void visit(std::shared_ptr<AbstractNamedCommand> opt) override {
+            /// todo: implement this function instead of the following:
+            visit(std::static_pointer_cast<AbstractNamedOption>(opt));
+        }
         void visit(std::shared_ptr<AbstractPositionalOption>) override {
             assert(false);
         }

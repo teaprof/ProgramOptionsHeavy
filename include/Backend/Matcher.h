@@ -14,22 +14,19 @@
 
 class ArgLexer {
         /*
-        --long_name_wo_value
-        --long_name=value
-        --long_name value
-        -s
-        -s value
-        -s=value
+        Examples of possible tokens:
+        --long_name
+        --long_name=value        
         -xyz
-        -xyz value  
-        -xyz positional_name
+        -xyz=value  
+        value
         */
+       /// todo: add "--" support (which signalizes that after it all arguments are treated as positional options)
     private:
-        static constexpr char long_option_pattern[] = "^--([A-Za-z0-9_\\-]+)";
-        static constexpr char long_option_eq_value_pattern[] = "^--([A-Za-z0-9_\\-]+)=(.*)";
-        static constexpr char short_options_pattern[] = "^-([A-Za-z0-9]+)";
-        static constexpr char short_options_eq_value_pattern[] = "^-([A-Za-z0-9]+)=(.*)";
-        //static constexpr char eq_pattern[] = "=";
+        static constexpr char long_option_pattern[] = "^--([A-Za-z0-9_\\-]+)"; // like --long_name
+        static constexpr char long_option_eq_value_pattern[] = "^--([A-Za-z0-9_\\-]+)=(.*)"; // like --long_name=value
+        static constexpr char short_options_pattern[] = "^-([A-Za-z0-9]+)"; // like -xyz
+        static constexpr char short_options_eq_value_pattern[] = "^-([A-Za-z0-9]+)=(.*)"; //like -xyz=value
     public:
         enum TokenType {
             long_option, // --long_option
@@ -45,51 +42,6 @@ class ArgLexer {
             std::string value;
         };
 
-        /*static Result lex(const std::string& arg) {
-            std::string current_arg = arg;
-            std::smatch match;
-            std::regex long_option_ex(long_option_pattern);
-            std::regex short_options_ex(short_options_pattern);
-            std::regex eq_ex(eq_pattern);
-            Result res;
-            if(std::regex_search(current_arg, match, long_option_ex)) {
-                res.long_option_name = current_arg.substr(0, match[0].length());
-                res.long_option_name = res.long_option_name.substr(2, std::string::npos); // remove leading "--""
-                current_arg = current_arg.substr(match.length(), std::string::npos);
-                if(std::regex_search(current_arg, match, eq_ex)) {
-                    current_arg = current_arg.substr(match.length(), std::string::npos);
-                    res.value = current_arg;
-                    res.type = TokenType::long_option_eq_value;
-                } else {
-                    if(current_arg.empty()) {
-                        res.type = TokenType::long_option;
-                    } else {
-                        res.type = TokenType::value;
-                        res.value = arg;
-                    }
-                }
-            } else if(std::regex_search(current_arg, match, short_options_ex)) {
-                res.short_option_names = current_arg.substr(0, match.length());
-                res.short_option_names = res.short_option_names.substr(1, std::string::npos);  // remove leading "-""
-                current_arg = current_arg.substr(match.length(), std::string::npos);
-                if(std::regex_search(current_arg, match, eq_ex)) {
-                    current_arg = current_arg.substr(match.length(), std::string::npos);
-                    res.value = current_arg;
-                    res.type = TokenType::short_options_eq_value;
-                } else {
-                    if(current_arg.empty()) {
-                        res.type = TokenType::short_options;
-                    } else {
-                        res.type = TokenType::value;
-                        res.value = arg;
-                    }
-                }
-            } else {
-                res.value = arg;
-                res.type = TokenType::value;
-            }
-            return res;
-        }        */
         static Result lex(const std::string& arg) {
             std::string current_arg = arg;
             std::smatch match;
@@ -136,23 +88,23 @@ class ArgLexer {
 };
 
 
-class ArgumentsTokenizer {
+class ArgGrammarParser {
         std::vector<std::string> args_;
         size_t idx{0};
         size_t subidx{0};
     public:
-        enum class TokenTypes {
-            long_option, // --long_option
-            long_option_eq_value, // --long_option=value
-            short_option, // -x
-            short_option_without_value, // when short option is specified like -xyz, the `y` option can't have value
-            short_option_eq_value, // -s=value
+        enum TokenTypes {
+            long_option, 
+            long_option_eq_value,
+            short_option,
+            short_option_without_value,
+            short_option_eq_value,
             value
         };        
         struct Result {
             TokenTypes token_type;
-            std::string long_option_name; // without leading "--"
-            std::string short_option_name; // without leading "-"
+            std::string long_option_name; 
+            std::string short_option_name;
             std::string value;
         };
         Result current_result;        
@@ -160,10 +112,10 @@ class ArgumentsTokenizer {
 
 
         template<class ... T>
-        ArgumentsTokenizer(T ... arguments) : args_{arguments...} {
+        ArgGrammarParser(T ... arguments) : args_{arguments...} {
         }
 
-        ArgumentsTokenizer(const std::string& str) {
+        ArgGrammarParser(const std::string& str) {
             // split str into separate words
             std::stringstream ss(str);
             std::string word;
@@ -237,32 +189,77 @@ class ArgumentsTokenizer {
 
 class SingleOptionMatcher : public AbstractOptionVisitor {
     private:
-        ArgumentsTokenizer& tokenizer_;
+        ArgGrammarParser& grammar_parser_;
     public:
         std::optional<size_t> match_index;
+        std::string value;
         std::vector<std::shared_ptr<AbstractOption>> unlocks;
-        SingleOptionMatcher(ArgumentsTokenizer& args) : tokenizer_{args} {}
+        SingleOptionMatcher(ArgGrammarParser& args) : grammar_parser_{args} {}
 
         void visit(std::shared_ptr<AbstractOption> opt) override {
             assert(false);
         }
         void visit(std::shared_ptr<AbstractNamedOption> opt) override {
-            /*match_index = std::nullopt;
-            unlocks.clear();
-            bool match_long = opt->longName().has_value() && opt->longName().value() == tokenizer_.val();
-            bool match_short = opt->shortName().has_value() && opt->shortName().value() == tokenizer_.val();
-            if(match_long || match_short) {
-                match_index = 0;
-                if(opt->valueRegex()) {
-
-                }
-                unlocks = opt->unlocks;
-            };*/
-        }
-        void visit(std::shared_ptr<AbstractPositionalOption>) override {
             match_index = std::nullopt;
             unlocks.clear();
-            assert(false);
+            bool match = false;
+            switch(grammar_parser_.current_result.token_type) {
+                case ArgGrammarParser::TokenTypes::long_option:                    
+                case ArgGrammarParser::TokenTypes::long_option_eq_value:
+                    match = opt->longName().has_value() && opt->longName().value() == grammar_parser_.current_result.long_option_name;
+                    break;
+                case ArgGrammarParser::TokenTypes::short_option:
+                case ArgGrammarParser::TokenTypes::short_option_without_value:
+                case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                    match = opt->shortName().has_value() && opt->shortName().value() == grammar_parser_.current_result.short_option_name;
+                    break;
+                case ArgGrammarParser::TokenTypes::value:
+                    /* nothing to do*/;
+            }            
+            if(match) {
+                match_index = 0;
+                if(opt->valueRequired()) {
+                    value = grammar_parser_.getValue();
+                }
+                unlocks = opt->unlocks;
+            };
+        }
+        void visit(std::shared_ptr<AbstractNamedCommand> opt) override {
+            match_index = std::nullopt;
+            unlocks.clear();
+            bool match = false;
+            switch(grammar_parser_.current_result.token_type) {
+                case ArgGrammarParser::TokenTypes::long_option:                    
+                case ArgGrammarParser::TokenTypes::long_option_eq_value:                    
+                case ArgGrammarParser::TokenTypes::short_option:
+                case ArgGrammarParser::TokenTypes::short_option_without_value:
+                case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                case ArgGrammarParser::TokenTypes::value:
+                    if(grammar_parser_.current_result.value == opt->longName()) {
+                        match = true;
+                    }                    
+            }            
+            if(match) {
+                match_index = 0;                
+                unlocks = opt->unlocks;
+            };
+        }
+        void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
+            match_index = std::nullopt;
+            unlocks.clear();
+            switch(grammar_parser_.current_result.token_type) {
+                case ArgGrammarParser::TokenTypes::long_option:
+                case ArgGrammarParser::TokenTypes::long_option_eq_value:
+                case ArgGrammarParser::TokenTypes::short_option:
+                case ArgGrammarParser::TokenTypes::short_option_without_value:
+                case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                    return;
+                case ArgGrammarParser::TokenTypes::value:
+                    /* nothing to do */;
+            }
+            match_index = 0;
+            value = grammar_parser_.getValue();
+            unlocks = opt->unlocks;
         }
         void visit(std::shared_ptr<Compatibles> opt) override {
             match_index = 0;            
@@ -293,15 +290,16 @@ class Parser {
 
         Parser(std::shared_ptr<AbstractOption> options) : options_{options} {}            
         
-        bool parse(ArgumentsTokenizer args) {
+        bool parse(ArgGrammarParser args) {
             values.clear();
             std::vector<std::shared_ptr<AbstractOption>> rest_options_;            
             if(auto q = std::dynamic_pointer_cast<Compatibles>(options_)) {
                 rest_options_ = options_->unlocks;
             } else {
                 rest_options_.push_back(options_);
-            }
+            }            
             while(!args.eof()) {
+                args.getNextOption(); 
                 SingleOptionMatcher matcher(args);
                 bool option_matched = false;
                 for(auto it = rest_options_.begin(); it != rest_options_.end(); it++) {

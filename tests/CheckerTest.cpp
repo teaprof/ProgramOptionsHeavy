@@ -29,9 +29,9 @@ TEST(CheckerTest, SimplePositionalOptions) {
 
 TEST(CheckerTest, Alternatives) {
     auto option = std::make_shared<Alternatives>(
-        std::make_shared<AbstractNamedOption>("run"),
-        std::make_shared<AbstractNamedOption>("gather"),
-        std::make_shared<AbstractNamedOption>("clean")
+        std::make_shared<AbstractNamedCommand>("run"),
+        std::make_shared<AbstractNamedCommand>("gather"),
+        std::make_shared<AbstractNamedCommand>("clean")
     );
     Checker checker;
     EXPECT_NO_THROW(option->accept(checker));
@@ -39,9 +39,9 @@ TEST(CheckerTest, Alternatives) {
 
 TEST(CheckerTest, Alternatives2) {
     auto option = std::make_shared<Alternatives>(
-        std::make_shared<AbstractNamedOption>("run")->addUnlock(std::make_shared<AbstractNamedOption>("--opt1"))->addUnlock(std::make_shared<AbstractNamedOption>("--opt2")),
-        std::make_shared<AbstractNamedOption>("gather")->addUnlock(std::make_shared<AbstractNamedOption>("--opt1")),
-        std::make_shared<AbstractNamedOption>("clean")->addUnlock(std::make_shared<AbstractNamedOption>("--opt2"))
+        std::make_shared<AbstractNamedCommand>("run")->addUnlock(std::make_shared<AbstractNamedOption>("--opt1"))->addUnlock(std::make_shared<AbstractNamedOption>("--opt2")),
+        std::make_shared<AbstractNamedCommand>("gather")->addUnlock(std::make_shared<AbstractNamedOption>("--opt1")),
+        std::make_shared<AbstractNamedCommand>("clean")->addUnlock(std::make_shared<AbstractNamedOption>("--opt2"))
     );
     Checker checker;
     EXPECT_NO_THROW(option->accept(checker));
@@ -52,9 +52,9 @@ TEST(CheckerTest, Alternatives3) {
         addUnlock(std::make_shared<AbstractNamedOption>("--opt1"))->
         addUnlock(    
             std::make_shared<Alternatives>(
-                std::make_shared<AbstractNamedOption>("run")->addUnlock(std::make_shared<AbstractNamedOption>("--opt1")),
-                std::make_shared<AbstractNamedOption>("gather")->addUnlock(std::make_shared<AbstractNamedOption>("--opt2")),
-                std::make_shared<AbstractNamedOption>("clean")->addUnlock(std::make_shared<AbstractNamedOption>("--opt1"))                
+                std::make_shared<AbstractNamedCommand>("run")->addUnlock(std::make_shared<AbstractNamedOption>("--opt1")),
+                std::make_shared<AbstractNamedCommand>("gather")->addUnlock(std::make_shared<AbstractNamedOption>("--opt2")),
+                std::make_shared<AbstractNamedCommand>("clean")->addUnlock(std::make_shared<AbstractNamedOption>("--opt1"))                
             )
         );
     Checker checker;
@@ -66,11 +66,11 @@ TEST(CheckerTest, Complex) {
     auto helpOption = std::make_shared<AbstractNamedOption>("--help", "-h");
     auto hypercubeOptions = std::make_shared<Alternatives>(
         helpOption,
-        std::make_shared<AbstractNamedOption>("run")->
+        std::make_shared<AbstractNamedCommand>("run")->
             addUnlock(std::make_shared<AbstractNamedOption>("--dim", "-d"))->
             addUnlock(std::make_shared<AbstractNamedOption>("--mIntervalsPerDim", "-m"))->
             addUnlock(helpOption),
-        std::make_shared<AbstractNamedOption>("gather")->addUnlock(helpOption)
+        std::make_shared<AbstractNamedCommand>("gather")->addUnlock(helpOption)
     );
     Checker checker;
     EXPECT_NO_THROW(hypercubeOptions->accept(checker));

@@ -10,11 +10,11 @@ class MatcherFixture : public ::testing::Test {
             common_option = std::make_shared<AbstractNamedOption>("--common", "-c");
             options = std::make_shared<Compatibles>();
             options->addUnlock(common_option);            
-            auto runOptions = std::make_shared<AbstractNamedOption>("run");
+            auto runOptions = std::make_shared<AbstractNamedCommand>("run");
             runOptions->addUnlock(
                 std::make_shared<AbstractNamedOption>("--dim", "-d")
             );
-            auto gatherOptions= std::make_shared<AbstractNamedOption>("gather");
+            auto gatherOptions= std::make_shared<AbstractNamedCommand>("gather");
             gatherOptions->addUnlock(std::make_shared<AbstractNamedOption>("--gatheropt", "-g"));
             command = std::make_shared<Alternatives>(runOptions, gatherOptions);
             options->addUnlock(command);
