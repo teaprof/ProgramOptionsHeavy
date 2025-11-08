@@ -1,6 +1,7 @@
 #ifndef __BACKEND_OPTION_H__
 #define __BACKEND_OPTION_H__
 
+#include "ValueSemantics.h"
 #include <memory>
 #include <vector>
 #include <optional>
@@ -10,19 +11,22 @@
 
 class AbstractOption;
 class AbstractNamedOption;
+class AAbstractNamedOptionWithValue; // TODO rename
 class AbstractNamedCommand;
 class AbstractPositionalOption;
 class Alternatives;
-class Compatibles;
+class OptionsGroup;
 
 
 class AbstractOptionVisitor {
     public:
+        virtual ~AbstractOptionVisitor() {};
         virtual void visit(std::shared_ptr<AbstractOption>) = 0;
         virtual void visit(std::shared_ptr<AbstractNamedOption>) = 0;
+        virtual void visit(std::shared_ptr<AAbstractNamedOptionWithValue>) = 0;
         virtual void visit(std::shared_ptr<AbstractNamedCommand>) = 0;
         virtual void visit(std::shared_ptr<AbstractPositionalOption>) = 0;
-        virtual void visit(std::shared_ptr<Compatibles>) = 0;
+        virtual void visit(std::shared_ptr<OptionsGroup>) = 0;
         virtual void visit(std::shared_ptr<Alternatives>) = 0;
 };
 
@@ -44,74 +48,60 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         bool required_{false};
 };
 
-
-template<class ... T>
-class TValueStorage {
-    public:
-
-    template<class Arg>
-    TValueStorage(Arg& v) : ref{v} {}
-
-    void setValue(const std::string& str) {
-        assert(std::holds_alternative<std::reference_wrapper<std::string>>(ref));
-        auto r = std::get<std::reference_wrapper<std::string>>(ref);        
-        r.get() = str;
-    }
-    
-    std::variant<std::reference_wrapper<T>...> ref;
-};
-
-using ValueStorage = TValueStorage<int, double, std::string, char>;
-
 class AbstractNamedOption : public AbstractOption {
     public:
         AbstractNamedOption() {}
         AbstractNamedOption(const std::string& undecorated_long_name);
         AbstractNamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name);        
 
-        void setValueRegex(const std::string& regex);
-        const std::optional<std::string>& valueRegex() const;
-        void setValueRequired(bool value_required);
-        bool valueRequired() const;
-        
-/*        template<class T>
-        void tie(T& value) {
-        // TODO use concepts to make error messages cleaner
-            storage = value;
-        }*/
-
-        void tie(std::string& value) {
-            storage_ = ValueStorage(value);
-        }
-
-        void setValue(const std::string& str) {
-            if(storage_.has_value()) {
-                storage_->setValue(str);
-            }
-        }
-
-        
-        void setMultiplicity(bool multiplicity);
-        bool multiplicity() const;
-
-        void setDefaultValue(const std::string& value);
-        const std::optional<std::string>& defaultValue() const;
-
         const std::optional<std::string>& longName() const;
         const std::optional<std::string>& shortName() const;
         const std::string displayName() const;
+
+        void setMultiplicity(bool multiplicity); // TODO: rename to setMaxOccuranceCount which can be inf
+        bool multiplicity() const;
 
         void accept(AbstractOptionVisitor& visitor) override;
     private:
         void sanitizeNames();
         std::optional<std::string> undecorated_long_name_; // long name without leading "--"
         std::optional<std::string> undecorated_short_name_; // short name without leading "-"
-        std::optional<std::string> value_regex_;
-        std::optional<std::string> default_value_;
-        bool value_required_{false};
         bool multiplicity_{false};
-        std::optional<ValueStorage> storage_;
 };
+
+class AAbstractNamedOptionWithValue : public AbstractNamedOption {
+    public:
+        AAbstractNamedOptionWithValue() {}
+        AAbstractNamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOption(undecorated_long_name) {};
+        AAbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AbstractNamedOption(undecorated_long_name, undecorated_short_name) {};   
+
+        bool valueRequired() {
+            return true;
+        }
+        void setValue(const std::string& str) {
+            //TODO Remove this function
+        }
+};
+
+template<class T>
+class AbstractNamedOptionWithValue : public AAbstractNamedOptionWithValue {
+    public:
+        AbstractNamedOptionWithValue() {}
+        AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : AAbstractNamedOptionWithValue(undecorated_long_name) {};
+        AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AAbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name) {};   
+        
+        void accept(AbstractOptionVisitor& visitor) override;
+
+        ValueSemantics<T>& valueSemantics() {
+            return value_semantics_;
+        }
+        const ValueSemantics<T>& valueSemantics() const {
+            return value_semantics_;
+        }
+    private:
+        ValueSemantics<T> value_semantics_;
+};
+
 
 class AbstractNamedCommand : public AbstractNamedOption {
     /// \todo: this should be a separate class without support of values and short names
@@ -125,12 +115,12 @@ class AbstractPositionalOption : public AbstractOption {
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
-class Compatibles : public AbstractOption {
+class OptionsGroup : public AbstractOption {
     public:
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
-class Alternatives : public AbstractOption {
+class Alternatives : public AbstractOption { // \todo: rename to OneOfOptions
     public:
         std::vector<std::shared_ptr<AbstractOption>> alternatives;
         Alternatives() {}
@@ -177,37 +167,12 @@ inline void AbstractNamedOption::sanitizeNames() {
 }
 
 
-inline void AbstractNamedOption::setValueRegex(const std::string& regex) {
-    value_regex_ = regex;
-    value_required_ = true;
-}
-
-inline const std::optional<std::string>& AbstractNamedOption::valueRegex() const {
-    return value_regex_;
-}
-
-inline bool AbstractNamedOption::valueRequired() const {
-    return value_required_;
-}
-
-inline void AbstractNamedOption::setValueRequired(bool value_required) {
-    value_required_ = value_required;
-}
-
 inline void AbstractNamedOption::setMultiplicity(bool multiplicity) {
     multiplicity_ = multiplicity;
 }
 
 inline bool AbstractNamedOption::multiplicity() const {
     return multiplicity_;
-}
-
-inline void AbstractNamedOption::setDefaultValue(const std::string& value) {
-    default_value_ = value;
-}
-
-inline const std::optional<std::string>& AbstractNamedOption::defaultValue() const {
-    return default_value_;
 }
 
 inline const std::optional<std::string>& AbstractNamedOption::longName() const {
@@ -252,8 +217,8 @@ inline void AbstractNamedCommand::accept(AbstractOptionVisitor& visitor) {
 inline void AbstractPositionalOption::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<AbstractPositionalOption>(shared_from_this()));
 }
-inline void Compatibles::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<Compatibles>(shared_from_this()));
+inline void OptionsGroup::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<OptionsGroup>(shared_from_this()));
 }
 
 inline void Alternatives::accept(AbstractOptionVisitor& visitor) {

@@ -216,6 +216,24 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 case ArgGrammarParser::TokenTypes::value:
                     /* nothing to do*/;
             }            
+        }
+        void visit(std::shared_ptr<AAbstractNamedOptionWithValue> opt) override {
+            match_index = std::nullopt;
+            unlocks.clear();
+            bool match = false;
+            switch(grammar_parser_.current_result.token_type) {
+                case ArgGrammarParser::TokenTypes::long_option:                    
+                case ArgGrammarParser::TokenTypes::long_option_eq_value:
+                    match = opt->longName().has_value() && opt->longName().value() == grammar_parser_.current_result.long_option_name;
+                    break;
+                case ArgGrammarParser::TokenTypes::short_option:
+                case ArgGrammarParser::TokenTypes::short_option_without_value:
+                case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                    match = opt->shortName().has_value() && opt->shortName().value() == grammar_parser_.current_result.short_option_name;
+                    break;
+                case ArgGrammarParser::TokenTypes::value:
+                    /* nothing to do*/;
+            }            
             if(match) {
                 match_index = 0;
                 if(opt->valueRequired()) {
@@ -261,7 +279,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             value = grammar_parser_.getValue(opt);
             unlocks = opt->unlocks;
         }
-        void visit(std::shared_ptr<Compatibles> opt) override {
+        void visit(std::shared_ptr<OptionsGroup> opt) override {
             match_index = 0;            
             unlocks = opt->unlocks;
         }
@@ -295,7 +313,7 @@ class Parser {
         bool parse(ArgGrammarParser args) {
             values.clear();
             std::vector<std::shared_ptr<AbstractOption>> rest_options_;            
-            if(auto q = std::dynamic_pointer_cast<Compatibles>(options_)) {
+            if(auto q = std::dynamic_pointer_cast<OptionsGroup>(options_)) {
                 rest_options_ = options_->unlocks;
             } else {
                 rest_options_.push_back(options_);
@@ -344,7 +362,7 @@ class Parser {
         }
 
         void setValue(std::shared_ptr<AbstractOption> opt, const SingleOptionMatcher& matcher) { 
-            if(auto p = std::dynamic_pointer_cast<AbstractNamedOption>(opt)) {
+            if(auto p = std::dynamic_pointer_cast<AAbstractNamedOptionWithValue>(opt)) {
                 Value& v = values[opt];
                 if(p->multiplicity() == false && v.values.size() != 0) {
                     throw OptionShouldBeSpecifiedOnlyOnce(p);

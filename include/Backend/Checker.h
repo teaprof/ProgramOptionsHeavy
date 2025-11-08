@@ -22,6 +22,9 @@ public:
         unlocks.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
+    void visit(std::shared_ptr<AAbstractNamedOptionWithValue> opt) override {
+        visit(std::static_pointer_cast<AbstractNamedOption>(opt));
+    }
     void visit(std::shared_ptr<AbstractNamedCommand> opt) override {
         addVisited(opt);
         checkCompatibility(opt);
@@ -33,7 +36,7 @@ public:
         unlocks.push_back(opt);        
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
-    void visit(std::shared_ptr<Compatibles> opt) override {
+    void visit(std::shared_ptr<OptionsGroup> opt) override {
         addVisited(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }

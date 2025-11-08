@@ -83,4 +83,26 @@ class TooFewPositionalOptions : public std::runtime_error {
         TooFewPositionalOptions() : std::runtime_error("too few positional options are specified") {}
 };
 
+class TooManyPositionalOptions : public std::runtime_error {
+    public:
+        TooManyPositionalOptions() : std::runtime_error("too few positional options are specified") {}
+};
+
+// TODO: OnlyOneChoiseIsAllowed (for alternative)
+
+/*
+From boost::program_options
+invalid_command_line_style
+invalid_command_line_style
+error_with_option_name
+multiple_occurrences
+multiple_values
+error_with_no_option_name
+unknown_option
+ambiguous_option
+validation_error
+invalid_option_value
+invalid_bool_value
+*/
+
 #endif

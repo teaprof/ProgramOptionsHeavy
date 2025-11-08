@@ -8,7 +8,7 @@ class MatcherFixture : public ::testing::Test {
         std::shared_ptr<Alternatives> command;
         void SetUp() override {
             common_option = std::make_shared<AbstractNamedOption>("--common", "-c");
-            options = std::make_shared<Compatibles>();
+            options = std::make_shared<OptionsGroup>();
             options->addUnlock(common_option);            
             auto runOptions = std::make_shared<AbstractNamedCommand>("run");
             runOptions->addUnlock(
