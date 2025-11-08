@@ -16,22 +16,22 @@ public:
             u->accept(*this);
         }        
     }
-    void visit(std::shared_ptr<AbstractNamedOption> opt) override {
+    void visit(std::shared_ptr<NamedOption> opt) override {
         addVisited(opt);
         checkCompatibility(opt);
         unlocks.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
-    void visit(std::shared_ptr<AAbstractNamedOptionWithValue> opt) override {
-        visit(std::static_pointer_cast<AbstractNamedOption>(opt));
+    void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
+        visit(std::static_pointer_cast<NamedOption>(opt));
     }
-    void visit(std::shared_ptr<AbstractNamedCommand> opt) override {
+    void visit(std::shared_ptr<NamedCommand> opt) override {
         addVisited(opt);
         checkCompatibility(opt);
         unlocks.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
-    void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
+    void visit(std::shared_ptr<PositionalOption> opt) override {
         addVisited(opt);
         unlocks.push_back(opt);        
         visit(std::static_pointer_cast<AbstractOption>(opt));
@@ -40,7 +40,7 @@ public:
         addVisited(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
-    void visit(std::shared_ptr<Alternatives> opt) override {
+    void visit(std::shared_ptr<OneOf> opt) override {
         size_t cur_size = unlocks.size();
         auto visited_old = visited;
         for(auto alt : opt->alternatives) {
@@ -60,15 +60,15 @@ private:
         visited.insert(opt);
     }
 
-    void checkCompatibility(std::shared_ptr<AbstractNamedOption> opt) {
+    void checkCompatibility(std::shared_ptr<NamedOption> opt) {
         for(auto unlock: unlocks) 
             if(checkCompatibility(opt, unlock) == false) {
                 std::stringstream str;
                 throw DuplicateOption(opt);
             }
     }
-    bool checkCompatibility(std::shared_ptr<AbstractNamedOption> first, std::shared_ptr<AbstractOption> second) {
-        auto second_named = std::dynamic_pointer_cast<AbstractNamedOption>(second);
+    bool checkCompatibility(std::shared_ptr<NamedOption> first, std::shared_ptr<AbstractOption> second) {
+        auto second_named = std::dynamic_pointer_cast<NamedOption>(second);
         if(second_named) {
             if(first->longName() && second_named->longName()) {
                 if(*first->longName() == *second_named->longName())

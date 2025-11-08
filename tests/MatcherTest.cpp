@@ -4,19 +4,19 @@
 class MatcherFixture : public ::testing::Test {
     protected:
         std::shared_ptr<AbstractOption> options;
-        std::shared_ptr<AbstractNamedOption> common_option;
-        std::shared_ptr<Alternatives> command;
+        std::shared_ptr<NamedOption> common_option;
+        std::shared_ptr<OneOf> command;
         void SetUp() override {
-            common_option = std::make_shared<AbstractNamedOption>("--common", "-c");
+            common_option = std::make_shared<NamedOption>("--common", "-c");
             options = std::make_shared<OptionsGroup>();
             options->addUnlock(common_option);            
-            auto runOptions = std::make_shared<AbstractNamedCommand>("run");
+            auto runOptions = std::make_shared<NamedCommand>("run");
             runOptions->addUnlock(
-                std::make_shared<AbstractNamedOption>("--dim", "-d")
+                std::make_shared<NamedOption>("--dim", "-d")
             );
-            auto gatherOptions= std::make_shared<AbstractNamedCommand>("gather");
-            gatherOptions->addUnlock(std::make_shared<AbstractNamedOption>("--gatheropt", "-g"));
-            command = std::make_shared<Alternatives>(runOptions, gatherOptions);
+            auto gatherOptions= std::make_shared<NamedCommand>("gather");
+            gatherOptions->addUnlock(std::make_shared<NamedOption>("--gatheropt", "-g"));
+            command = std::make_shared<OneOf>(runOptions, gatherOptions);
             options->addUnlock(command);
         }
 
@@ -41,7 +41,7 @@ TEST_F(MatcherFixture, Test2) {
 }
 
 TEST(Matcher, OptionRequired) {
-    auto opt = std::make_shared<AbstractNamedOption>("--opt1");
+    auto opt = std::make_shared<NamedOption>("--opt1");
     opt->setRequired(true);
 
     Parser parser(opt);

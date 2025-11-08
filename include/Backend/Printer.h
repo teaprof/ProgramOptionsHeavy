@@ -31,7 +31,7 @@ class Printer : public AbstractOptionVisitor {
             }
             prefix = old_prefix;
         }
-        void visit(std::shared_ptr<AbstractNamedOption> opt) override {
+        void visit(std::shared_ptr<NamedOption> opt) override {
             std::cout<<prefix<<opt->longName()<<" : "<<opt->shortName()<<std::endl;
             auto old_prefix{prefix};
             prefix = std::string("  ") + prefix;
@@ -41,14 +41,14 @@ class Printer : public AbstractOptionVisitor {
             }
             prefix = old_prefix;
         }
-        void visit(std::shared_ptr<AAbstractNamedOptionWithValue> opt) override {
-            visit(std::static_pointer_cast<AbstractNamedOption>(opt));
+        void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
+            visit(std::static_pointer_cast<NamedOption>(opt));
         }
-        void visit(std::shared_ptr<AbstractNamedCommand> opt) override {
+        void visit(std::shared_ptr<NamedCommand> opt) override {
             /// todo: implement this function instead of the following:
-            visit(std::static_pointer_cast<AbstractNamedOption>(opt));
+            visit(std::static_pointer_cast<NamedOption>(opt));
         }
-        void visit(std::shared_ptr<AbstractPositionalOption>) override {
+        void visit(std::shared_ptr<PositionalOption>) override {
             assert(false);
         }
         void visit(std::shared_ptr<OptionsGroup> opt) override {
@@ -61,8 +61,8 @@ class Printer : public AbstractOptionVisitor {
             }
             prefix = old_prefix;
         }
-        void visit(std::shared_ptr<Alternatives> opt) override {
-            std::cout<<"Alternatives"<<std::endl;
+        void visit(std::shared_ptr<OneOf> opt) override {
+            std::cout<<"OneOf"<<std::endl;
             auto old_prefix{prefix};
             prefix = std::string("  ") + prefix;
             for(auto it : opt->alternatives) {

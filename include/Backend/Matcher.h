@@ -199,7 +199,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
         void visit(std::shared_ptr<AbstractOption> opt) override {
             assert(false);
         }
-        void visit(std::shared_ptr<AbstractNamedOption> opt) override {
+        void visit(std::shared_ptr<NamedOption> opt) override {
             match_index = std::nullopt;
             unlocks.clear();
             bool match = false;
@@ -217,7 +217,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                     /* nothing to do*/;
             }            
         }
-        void visit(std::shared_ptr<AAbstractNamedOptionWithValue> opt) override {
+        void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
             match_index = std::nullopt;
             unlocks.clear();
             bool match = false;
@@ -242,7 +242,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 unlocks = opt->unlocks;
             };
         }
-        void visit(std::shared_ptr<AbstractNamedCommand> opt) override {
+        void visit(std::shared_ptr<NamedCommand> opt) override {
             match_index = std::nullopt;
             unlocks.clear();
             bool match = false;
@@ -262,7 +262,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 unlocks = opt->unlocks;
             };
         }
-        void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
+        void visit(std::shared_ptr<PositionalOption> opt) override {
             match_index = std::nullopt;
             unlocks.clear();
             switch(grammar_parser_.current_result.token_type) {
@@ -283,7 +283,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             match_index = 0;            
             unlocks = opt->unlocks;
         }
-        void visit(std::shared_ptr<Alternatives> opt) override {
+        void visit(std::shared_ptr<OneOf> opt) override {
             match_index = std::nullopt;
             unlocks.clear();
             for(size_t n = 0; n < opt->alternatives.size(); n++) {
@@ -340,14 +340,14 @@ class Parser {
             for(auto p : rest_options_)
             {
                 if(p->required()) {
-                    if(auto q = std::dynamic_pointer_cast<AbstractNamedOption>(p)) {
+                    if(auto q = std::dynamic_pointer_cast<NamedOption>(p)) {
                         std::stringstream str;
                         throw RequiredOptionIsNotSet(q);
                     }
-                    if(auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p)) {
+                    if(auto q = std::dynamic_pointer_cast<PositionalOption>(p)) {
                         throw TooFewPositionalOptions(); /// \todo: how many pos options are expected
                     }
-                    if(auto q = std::dynamic_pointer_cast<Alternatives>(p)) {
+                    if(auto q = std::dynamic_pointer_cast<OneOf>(p)) {
                         throw RequiredOptionIsNotSet(q);
                     }
                 }
@@ -355,14 +355,14 @@ class Parser {
             return true;
         }
     private:
-        std::string displayName(std::shared_ptr<AbstractNamedOption> opt) {
+        std::string displayName(std::shared_ptr<NamedOption> opt) {
             if(opt->longName())
                 return *opt->longName();
             return *opt->shortName();
         }
 
         void setValue(std::shared_ptr<AbstractOption> opt, const SingleOptionMatcher& matcher) { 
-            if(auto p = std::dynamic_pointer_cast<AAbstractNamedOptionWithValue>(opt)) {
+            if(auto p = std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(opt)) {
                 Value& v = values[opt];
                 if(p->multiplicity() == false && v.values.size() != 0) {
                     throw OptionShouldBeSpecifiedOnlyOnce(p);

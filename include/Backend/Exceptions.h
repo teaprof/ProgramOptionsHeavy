@@ -17,7 +17,7 @@ class BaseOptionError : public std::runtime_error {
             return str.str();
         }
         static std::string displayName(std::shared_ptr<AbstractOption> opt) {
-            if(auto p = std::dynamic_pointer_cast<AbstractNamedCommand>(opt)) {
+            if(auto p = std::dynamic_pointer_cast<NamedCommand>(opt)) {
                 return p->displayName();
             }
             return "";            

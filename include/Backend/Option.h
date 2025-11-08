@@ -10,11 +10,11 @@
 #include <functional>
 
 class AbstractOption;
-class AbstractNamedOption;
-class AAbstractNamedOptionWithValue; // TODO rename
-class AbstractNamedCommand;
-class AbstractPositionalOption;
-class Alternatives;
+class NamedOption;
+class AbstractNamedOptionWithValue; // TODO rename
+class NamedCommand;
+class PositionalOption;
+class OneOf;
 class OptionsGroup;
 
 
@@ -22,12 +22,12 @@ class AbstractOptionVisitor {
     public:
         virtual ~AbstractOptionVisitor() {};
         virtual void visit(std::shared_ptr<AbstractOption>) = 0;
-        virtual void visit(std::shared_ptr<AbstractNamedOption>) = 0;
-        virtual void visit(std::shared_ptr<AAbstractNamedOptionWithValue>) = 0;
-        virtual void visit(std::shared_ptr<AbstractNamedCommand>) = 0;
-        virtual void visit(std::shared_ptr<AbstractPositionalOption>) = 0;
+        virtual void visit(std::shared_ptr<NamedOption>) = 0;
+        virtual void visit(std::shared_ptr<AbstractNamedOptionWithValue>) = 0;
+        virtual void visit(std::shared_ptr<NamedCommand>) = 0;
+        virtual void visit(std::shared_ptr<PositionalOption>) = 0;
         virtual void visit(std::shared_ptr<OptionsGroup>) = 0;
-        virtual void visit(std::shared_ptr<Alternatives>) = 0;
+        virtual void visit(std::shared_ptr<OneOf>) = 0;
 };
 
 class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
@@ -48,11 +48,11 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         bool required_{false};
 };
 
-class AbstractNamedOption : public AbstractOption {
+class NamedOption : public AbstractOption {
     public:
-        AbstractNamedOption() {}
-        AbstractNamedOption(const std::string& undecorated_long_name);
-        AbstractNamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name);        
+        NamedOption() {}
+        NamedOption(const std::string& undecorated_long_name);
+        NamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name);        
 
         const std::optional<std::string>& longName() const;
         const std::optional<std::string>& shortName() const;
@@ -69,11 +69,11 @@ class AbstractNamedOption : public AbstractOption {
         bool multiplicity_{false};
 };
 
-class AAbstractNamedOptionWithValue : public AbstractNamedOption {
+class AbstractNamedOptionWithValue : public NamedOption {
     public:
-        AAbstractNamedOptionWithValue() {}
-        AAbstractNamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOption(undecorated_long_name) {};
-        AAbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AbstractNamedOption(undecorated_long_name, undecorated_short_name) {};   
+        AbstractNamedOptionWithValue() {}
+        AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : NamedOption(undecorated_long_name) {};
+        AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): NamedOption(undecorated_long_name, undecorated_short_name) {};   
 
         bool valueRequired() {
             return true;
@@ -84,11 +84,11 @@ class AAbstractNamedOptionWithValue : public AbstractNamedOption {
 };
 
 template<class T>
-class AbstractNamedOptionWithValue : public AAbstractNamedOptionWithValue {
+class NamedOptionWithValue : public AbstractNamedOptionWithValue {
     public:
-        AbstractNamedOptionWithValue() {}
-        AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : AAbstractNamedOptionWithValue(undecorated_long_name) {};
-        AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AAbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name) {};   
+        NamedOptionWithValue() {}
+        NamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOptionWithValue(undecorated_long_name) {};
+        NamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name) {};   
         
         void accept(AbstractOptionVisitor& visitor) override;
 
@@ -103,14 +103,14 @@ class AbstractNamedOptionWithValue : public AAbstractNamedOptionWithValue {
 };
 
 
-class AbstractNamedCommand : public AbstractNamedOption {
+class NamedCommand : public NamedOption {
     /// \todo: this should be a separate class without support of values and short names
     public:          
-        AbstractNamedCommand(const std::string long_name) : AbstractNamedOption(long_name) {};
+        NamedCommand(const std::string long_name) : NamedOption(long_name) {};
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
-class AbstractPositionalOption : public AbstractOption {
+class PositionalOption : public AbstractOption {
     public:
         void accept(AbstractOptionVisitor& visitor) override;
 };
@@ -120,12 +120,12 @@ class OptionsGroup : public AbstractOption {
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
-class Alternatives : public AbstractOption { // \todo: rename to OneOfOptions
+class OneOf : public AbstractOption {
     public:
         std::vector<std::shared_ptr<AbstractOption>> alternatives;
-        Alternatives() {}
-        Alternatives(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2);
-        Alternatives(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2, std::shared_ptr<AbstractOption> alt3);
+        OneOf() {}
+        OneOf(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2);
+        OneOf(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2, std::shared_ptr<AbstractOption> alt3);
 
         std::shared_ptr<AbstractOption> addAlternative(std::shared_ptr<AbstractOption> opt);
         void accept(AbstractOptionVisitor& visitor) override;
@@ -144,14 +144,14 @@ inline void AbstractOption::setRequired(bool val) {
     required_ = val;
 }
 
-inline AbstractNamedOption::AbstractNamedOption(const std::string& undecorated_long_name) : undecorated_long_name_{undecorated_long_name} {
+inline NamedOption::NamedOption(const std::string& undecorated_long_name) : undecorated_long_name_{undecorated_long_name} {
     sanitizeNames();
 }
-inline AbstractNamedOption::AbstractNamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name) : AbstractOption(false), undecorated_long_name_{undecorated_long_name}, undecorated_short_name_{undecorated_short_name} {
+inline NamedOption::NamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name) : AbstractOption(false), undecorated_long_name_{undecorated_long_name}, undecorated_short_name_{undecorated_short_name} {
     sanitizeNames();
 }
 
-inline void AbstractNamedOption::sanitizeNames() {
+inline void NamedOption::sanitizeNames() {
     if(undecorated_long_name_.has_value()) {
         if(undecorated_long_name_->starts_with("--")) {
             undecorated_long_name_->erase(0, 2);
@@ -167,39 +167,39 @@ inline void AbstractNamedOption::sanitizeNames() {
 }
 
 
-inline void AbstractNamedOption::setMultiplicity(bool multiplicity) {
+inline void NamedOption::setMultiplicity(bool multiplicity) {
     multiplicity_ = multiplicity;
 }
 
-inline bool AbstractNamedOption::multiplicity() const {
+inline bool NamedOption::multiplicity() const {
     return multiplicity_;
 }
 
-inline const std::optional<std::string>& AbstractNamedOption::longName() const {
+inline const std::optional<std::string>& NamedOption::longName() const {
     return undecorated_long_name_;
 }
-inline const std::optional<std::string>& AbstractNamedOption::shortName() const {
+inline const std::optional<std::string>& NamedOption::shortName() const {
     return undecorated_short_name_;
 }
-inline const std::string AbstractNamedOption::displayName() const {
+inline const std::string NamedOption::displayName() const {
     if(undecorated_long_name_.has_value())
         return std::string("--") + undecorated_long_name_.value();
     assert(undecorated_short_name_.has_value());
     return std::string("-") + undecorated_long_name_.value();
 }
 
-inline Alternatives::Alternatives(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2) {
+inline OneOf::OneOf(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2) {
     alternatives.push_back(alt1);
     alternatives.push_back(alt2);
 }
 
-inline Alternatives::Alternatives(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2, std::shared_ptr<AbstractOption> alt3) {
+inline OneOf::OneOf(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2, std::shared_ptr<AbstractOption> alt3) {
     alternatives.push_back(alt1);
     alternatives.push_back(alt2);
     alternatives.push_back(alt3);
 }
 
-inline std::shared_ptr<AbstractOption> Alternatives::addAlternative(std::shared_ptr<AbstractOption> opt) {
+inline std::shared_ptr<AbstractOption> OneOf::addAlternative(std::shared_ptr<AbstractOption> opt) {
     alternatives.push_back(opt);
     return shared_from_this();
 }
@@ -208,21 +208,21 @@ inline std::shared_ptr<AbstractOption> Alternatives::addAlternative(std::shared_
 inline void AbstractOption::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(shared_from_this());
 }
-inline void AbstractNamedOption::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<AbstractNamedOption>(shared_from_this()));
+inline void NamedOption::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<NamedOption>(shared_from_this()));
 }
-inline void AbstractNamedCommand::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<AbstractNamedCommand>(shared_from_this()));
+inline void NamedCommand::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<NamedCommand>(shared_from_this()));
 }
-inline void AbstractPositionalOption::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<AbstractPositionalOption>(shared_from_this()));
+inline void PositionalOption::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<PositionalOption>(shared_from_this()));
 }
 inline void OptionsGroup::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<OptionsGroup>(shared_from_this()));
 }
 
-inline void Alternatives::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<Alternatives>(shared_from_this()));
+inline void OneOf::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<OneOf>(shared_from_this()));
 }
 
 #endif

@@ -29,13 +29,13 @@ alt2.addCompatible(repack)
 
 
 int main(int argc, char* argv[]) {
-    auto helpOption = std::make_shared<AbstractNamedOption>("--help", "-h");
-    auto hypercubeOptions = std::make_shared<Alternatives>(
+    auto helpOption = std::make_shared<NamedOption>("--help", "-h");
+    auto hypercubeOptions = std::make_shared<OneOf>(
         helpOption,
-        std::make_shared<AbstractNamedOption>("run")->
-            addUnlock(std::make_shared<AbstractNamedOption>("--dim", "-d"))->
-            addUnlock(std::make_shared<AbstractNamedOption>("--mIntervalsPerDim", "-m")),
-        std::make_shared<AbstractNamedOption>("gather")
+        std::make_shared<NamedOption>("run")->
+            addUnlock(std::make_shared<NamedOption>("--dim", "-d"))->
+            addUnlock(std::make_shared<NamedOption>("--mIntervalsPerDim", "-m")),
+        std::make_shared<NamedOption>("gather")
     );
 
     Printer printer;
