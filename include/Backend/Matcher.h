@@ -115,6 +115,15 @@ class ArgGrammarParser {
         ArgGrammarParser(T ... arguments) : args_{arguments...} {
         }
 
+        ArgGrammarParser(const char* str) {
+            // split str into separate words
+            std::stringstream ss(str);
+            std::string word;
+            while (ss >> word) {
+                args_.push_back(word);
+            }
+        }
+
         ArgGrammarParser(const std::string& str) {
             // split str into separate words
             std::stringstream ss(str);
@@ -279,11 +288,13 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
         }
 };
 
+struct Value {
+    std::vector<std::string> values;
+    bool is_default;
+};
+
 class Parser {
     public:
-        struct Value {
-    
-        };
 
         std::map<std::shared_ptr<AbstractOption>, Value> values;
         std::shared_ptr<AbstractOption> options_;
@@ -305,10 +316,7 @@ class Parser {
                 for(auto it = rest_options_.begin(); it != rest_options_.end(); it++) {
                     (*it)->accept(matcher);
                     if(matcher.match_index.has_value()) {
-                        if(values.contains(*it)) {
-                            assert(false); // duplicate parameter
-                        }
-                        values.insert(std::make_pair(*it, Value{}));
+                        setValue(*it, matcher);
                         rest_options_.erase(it);
                         rest_options_.insert(rest_options_.end(), matcher.unlocks.begin(), matcher.unlocks.end());
                         option_matched = true;
@@ -318,7 +326,6 @@ class Parser {
                 // unknown option or duplicate option
                 if(!option_matched)
                     return false;
-                //++args;
             }
             // check that all required options are used
             for(auto p : rest_options_)
@@ -331,10 +338,10 @@ class Parser {
                     }
                     if(auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p)) {
                         //throw std::runtime_error("At least "<<num<<" positional options are required");
-                        throw std::runtime_error("Too few positional options are specified"); /// \todo: correct message
+                        throw std::runtime_error("Too few positional options are specified"); /// todo: correct message 
                     }
                     if(auto q = std::dynamic_pointer_cast<Alternatives>(p)) {
-                        throw std::runtime_error("Alternative is not specifoed"); /// \todo: correct message
+                        throw std::runtime_error("Alternative is not specifoed"); /// todo: correct message
                     }
                 }
             }
@@ -345,6 +352,25 @@ class Parser {
             if(opt->longName())
                 return *opt->longName();
             return *opt->shortName();
+        }
+
+        void setValue(std::shared_ptr<AbstractOption> opt, const SingleOptionMatcher& matcher) { 
+            if(auto p = std::dynamic_pointer_cast<AbstractNamedOption>(opt)) {
+                Value& v = values[opt];
+                if(p->multiplicity() == false && v.values.size() != 0) {
+                    throw std::runtime_error("Option should be specified only once");
+                }
+                if(p->valueRequired()) {
+                    v.values.push_back(matcher.value);
+                }
+                v.is_default = false;
+                p->setValue(matcher.value);
+            } else {
+                if(values.contains(opt)) {
+                    throw std::runtime_error("Option should be specified only once");
+                }
+                values.insert(std::make_pair(opt, Value()));
+            }
         }
 };
 

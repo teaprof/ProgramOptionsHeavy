@@ -5,6 +5,8 @@
 #include <vector>
 #include <optional>
 #include <cassert>
+#include <variant>
+#include <functional>
 
 class AbstractOption;
 class AbstractNamedOption;
@@ -42,30 +44,55 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         bool required_{false};
 };
 
+
+template<class ... T>
+class TValueStorage {
+    public:
+
+    template<class Arg>
+    TValueStorage(Arg& v) : ref{v} {}
+
+    void setValue(const std::string& str) {
+        assert(std::holds_alternative<std::reference_wrapper<std::string>>(ref));
+        auto r = std::get<std::reference_wrapper<std::string>>(ref);        
+        r.get() = str;
+    }
+    
+    std::variant<std::reference_wrapper<T>...> ref;
+};
+
+using ValueStorage = TValueStorage<int, double, std::string, char>;
+
 class AbstractNamedOption : public AbstractOption {
     public:
         AbstractNamedOption() {}
-        AbstractNamedOption(const std::string& undecorated_long_name) : undecorated_long_name_{undecorated_long_name} {
-            if(undecorated_long_name_->starts_with("--")) {
-                undecorated_long_name_->erase(0, 2);
-            };
-            assert(undecorated_long_name_->size() > 0 && undecorated_long_name_.value()[0] != '-');
-        }
-        AbstractNamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name) : AbstractOption(false), undecorated_long_name_{undecorated_long_name}, undecorated_short_name_{undecorated_short_name} {
-            if(undecorated_long_name_->starts_with("--")) {
-                undecorated_long_name_->erase(0, 2);
-            };
-            assert(undecorated_long_name_->size() > 0 && undecorated_long_name_.value()[0] != '-');
-            if(undecorated_short_name_->starts_with("-")) {
-                undecorated_short_name_->erase(0, 1);
-            };
-            assert(undecorated_short_name_->size() > 0 && undecorated_short_name_.value()[0] != '-');
-        }
+        AbstractNamedOption(const std::string& undecorated_long_name);
+        AbstractNamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name);
 
         void setValueRegex(const std::string& regex);
         const std::optional<std::string>& valueRegex() const;
         void setValueRequired(bool value_required);
-        bool valueRequired() const;        
+        bool valueRequired() const;
+        
+/*        template<class T>
+        void tie(T& value) {
+        // TODO use concepts to make error messages cleaner
+            storage = value;
+        }*/
+
+        void tie(std::string& value) {
+            storage_ = ValueStorage(value);
+        }
+
+        void setValue(const std::string& str) {
+            if(storage_.has_value()) {
+                storage_->setValue(str);
+            }
+        }
+
+        
+        void setMultiplicity(bool multiplicity);
+        bool multiplicity() const;
 
         void setDefaultValue(const std::string& value);
         const std::optional<std::string>& defaultValue() const;
@@ -75,11 +102,14 @@ class AbstractNamedOption : public AbstractOption {
 
         void accept(AbstractOptionVisitor& visitor) override;
     private:
+        void sanitizeNames();
         std::optional<std::string> undecorated_long_name_; // long name without leading "--"
         std::optional<std::string> undecorated_short_name_; // short name without leading "-"
         std::optional<std::string> value_regex_;
         std::optional<std::string> default_value_;
         bool value_required_{false};
+        bool multiplicity_{false};
+        std::optional<ValueStorage> storage_;
 };
 
 class AbstractNamedCommand : public AbstractNamedOption {
@@ -123,6 +153,29 @@ inline void AbstractOption::setRequired(bool val) {
     required_ = val;
 }
 
+inline AbstractNamedOption::AbstractNamedOption(const std::string& undecorated_long_name) : undecorated_long_name_{undecorated_long_name} {
+    sanitizeNames();
+}
+inline AbstractNamedOption::AbstractNamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name) : AbstractOption(false), undecorated_long_name_{undecorated_long_name}, undecorated_short_name_{undecorated_short_name} {
+    sanitizeNames();
+}
+
+inline void AbstractNamedOption::sanitizeNames() {
+    if(undecorated_long_name_.has_value()) {
+        if(undecorated_long_name_->starts_with("--")) {
+            undecorated_long_name_->erase(0, 2);
+        };
+        assert(undecorated_long_name_->size() > 0 && undecorated_long_name_.value()[0] != '-');
+    };
+    if(undecorated_short_name_.has_value()) {
+        if(undecorated_short_name_->starts_with("-")) {
+            undecorated_short_name_->erase(0, 1);
+        };
+        assert(undecorated_short_name_->size() > 0 && undecorated_short_name_.value()[0] != '-');
+    };
+}
+
+
 inline void AbstractNamedOption::setValueRegex(const std::string& regex) {
     value_regex_ = regex;
     value_required_ = true;
@@ -138,6 +191,14 @@ inline bool AbstractNamedOption::valueRequired() const {
 
 inline void AbstractNamedOption::setValueRequired(bool value_required) {
     value_required_ = value_required;
+}
+
+inline void AbstractNamedOption::setMultiplicity(bool multiplicity) {
+    multiplicity_ = multiplicity;
+}
+
+inline bool AbstractNamedOption::multiplicity() const {
+    return multiplicity_;
 }
 
 inline void AbstractNamedOption::setDefaultValue(const std::string& value) {

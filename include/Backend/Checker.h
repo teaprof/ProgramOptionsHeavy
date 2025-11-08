@@ -4,41 +4,58 @@
 #include "Option.h"
 #include <sstream>
 #include <stdexcept>
+#include <set>
 
 class Checker : public AbstractOptionVisitor {
-public:
+public:    
     std::vector<std::shared_ptr<AbstractOption>> unlocks;
 
     void visit(std::shared_ptr<AbstractOption> opt) override {
-        throw std::runtime_error("AbstractOption should not be used directly");
+        for(auto u : opt->unlocks) {
+            u->accept(*this);
+        }        
     }
     void visit(std::shared_ptr<AbstractNamedOption> opt) override {
+        addVisited(opt);
         checkCompatibility(opt);
         unlocks.push_back(opt);
-        //visit(std::static_pointer_cast<AbstractOption>(opt));
+        visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<AbstractNamedCommand> opt) override {
+        addVisited(opt);
         checkCompatibility(opt);
         unlocks.push_back(opt);
-        //visit(std::static_pointer_cast<AbstractOption>(opt));
+        visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
+        addVisited(opt);
         unlocks.push_back(opt);        
-        //visit(std::static_pointer_cast<AbstractOption>(opt));
+        visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<Compatibles> opt) override {
-        for(auto unlock: opt->unlocks) {
-            unlock->accept(*this);
-        }
+        addVisited(opt);
+        visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<Alternatives> opt) override {
         size_t cur_size = unlocks.size();
+        auto visited_old = visited;
         for(auto alt : opt->alternatives) {
             alt->accept(*this);
             unlocks.erase(unlocks.begin() + cur_size, unlocks.end());
+            visited = visited_old;
         }
     }
 private:    
+    std::set<std::shared_ptr<AbstractOption>> visited;
+
+    void addVisited(std::shared_ptr<AbstractOption> opt) {
+        if(visited.contains(opt)) {   
+            /// returned to option opt         
+            throw std::runtime_error("Cycle detected, check your options tree");
+        }
+        visited.insert(opt);
+    }
+
     void checkCompatibility(std::shared_ptr<AbstractNamedOption> opt) {
         for(auto unlock: unlocks) 
             if(checkCompatibility(opt, unlock) == false) {

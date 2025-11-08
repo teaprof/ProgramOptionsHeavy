@@ -75,3 +75,28 @@ TEST(CheckerTest, Complex) {
     Checker checker;
     EXPECT_NO_THROW(hypercubeOptions->accept(checker));
 }
+
+
+TEST(CheckerTest, RepeatedOption) {
+    auto helpOption = std::make_shared<AbstractNamedOption>("--help", "-h");
+    auto hypercubeOptions = std::make_shared<Alternatives>(
+        helpOption,
+        std::make_shared<AbstractNamedCommand>("run")->
+            addUnlock(std::make_shared<AbstractNamedOption>("--dim", "-d"))->
+            addUnlock(std::make_shared<AbstractNamedOption>("--mIntervalsPerDim", "-m"))->
+            addUnlock(helpOption)->
+            addUnlock(helpOption),
+        std::make_shared<AbstractNamedCommand>("gather")->addUnlock(helpOption)
+    );
+    Checker checker;
+    EXPECT_THROW(hypercubeOptions->accept(checker), std::runtime_error);
+}
+
+TEST(CheckerTest, Cycle) {
+    auto option1 = std::make_shared<AbstractNamedOption>("--opt1");
+    auto option2 = std::make_shared<AbstractNamedOption>("--opt2");
+    option1->addUnlock(option2);
+    option2->addUnlock(option1);
+    Checker checker;
+    EXPECT_THROW(option1->accept(checker), std::runtime_error);
+}

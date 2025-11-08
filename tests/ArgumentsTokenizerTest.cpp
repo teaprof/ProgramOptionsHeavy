@@ -1,15 +1,7 @@
 #include <Backend/Matcher.h>
 #include <gtest/gtest.h>
 
-#include <boost/spirit/include/qi.hpp>
-
-TEST(ArgumentsParser, Test1) {
-    auto minus = boost::spirit::qi::char_('-');
-    auto short_options_group = minus >> boost::spirit::qi::alnum;
-    auto long_option = boost::spirit::qi::repeat(2)[minus]  >> boost::spirit::qi::alnum;
-}
-
-TEST(ArgumentsParser, TestRegexps) {
+TEST(ArgumentsLexer, SimpleTests) {
     auto res = ArgLexer::lex("--dim");
     EXPECT_EQ(res.type, ArgLexer::long_option);
     EXPECT_EQ(res.long_option_name, "dim");
@@ -27,7 +19,7 @@ TEST(ArgumentsParser, TestRegexps) {
     EXPECT_EQ(res.value, "--dim -a");
 }
 
-TEST(ArgumentsParser, TestTokens) {
+TEST(ArgumentsLexer, ComplexTests) {
     auto res = ArgLexer::lex("--dim");
     EXPECT_EQ(res.type, ArgLexer::long_option);
     EXPECT_EQ(res.long_option_name, "dim");
@@ -46,3 +38,4 @@ TEST(ArgumentsParser, TestTokens) {
     EXPECT_EQ(res.short_option_names, "xyz");
     EXPECT_EQ(res.value, "4");
 }
+
