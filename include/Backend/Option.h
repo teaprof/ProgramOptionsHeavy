@@ -39,7 +39,7 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         virtual void accept(AbstractOptionVisitor& visitor);
 
         bool required();
-        void setRequired(bool val);
+        void setRequired(bool val);        
     private:
         bool required_{false};
 };
@@ -67,7 +67,7 @@ class AbstractNamedOption : public AbstractOption {
     public:
         AbstractNamedOption() {}
         AbstractNamedOption(const std::string& undecorated_long_name);
-        AbstractNamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name);
+        AbstractNamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name);        
 
         void setValueRegex(const std::string& regex);
         const std::optional<std::string>& valueRegex() const;
@@ -99,6 +99,7 @@ class AbstractNamedOption : public AbstractOption {
 
         const std::optional<std::string>& longName() const;
         const std::optional<std::string>& shortName() const;
+        const std::string displayName() const;
 
         void accept(AbstractOptionVisitor& visitor) override;
     private:
@@ -214,6 +215,12 @@ inline const std::optional<std::string>& AbstractNamedOption::longName() const {
 }
 inline const std::optional<std::string>& AbstractNamedOption::shortName() const {
     return undecorated_short_name_;
+}
+inline const std::string AbstractNamedOption::displayName() const {
+    if(undecorated_long_name_.has_value())
+        return std::string("--") + undecorated_long_name_.value();
+    assert(undecorated_short_name_.has_value());
+    return std::string("-") + undecorated_long_name_.value();
 }
 
 inline Alternatives::Alternatives(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2) {

@@ -2,6 +2,7 @@
 #define _BACKEND_MATCHER_H
 
 #include "Option.h"
+#include "Exceptions.h"
 
 #include <cassert>
 #include <map>

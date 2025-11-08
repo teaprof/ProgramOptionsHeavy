@@ -39,3 +39,12 @@ TEST_F(MatcherFixture, Test2) {
     EXPECT_TRUE(parser.parse({"run", "--common"}));
     EXPECT_TRUE(parser.parse({"--common", "run", "-d"}));
 }
+
+TEST(Matcher, OptionRequired) {
+    auto opt = std::make_shared<AbstractNamedOption>("--opt1");
+    opt->setRequired(true);
+
+    Parser parser(opt);
+    EXPECT_THROW(parser.parse({}), std::runtime_error);
+    EXPECT_TRUE(parser.parse({"--opt1"}));
+}
