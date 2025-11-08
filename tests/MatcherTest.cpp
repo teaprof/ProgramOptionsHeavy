@@ -32,7 +32,7 @@ TEST_F(MatcherFixture, Test1) {
 TEST_F(MatcherFixture, Test2) {
     Parser parser(options);
     command->setRequired(true);
-    EXPECT_THROW(parser.parse({}), std::runtime_error);
+    EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"run"}));
     EXPECT_TRUE(parser.parse({"gather", "-g"}));
     EXPECT_FALSE(parser.parse({"run", "gather", "-g"}));
@@ -45,6 +45,6 @@ TEST(Matcher, OptionRequired) {
     opt->setRequired(true);
 
     Parser parser(opt);
-    EXPECT_THROW(parser.parse({}), std::runtime_error);
+    EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"--opt1"}));
 }

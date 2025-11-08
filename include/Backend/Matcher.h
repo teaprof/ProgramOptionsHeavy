@@ -52,30 +52,22 @@ class ArgLexer {
             std::regex short_options_eq_value_ex(short_options_eq_value_pattern);
             Result res;
             if(std::regex_match(arg, match, long_option_ex)) {                
-                for(size_t n = 0; n < match.size(); n++)                
-                    std::cout<<n<<" : "<<match[n]<<std::endl;
                 assert(match.size() == 2);
                 res.long_option_name = match[1];
                 res.type = long_option;
             } else 
             if(std::regex_match(arg, match, long_option_eq_value_ex)) {
-                for(size_t n = 0; n < match.size(); n++)                
-                    std::cout<<n<<" : "<<match[n]<<std::endl;
                 assert(match.size() == 3);
                 res.long_option_name = match[1];
                 res.value = match[2];
                 res.type = long_option_eq_value;
             } else 
             if(std::regex_match(arg, match, short_options_ex)) {
-                for(size_t n = 0; n < match.size(); n++)                
-                    std::cout<<n<<" : "<<match[n]<<std::endl;
                 assert(match.size() == 2);
                 res.short_option_names = match[1];
                 res.type = short_options;
             } else 
             if(std::regex_match(arg, match, short_options_eq_value_ex)) {
-                for(size_t n = 0; n < match.size(); n++)                
-                    std::cout<<n<<" : "<<match[n]<<std::endl;
                 assert(match.size() == 3);
                 res.short_option_names = match[1];
                 res.value = match[2];
@@ -177,12 +169,10 @@ class ArgGrammarParser {
             return current_result;
         }
 
-        std::string getValue() {
+        std::string getValue(std::shared_ptr<AbstractOption> opt) {
             switch(current_result.token_type) {
                 case TokenTypes::short_option_without_value: {
-                    std::stringstream str;
-                    str<<"Option -"<<current_result.short_option_name<<" requires a value";
-                    throw std::runtime_error(str.str());
+                    throw ExpectedValue(opt);
                 }                    
                 case TokenTypes::long_option:
                 case TokenTypes::short_option:
@@ -229,7 +219,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             if(match) {
                 match_index = 0;
                 if(opt->valueRequired()) {
-                    value = grammar_parser_.getValue();
+                    value = grammar_parser_.getValue(opt);
                 }
                 unlocks = opt->unlocks;
             };
@@ -268,7 +258,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                     /* nothing to do */;
             }
             match_index = 0;
-            value = grammar_parser_.getValue();
+            value = grammar_parser_.getValue(opt);
             unlocks = opt->unlocks;
         }
         void visit(std::shared_ptr<Compatibles> opt) override {
@@ -334,15 +324,13 @@ class Parser {
                 if(p->required()) {
                     if(auto q = std::dynamic_pointer_cast<AbstractNamedOption>(p)) {
                         std::stringstream str;
-                        str << "Option " << displayName(q) << " is required";
-                        throw std::runtime_error(str.str());
+                        throw RequiredOptionIsNotSet(q);
                     }
                     if(auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p)) {
-                        //throw std::runtime_error("At least "<<num<<" positional options are required");
-                        throw std::runtime_error("Too few positional options are specified"); /// todo: correct message 
+                        throw TooFewPositionalOptions(); /// \todo: how many pos options are expected
                     }
                     if(auto q = std::dynamic_pointer_cast<Alternatives>(p)) {
-                        throw std::runtime_error("Alternative is not specifoed"); /// todo: correct message
+                        throw RequiredOptionIsNotSet(q);
                     }
                 }
             }
@@ -359,7 +347,7 @@ class Parser {
             if(auto p = std::dynamic_pointer_cast<AbstractNamedOption>(opt)) {
                 Value& v = values[opt];
                 if(p->multiplicity() == false && v.values.size() != 0) {
-                    throw std::runtime_error("Option should be specified only once");
+                    throw OptionShouldBeSpecifiedOnlyOnce(p);
                 }
                 if(p->valueRequired()) {
                     v.values.push_back(matcher.value);
@@ -368,7 +356,7 @@ class Parser {
                 p->setValue(matcher.value);
             } else {
                 if(values.contains(opt)) {
-                    throw std::runtime_error("Option should be specified only once");
+                    throw OptionShouldBeSpecifiedOnlyOnce(p);
                 }
                 values.insert(std::make_pair(opt, Value()));
             }

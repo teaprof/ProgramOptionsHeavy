@@ -15,7 +15,7 @@ TEST(CheckerTest, Simple2) {
     EXPECT_NO_THROW(option->accept(checker));
 
     option->addUnlock(std::make_shared<AbstractNamedOption>("--opt2"));
-    EXPECT_THROW(option->accept(checker), std::runtime_error);
+    EXPECT_THROW(option->accept(checker), DuplicateOption);
 }
 
 TEST(CheckerTest, SimplePositionalOptions) {
@@ -58,7 +58,7 @@ TEST(CheckerTest, Alternatives3) {
             )
         );
     Checker checker;
-    EXPECT_THROW(option->accept(checker), std::runtime_error);
+    EXPECT_THROW(option->accept(checker), DuplicateOption);
 }
 
 
@@ -89,7 +89,7 @@ TEST(CheckerTest, RepeatedOption) {
         std::make_shared<AbstractNamedCommand>("gather")->addUnlock(helpOption)
     );
     Checker checker;
-    EXPECT_THROW(hypercubeOptions->accept(checker), std::runtime_error);
+    EXPECT_THROW(hypercubeOptions->accept(checker), DuplicateOption);
 }
 
 TEST(CheckerTest, Cycle) {
@@ -98,5 +98,5 @@ TEST(CheckerTest, Cycle) {
     option1->addUnlock(option2);
     option2->addUnlock(option1);
     Checker checker;
-    EXPECT_THROW(option1->accept(checker), std::runtime_error);
+    EXPECT_THROW(option1->accept(checker), DuplicateOption);
 }

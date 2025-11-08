@@ -2,6 +2,7 @@
 #define __BACKEND_CHECKER_H__
 
 #include "Option.h"
+#include "Exceptions.h"
 #include <sstream>
 #include <stdexcept>
 #include <set>
@@ -51,7 +52,7 @@ private:
     void addVisited(std::shared_ptr<AbstractOption> opt) {
         if(visited.contains(opt)) {   
             /// returned to option opt         
-            throw std::runtime_error("Cycle detected, check your options tree");
+            throw DuplicateOption(opt);
         }
         visited.insert(opt);
     }
@@ -60,8 +61,7 @@ private:
         for(auto unlock: unlocks) 
             if(checkCompatibility(opt, unlock) == false) {
                 std::stringstream str;
-                str<<"Duplicate option found!"; //todo: "<<opt.asstring()"
-                throw std::runtime_error(str.str());
+                throw DuplicateOption(opt);
             }
     }
     bool checkCompatibility(std::shared_ptr<AbstractNamedOption> first, std::shared_ptr<AbstractOption> second) {

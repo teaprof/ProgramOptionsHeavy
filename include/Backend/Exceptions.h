@@ -6,14 +6,14 @@
 #include <sstream>
 
 
-class BasicOptionError : public std::runtime_error {
+class BaseOptionError : public std::runtime_error {
     public:
-        BasicOptionError(std::shared_ptr<AbstractOption> opt) : std::runtime_error(BasicOptionError::description(opt)), opt_{opt} {
+        BaseOptionError(std::shared_ptr<AbstractOption> opt) : std::runtime_error(BaseOptionError::description(opt)), opt_{opt} {
         }
         static std::string description(std::shared_ptr<AbstractOption> opt) {
             std::stringstream str;
             str<<"Option error: ";
-            str<<BasicOptionError::displayName(opt);
+            str<<BaseOptionError::displayName(opt);
             return str.str();
         }
         static std::string displayName(std::shared_ptr<AbstractOption> opt) {
@@ -30,16 +30,57 @@ class BasicOptionError : public std::runtime_error {
         std::shared_ptr<AbstractOption> opt_;
 };
 
-/*
-OptionIsRequired
-UnknownOption
-ExpectedOption
-ExpectedValue
-ValueTypeIsIncorrect
-ValueDomainError
-OptionShouldBeSpecifiedOnlyOnce
+class ExpectedOption : public std::runtime_error {
+    public:
+        ExpectedOption() : std::runtime_error("Expected option") {}
+};
 
-CycleIsFound logic_error
-*/
+class UnknownOption : public BaseOptionError {
+    public:
+        UnknownOption(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
+};
+
+class RequiredOptionIsNotSet : public BaseOptionError {
+     public:
+        RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
+};
+
+class ExpectedValue  : public BaseOptionError {
+     public:
+        ExpectedValue(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
+};
+
+class ValueTypeIsIncorrect  : public BaseOptionError {
+     public:
+        ValueTypeIsIncorrect(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
+};
+
+
+class ValueDomainError  : public BaseOptionError {
+     public:
+        ValueDomainError(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
+};
+
+
+class OptionShouldBeSpecifiedOnlyOnce  : public BaseOptionError {
+     public:
+        OptionShouldBeSpecifiedOnlyOnce(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
+};
+
+/// TODO unused class, remove
+class CycleIsFound : public std::logic_error { 
+    public:
+        CycleIsFound(std::shared_ptr<AbstractOption> opt) : std::logic_error("option should be specified only once") {}
+};
+
+class DuplicateOption : public std::logic_error {
+    public:
+        DuplicateOption(std::shared_ptr<AbstractOption> opt) : std::logic_error("option should be specified only once") {}
+};
+
+class TooFewPositionalOptions : public std::runtime_error {
+    public:
+        TooFewPositionalOptions() : std::runtime_error("too few positional options are specified") {}
+};
 
 #endif
