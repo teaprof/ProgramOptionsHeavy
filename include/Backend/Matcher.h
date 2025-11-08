@@ -364,7 +364,7 @@ class Parser {
         void setValue(std::shared_ptr<AbstractOption> opt, const SingleOptionMatcher& matcher) { 
             if(auto p = std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(opt)) {
                 Value& v = values[opt];
-                if(p->multiplicity() == false && v.values.size() != 0) {
+                if(v.values.size() >= p->maxOccurrence()) {
                     throw OptionShouldBeSpecifiedOnlyOnce(p);
                 }
                 if(p->valueRequired()) {

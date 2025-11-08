@@ -8,6 +8,7 @@
 #include <cassert>
 #include <variant>
 #include <functional>
+#include <limits>
 
 class AbstractOption;
 class NamedOption;
@@ -40,10 +41,11 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         AbstractOption(bool required) : required_{required} {}
         std::vector<std::shared_ptr<AbstractOption>> unlocks;
         std::shared_ptr<AbstractOption> addUnlock(std::shared_ptr<AbstractOption> opt);
-        virtual void accept(AbstractOptionVisitor& visitor);
 
         bool required();
-        void setRequired(bool val);        
+        void setRequired(bool val);
+
+        virtual void accept(AbstractOptionVisitor& visitor);
     private:
         bool required_{false};
 };
@@ -58,22 +60,27 @@ class NamedOption : public AbstractOption {
         const std::optional<std::string>& shortName() const;
         const std::string displayName() const;
 
-        void setMultiplicity(bool multiplicity); // TODO: rename to setMaxOccuranceCount which can be inf
-        bool multiplicity() const;
+        void setMaxOccurreneCount(size_t max_count = std::numeric_limits<size_t>::max());
+        size_t maxOccurrence() const;
 
         void accept(AbstractOptionVisitor& visitor) override;
     private:
         void sanitizeNames();
         std::optional<std::string> undecorated_long_name_; // long name without leading "--"
         std::optional<std::string> undecorated_short_name_; // short name without leading "-"
-        bool multiplicity_{false};
+        size_t max_occurence_{1};
 };
 
 class AbstractNamedOptionWithValue : public NamedOption {
     public:
         AbstractNamedOptionWithValue() {}
         AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : NamedOption(undecorated_long_name) {};
-        AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): NamedOption(undecorated_long_name, undecorated_short_name) {};   
+        AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): NamedOption(undecorated_long_name, undecorated_short_name) {};
+
+        /*
+        virtual const BaseValueSemantics& valueSemantics() const = 0;
+        virtual BaseValueSemantics& valueSemantics() = 0;
+        */
 
         bool valueRequired() {
             return true;
@@ -81,6 +88,7 @@ class AbstractNamedOptionWithValue : public NamedOption {
         void setValue(const std::string& str) {
             //TODO Remove this function
         }
+        void accept(AbstractOptionVisitor& visitor) override;
 };
 
 template<class T>
@@ -90,7 +98,6 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue {
         NamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOptionWithValue(undecorated_long_name) {};
         NamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name) {};   
         
-        void accept(AbstractOptionVisitor& visitor) override;
 
         ValueSemantics<T>& valueSemantics() {
             return value_semantics_;
@@ -98,6 +105,7 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue {
         const ValueSemantics<T>& valueSemantics() const {
             return value_semantics_;
         }
+        void accept(AbstractOptionVisitor& visitor) override;
     private:
         ValueSemantics<T> value_semantics_;
 };
@@ -166,15 +174,6 @@ inline void NamedOption::sanitizeNames() {
     };
 }
 
-
-inline void NamedOption::setMultiplicity(bool multiplicity) {
-    multiplicity_ = multiplicity;
-}
-
-inline bool NamedOption::multiplicity() const {
-    return multiplicity_;
-}
-
 inline const std::optional<std::string>& NamedOption::longName() const {
     return undecorated_long_name_;
 }
@@ -187,6 +186,13 @@ inline const std::string NamedOption::displayName() const {
     assert(undecorated_short_name_.has_value());
     return std::string("-") + undecorated_long_name_.value();
 }
+inline void NamedOption::setMaxOccurreneCount(size_t max_count) {
+    max_occurence_ = max_count;
+}
+inline size_t NamedOption::maxOccurrence() const {
+    return max_occurence_;
+}
+
 
 inline OneOf::OneOf(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2) {
     alternatives.push_back(alt1);
@@ -210,6 +216,13 @@ inline void AbstractOption::accept(AbstractOptionVisitor& visitor) {
 }
 inline void NamedOption::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<NamedOption>(shared_from_this()));
+}
+inline void AbstractNamedOptionWithValue::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<AbstractNamedOptionWithValue>(shared_from_this()));
+}
+template<class T>
+inline void NamedOptionWithValue<T>::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<NamedOptionWithValue<T>>(shared_from_this()));
 }
 inline void NamedCommand::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<NamedCommand>(shared_from_this()));

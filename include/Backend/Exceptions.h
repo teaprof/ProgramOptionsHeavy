@@ -62,7 +62,7 @@ class ValueDomainError  : public BaseOptionError {
 };
 
 
-class OptionShouldBeSpecifiedOnlyOnce  : public BaseOptionError {
+class OptionShouldBeSpecifiedOnlyOnce  : public BaseOptionError { // TODO: rename MaxOccurenceIsExceeded
      public:
         OptionShouldBeSpecifiedOnlyOnce(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
 };
