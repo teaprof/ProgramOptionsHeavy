@@ -8,6 +8,7 @@
 #include <set>
 
 class Checker : public AbstractOptionVisitor {
+// TODO checker should check if default value is within [min, max]
 public:    
     std::vector<std::shared_ptr<AbstractOption>> unlocks;
 

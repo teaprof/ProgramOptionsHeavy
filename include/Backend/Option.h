@@ -1,7 +1,6 @@
 #ifndef __BACKEND_OPTION_H__
 #define __BACKEND_OPTION_H__
 
-#include "ValueSemantics.h"
 #include <memory>
 #include <vector>
 #include <optional>
@@ -17,6 +16,9 @@ class NamedCommand;
 class PositionalOption;
 class OneOf;
 class OptionsGroup;
+
+class BaseValueSemantics;
+template<class T> class ValueSemantics;
 
 
 class AbstractOptionVisitor {
@@ -77,16 +79,12 @@ class AbstractNamedOptionWithValue : public NamedOption {
         AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : NamedOption(undecorated_long_name) {};
         AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): NamedOption(undecorated_long_name, undecorated_short_name) {};
 
-        /*
-        virtual const BaseValueSemantics& valueSemantics() const = 0;
-        virtual BaseValueSemantics& valueSemantics() = 0;
-        */
+        
+        virtual const BaseValueSemantics& baseValueSemantics() const = 0;
+        virtual BaseValueSemantics& baseValueSemantics() = 0;
 
         bool valueRequired() {
             return true;
-        }
-        void setValue(const std::string& str) {
-            //TODO Remove this function
         }
         void accept(AbstractOptionVisitor& visitor) override;
 };
@@ -98,6 +96,14 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue {
         NamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOptionWithValue(undecorated_long_name) {};
         NamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name) {};   
         
+
+            
+        const BaseValueSemantics& baseValueSemantics() const override {
+            return valueSemantics();
+        }
+        BaseValueSemantics& baseValueSemantics() override {
+            return valueSemantics();
+        }
 
         ValueSemantics<T>& valueSemantics() {
             return value_semantics_;
@@ -222,7 +228,7 @@ inline void AbstractNamedOptionWithValue::accept(AbstractOptionVisitor& visitor)
 }
 template<class T>
 inline void NamedOptionWithValue<T>::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<NamedOptionWithValue<T>>(shared_from_this()));
+    visitor.visit(std::static_pointer_cast<AbstractNamedOptionWithValue>(shared_from_this()));
 }
 inline void NamedCommand::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<NamedCommand>(shared_from_this()));

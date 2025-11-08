@@ -4,6 +4,7 @@
 #include "Option.h"
 #include <stdexcept>
 #include <sstream>
+#include <memory>
 
 
 class BaseOptionError : public std::runtime_error {
@@ -50,21 +51,21 @@ class ExpectedValue  : public BaseOptionError {
         ExpectedValue(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
 };
 
-class ValueTypeIsIncorrect  : public BaseOptionError {
+class InvalidValueType  : public BaseOptionError {
      public:
-        ValueTypeIsIncorrect(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
+        InvalidValueType(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
 };
 
 
-class ValueDomainError  : public BaseOptionError {
+class ValueIsOutOfRange  : public BaseOptionError {
      public:
-        ValueDomainError(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
+        ValueIsOutOfRange(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
 };
 
 
-class OptionShouldBeSpecifiedOnlyOnce  : public BaseOptionError { // TODO: rename MaxOccurenceIsExceeded
+class MaxOptionOccurenceIsExceeded  : public BaseOptionError {
      public:
-        OptionShouldBeSpecifiedOnlyOnce(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
+        MaxOptionOccurenceIsExceeded(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
 };
 
 /// TODO unused class, remove

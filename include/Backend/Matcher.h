@@ -3,6 +3,7 @@
 
 #include "Option.h"
 #include "Exceptions.h"
+#include "ValueSemantics.h"
 
 #include <cassert>
 #include <map>
@@ -176,7 +177,9 @@ class ArgGrammarParser {
                 }                    
                 case TokenTypes::long_option:
                 case TokenTypes::short_option:
-                    assert(!eof());
+                    if(eof()) {
+                        throw ExpectedValue(opt);
+                    }
                     return args_[idx++];
                 case TokenTypes::value:
                 case TokenTypes::short_option_eq_value:
@@ -216,6 +219,10 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 case ArgGrammarParser::TokenTypes::value:
                     /* nothing to do*/;
             }            
+            if(match) {
+                match_index = 0;
+                unlocks = opt->unlocks;
+            };
         }
         void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
             match_index = std::nullopt;
@@ -365,16 +372,16 @@ class Parser {
             if(auto p = std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(opt)) {
                 Value& v = values[opt];
                 if(v.values.size() >= p->maxOccurrence()) {
-                    throw OptionShouldBeSpecifiedOnlyOnce(p);
+                    throw MaxOptionOccurenceIsExceeded(p);
                 }
                 if(p->valueRequired()) {
                     v.values.push_back(matcher.value);
                 }
                 v.is_default = false;
-                p->setValue(matcher.value);
+                p->baseValueSemantics().setValue(matcher.value);
             } else {
-                if(values.contains(opt)) {
-                    throw OptionShouldBeSpecifiedOnlyOnce(p);
+                if(values[opt].values.size() >= p->maxOccurrence()) {
+                    throw MaxOptionOccurenceIsExceeded(p);
                 }
                 values.insert(std::make_pair(opt, Value()));
             }

@@ -1,5 +1,29 @@
+#include <Backend/ValueSemantics.h>
 #include <Backend/Matcher.h>
 #include <gtest/gtest.h>
+
+class MatcherFixtureSimple : public ::testing::Test {
+    protected:
+        std::shared_ptr<AbstractOption> options;
+        std::shared_ptr<NamedOption> opt1;
+        std::shared_ptr<NamedOptionWithValue<int>> opt2;
+        std::shared_ptr<PositionalOption> opt3;        
+        void SetUp() override {
+            options = std::make_shared<OptionsGroup>();
+            opt1 = std::make_shared<NamedOption>("--opt1", "-1");
+            opt2 = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
+            opt3 = std::make_shared<PositionalOption>();
+            options->addUnlock(opt1);
+            options->addUnlock(opt2);
+            options->addUnlock(opt3);
+
+            opt1->setRequired(true);
+            opt2->valueSemantics().setMinMax(-10, 10);
+        }
+
+        void TearDown() override {
+        }        
+};
 
 class MatcherFixture : public ::testing::Test {
     protected:
@@ -23,6 +47,18 @@ class MatcherFixture : public ::testing::Test {
         void TearDown() override {
         }        
 };
+
+TEST_F(MatcherFixtureSimple, Test1) {
+    Parser parser(options);
+    EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
+    EXPECT_TRUE(parser.parse("-1"));
+    EXPECT_TRUE(parser.parse("--opt1"));
+    EXPECT_THROW(parser.parse("--opt1 --opt2"), ExpectedValue);
+    EXPECT_TRUE(parser.parse("--opt1 --opt2=10"));
+    EXPECT_TRUE(parser.parse("--opt1 --opt2 10"));
+    EXPECT_THROW(parser.parse("--opt1 --opt2 22"), ValueIsOutOfRange);
+    EXPECT_THROW(parser.parse("--opt1 --opt1"), MaxOptionOccurenceIsExceeded);
+}
 
 TEST_F(MatcherFixture, Test1) {
     Parser parser(options);
