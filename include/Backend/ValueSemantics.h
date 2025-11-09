@@ -2,12 +2,13 @@
 #define __BACKEND_VALUE_SEMANTICS__
 
 #include "Exceptions.h"
+#include <any>
 #include <optional>
 #include <string>
 
 class BaseValueSemantics {
     public:
-        virtual void setValue(const std::string& value) = 0;
+        virtual void setValue(const std::string& value, std::any) = 0;        
 };
 
 template<class T>
@@ -35,7 +36,7 @@ class ValueSemantics<int> : public BaseValueSemantics {
         void setMax(int max) {
             max_ = max;
         }
-        void setValue(const std::string& value) override {
+        void setValue(const std::string& value, std::any valueptr) override {
             // TODO: trim value
             size_t pos;
             int res;
@@ -59,14 +60,12 @@ class ValueSemantics<int> : public BaseValueSemantics {
                     throw ValueIsOutOfRange(nullptr, value, "min..max");
                 }
             }
-            value_ = res;
-        }
-        int value() {
-            return value_;
+            int* p = std::any_cast<int*>(valueptr);
+            if(p != nullptr)
+                *p = res;
         }
     private:
         std::optional<int> min_, max_;
-        int value_;
 };
 
 template<> 

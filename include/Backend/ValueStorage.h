@@ -1,26 +1,38 @@
 #ifndef __BACKEND_VALUE_STORAGE_H__
 #define __BACKEND_VALUE_STORAGE_H__
 
+#include <any>
 #include <string>
+#include <vector>
+#include <memory>
+#include <map>
+#include <optional>
 
+class NamedOptionWithValue;
+class PositionalOption;
 
-template<class ... T>
-class TValueStorage {
-    public:
+class BaseValue {
 
-    template<class Arg>
-    TValueStorage(Arg& v) : ref{v} {}
-
-    void setValue(const std::string& str) {
-        assert(std::holds_alternative<std::reference_wrapper<std::string>>(ref));
-        auto r = std::get<std::reference_wrapper<std::string>>(ref);        
-        r.get() = str;
-    }
-    
-    std::variant<std::reference_wrapper<T>...> ref;
 };
 
-using ValueStorage = TValueStorage<int, double, std::string, char, bool>;
+struct Value : public BaseValue {
+    std::string raw_value_;
+    std::any value;
+    bool is_defaulted;
+    
+    std::optional<std::any> reference; // Usage: *std::any_cast<T*> = value
+};
+
+
+class ValueStorage {
+    public:
+    void setValue(std::shared_ptr<NamedOptionWithValue> opt, std::string& str) {
+    }
+    private:
+    std::map<std::shared_ptr<NamedOptionWithValue>, std::shared_ptr<BaseValue>> valuesmap;
+        
+};
+
 
 
 #endif
