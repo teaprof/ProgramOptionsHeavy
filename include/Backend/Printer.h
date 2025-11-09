@@ -7,8 +7,8 @@
 #include <iostream>
 #include <sstream>
 
-template<class T>
-std::ostream& operator<<(std::ostream& out, const std::optional<T>& v) {
+template<class IntType>
+std::ostream& operator<<(std::ostream& out, const std::optional<IntType>& v) {
     if(v.has_value()) {
         out<<*v;
     } else {

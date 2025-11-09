@@ -106,8 +106,8 @@ class ArgGrammarParser {
         std::queue<Result> results;     
 
 
-        template<class ... T>
-        ArgGrammarParser(T ... arguments) : args_{arguments...} {
+        template<class ... IntType>
+        ArgGrammarParser(IntType ... arguments) : args_{arguments...} {
         }
 
         ArgGrammarParser(const char* str) {
@@ -331,6 +331,7 @@ class Parser {
         
         bool parse(ArgGrammarParser args) {
             storage.clear();
+            opts_counter_.clear();
             std::vector<std::shared_ptr<AbstractOption>> all_options_;
 
             if(auto q = std::dynamic_pointer_cast<OptionsGroup>(options_)) {
@@ -359,7 +360,7 @@ class Parser {
             // check that all required options are used
             for(auto p : all_options_)
             {
-                if(p->required() && storage.count(p) == 0) {
+                if(p->required() && opts_counter_.count(p) == 0) {
                     if(auto q = std::dynamic_pointer_cast<PositionalOption>(p)) {
                         throw TooFewPositionalOptions(); /// \todo: how many pos options are expected
                     } else {
@@ -370,6 +371,16 @@ class Parser {
             return true;
         }
     private:
+        std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
+        void checkMaxOccurrence(std::shared_ptr<AbstractOption> opt)  {
+            if(opts_counter_.count(opt) >= opt->maxOccurrence()) {
+                if(auto p = std::dynamic_pointer_cast<OneOf>(opt)) {
+                    throw OnlyOneChoiseIsAllowed(p);
+                }
+                throw MaxOptionOccurenceIsExceeded(opt);
+            }
+
+        }
         std::string displayName(std::shared_ptr<NamedOption> opt) {
             if(opt->longName())
                 return *opt->longName();
@@ -377,19 +388,14 @@ class Parser {
         }
 
         void setValue(std::shared_ptr<AbstractOption> opt, const SingleOptionMatcher& matcher) { 
-            if(storage.count(opt) >= opt->maxOccurrence()) {
-                if(auto p = std::dynamic_pointer_cast<OneOf>(opt))
-                    throw OnlyOneChoiseIsAllowed(p);
-                throw MaxOptionOccurenceIsExceeded(opt);
-            }
+            checkMaxOccurrence(opt);
+            // TODO: support for positional options
             if(auto p = std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(opt)) {
-                storage.addValue(p, matcher.value);
-            } else {
-                storage.addCounter(opt);
+                auto semantic_parse_result = p->baseValueSemantics().semanticParse(matcher.value);                
+                storage.addValue(p, semantic_parse_result);
             }
+            opts_counter_[opt]++;;
         }
 };
-
-
 
 #endif 
