@@ -36,14 +36,14 @@ class ExpectedOption : public std::runtime_error {
         ExpectedOption() : std::runtime_error("Expected option") {}
 };
 
-class UnknownOption : public BaseOptionError {
+class UnknownOption : public std::runtime_error { /// TODO: make abstract base class to avoid direct inheritance from std::runtime_error
     public:
-        UnknownOption(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
+        UnknownOption(std::string str) : std::runtime_error("Unknown option") {}
 };
 
-class RequiredOptionIsNotSet : public BaseOptionError {
+class RequiredOptionIsNotSet : public std::runtime_error {
      public:
-        RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
+        RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt) : std::runtime_error("123") {}
 };
 
 class ExpectedValue  : public BaseOptionError {
@@ -89,9 +89,13 @@ class TooManyPositionalOptions : public std::runtime_error {
         TooManyPositionalOptions() : std::runtime_error("too few positional options are specified") {}
 };
 
-// TODO: OnlyOneChoiseIsAllowed (for alternative)
+class OnlyOneChoiseIsAllowed : public BaseOptionError {
+    public:
+        OnlyOneChoiseIsAllowed(std::shared_ptr<OneOf> opt) : BaseOptionError(opt) {}
+};
 
 /*
+TODO:
 From boost::program_options
 invalid_command_line_style
 invalid_command_line_style

@@ -8,7 +8,10 @@
 
 class BaseValueSemantics {
     public:
-        virtual void setValue(const std::string& value, std::any) = 0;        
+        virtual void checkValue(const std::string& value) {
+            setValue2(value, {});
+        }
+        virtual void setValue2(const std::string& value, std::any reference) = 0;  // TODO rename to decodeValue  
 };
 
 template<class T>
@@ -36,7 +39,7 @@ class ValueSemantics<int> : public BaseValueSemantics {
         void setMax(int max) {
             max_ = max;
         }
-        void setValue(const std::string& value, std::any valueptr) override {
+        void setValue2(const std::string& value, std::any valueptr) override {
             // TODO: trim value
             size_t pos;
             int res;
@@ -60,9 +63,11 @@ class ValueSemantics<int> : public BaseValueSemantics {
                     throw ValueIsOutOfRange(nullptr, value, "min..max");
                 }
             }
-            int* p = std::any_cast<int*>(valueptr);
-            if(p != nullptr)
-                *p = res;
+            if(valueptr.has_value()) {
+                int* p = std::any_cast<int*>(valueptr);
+                if(p != nullptr)
+                    *p = res;
+            };
         }
     private:
         std::optional<int> min_, max_;
@@ -71,8 +76,11 @@ class ValueSemantics<int> : public BaseValueSemantics {
 template<> 
 class ValueSemantics<std::string> : public BaseValueSemantics {
     public:
-        void setValue(const std::string& value) override {
+        void setValue2(const std::string& value, std::any valueptr) override {
             value_ = value;
+            std::string* p = std::any_cast<std::string*>(valueptr);
+            if(p != nullptr)
+                *p = value;
         }
         const std::string& value() {
             return value_;

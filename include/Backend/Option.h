@@ -47,9 +47,13 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         bool required();
         void setRequired(bool val);
 
+        void setMaxOccurreneCount(size_t max_count = std::numeric_limits<size_t>::max());
+        size_t maxOccurrence() const;
+
         virtual void accept(AbstractOptionVisitor& visitor);
     private:
         bool required_{false};
+        size_t max_occurence_{1};
 };
 
 class NamedOption : public AbstractOption {
@@ -62,15 +66,11 @@ class NamedOption : public AbstractOption {
         const std::optional<std::string>& shortName() const;
         const std::string displayName() const;
 
-        void setMaxOccurreneCount(size_t max_count = std::numeric_limits<size_t>::max());
-        size_t maxOccurrence() const;
-
         void accept(AbstractOptionVisitor& visitor) override;
     private:
         void sanitizeNames();
         std::optional<std::string> undecorated_long_name_; // long name without leading "--"
         std::optional<std::string> undecorated_short_name_; // short name without leading "-"
-        size_t max_occurence_{1};
 };
 
 class AbstractNamedOptionWithValue : public NamedOption {
@@ -157,6 +157,12 @@ inline bool AbstractOption::required() {
 inline void AbstractOption::setRequired(bool val) {
     required_ = val;
 }
+inline void AbstractOption::setMaxOccurreneCount(size_t max_count) {
+    max_occurence_ = max_count;
+}
+inline size_t AbstractOption::maxOccurrence() const {
+    return max_occurence_;
+}
 
 inline NamedOption::NamedOption(const std::string& undecorated_long_name) : undecorated_long_name_{undecorated_long_name} {
     sanitizeNames();
@@ -192,13 +198,6 @@ inline const std::string NamedOption::displayName() const {
     assert(undecorated_short_name_.has_value());
     return std::string("-") + undecorated_long_name_.value();
 }
-inline void NamedOption::setMaxOccurreneCount(size_t max_count) {
-    max_occurence_ = max_count;
-}
-inline size_t NamedOption::maxOccurrence() const {
-    return max_occurence_;
-}
-
 
 inline OneOf::OneOf(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2) {
     alternatives.push_back(alt1);

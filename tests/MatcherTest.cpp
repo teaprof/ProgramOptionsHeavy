@@ -7,7 +7,7 @@ class MatcherFixtureSimple : public ::testing::Test {
         std::shared_ptr<AbstractOption> options;
         std::shared_ptr<NamedOption> opt1;
         std::shared_ptr<NamedOptionWithValue<int>> opt2;
-        std::shared_ptr<PositionalOption> opt3;        
+        std::shared_ptr<PositionalOption> opt3;
         void SetUp() override {
             options = std::make_shared<OptionsGroup>();
             opt1 = std::make_shared<NamedOption>("--opt1", "-1");
@@ -50,14 +50,23 @@ class MatcherFixture : public ::testing::Test {
 
 TEST_F(MatcherFixtureSimple, Test1) {
     Parser parser(options);
+    int v{0};
+    parser.storage.setExternalStorage<int>(opt2, &v);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse("-1"));
+    ASSERT_EQ(v, 0);
     EXPECT_TRUE(parser.parse("--opt1"));
+    ASSERT_EQ(v, 0);
     EXPECT_THROW(parser.parse("--opt1 --opt2"), ExpectedValue);
+    ASSERT_EQ(v, 0); /// TODO here should be default value
     EXPECT_TRUE(parser.parse("--opt1 --opt2=10"));
-    EXPECT_TRUE(parser.parse("--opt1 --opt2 10"));
+    ASSERT_EQ(v, 10);
+    EXPECT_THROW(parser.parse("--opt1 --opt2 11"), ValueIsOutOfRange);
+    ASSERT_EQ(v, 10);
     EXPECT_THROW(parser.parse("--opt1 --opt2 22"), ValueIsOutOfRange);
+    ASSERT_EQ(v, 10);
     EXPECT_THROW(parser.parse("--opt1 --opt1"), MaxOptionOccurenceIsExceeded);
+    ASSERT_EQ(v, 10);
 }
 
 TEST_F(MatcherFixture, Test1) {
@@ -71,7 +80,7 @@ TEST_F(MatcherFixture, Test2) {
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"run"}));
     EXPECT_TRUE(parser.parse({"gather", "-g"}));
-    EXPECT_FALSE(parser.parse({"run", "gather", "-g"}));
+    EXPECT_THROW(parser.parse({"run", "gather", "-g"}), OnlyOneChoiseIsAllowed);
     EXPECT_TRUE(parser.parse({"run", "--common"}));
     EXPECT_TRUE(parser.parse({"--common", "run", "-d"}));
 }
