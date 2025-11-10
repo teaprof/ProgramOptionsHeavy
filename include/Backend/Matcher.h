@@ -106,8 +106,8 @@ class ArgGrammarParser {
         std::queue<Result> results;     
 
 
-        template<class ... IntType>
-        ArgGrammarParser(IntType ... arguments) : args_{arguments...} {
+        template<class ... Type>
+        ArgGrammarParser(Type ... arguments) : args_{arguments...} {
         }
 
         ArgGrammarParser(const char* str) {
@@ -392,7 +392,7 @@ class Parser {
             // TODO: support for positional options
             if(auto p = std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(opt)) {
                 auto semantic_parse_result = p->baseValueSemantics().semanticParse(matcher.value);                
-                storage.addValue(p, semantic_parse_result);
+                storage.addValue(p, matcher.value, semantic_parse_result);
             }
             opts_counter_[opt]++;;
         }

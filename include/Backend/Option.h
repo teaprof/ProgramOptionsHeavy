@@ -18,7 +18,7 @@ class OneOf;
 class OptionsGroup;
 
 class BaseValueSemantics;
-template<class IntType> class ValueSemantics;
+template<class T> class ValueSemantics;
 
 
 class AbstractOptionVisitor {
@@ -89,7 +89,7 @@ class AbstractNamedOptionWithValue : public NamedOption {
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
-template<class IntType>
+template<class T>
 class NamedOptionWithValue : public AbstractNamedOptionWithValue {
     public:
         NamedOptionWithValue() {}
@@ -105,15 +105,15 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue {
             return valueSemantics();
         }
 
-        ValueSemantics<IntType>& valueSemantics() {
+        ValueSemantics<T>& valueSemantics() {
             return value_semantics_;
         }
-        const ValueSemantics<IntType>& valueSemantics() const {
+        const ValueSemantics<T>& valueSemantics() const {
             return value_semantics_;
         }
         void accept(AbstractOptionVisitor& visitor) override;
     private:
-        ValueSemantics<IntType> value_semantics_;
+        ValueSemantics<T> value_semantics_;
 };
 
 
@@ -225,8 +225,8 @@ inline void NamedOption::accept(AbstractOptionVisitor& visitor) {
 inline void AbstractNamedOptionWithValue::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<AbstractNamedOptionWithValue>(shared_from_this()));
 }
-template<class IntType>
-inline void NamedOptionWithValue<IntType>::accept(AbstractOptionVisitor& visitor) {
+template<class T>
+inline void NamedOptionWithValue<T>::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<AbstractNamedOptionWithValue>(shared_from_this()));
 }
 inline void NamedCommand::accept(AbstractOptionVisitor& visitor) {
