@@ -48,7 +48,7 @@ class Printer : public AbstractOptionVisitor {
             /// todo: implement this function instead of the following:
             visit(std::static_pointer_cast<NamedOption>(opt));
         }
-        void visit(std::shared_ptr<PositionalOption>) override {
+        void visit(std::shared_ptr<AbstractPositionalOption>) override {
             assert(false);
         }
         void visit(std::shared_ptr<OptionsGroup> opt) override {

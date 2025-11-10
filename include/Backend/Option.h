@@ -12,8 +12,8 @@
 class AbstractOption;
 class NamedOption;
 class AbstractNamedOptionWithValue; // TODO rename
+class AbstractPositionalOption; // TODO rename
 class NamedCommand;
-class PositionalOption;
 class OneOf;
 class OptionsGroup;
 
@@ -28,7 +28,7 @@ class AbstractOptionVisitor {
         virtual void visit(std::shared_ptr<NamedOption>) = 0;
         virtual void visit(std::shared_ptr<AbstractNamedOptionWithValue>) = 0;
         virtual void visit(std::shared_ptr<NamedCommand>) = 0;
-        virtual void visit(std::shared_ptr<PositionalOption>) = 0;
+        virtual void visit(std::shared_ptr<AbstractPositionalOption>) = 0;
         virtual void visit(std::shared_ptr<OptionsGroup>) = 0;
         virtual void visit(std::shared_ptr<OneOf>) = 0;
 };
@@ -73,15 +73,17 @@ class NamedOption : public AbstractOption {
         std::optional<std::string> undecorated_short_name_; // short name without leading "-"
 };
 
-class AbstractNamedOptionWithValue : public NamedOption {
+class AbstractOptionWithValue {
+    public:
+        virtual const BaseValueSemantics& baseValueSemantics() const = 0;
+        virtual BaseValueSemantics& baseValueSemantics() = 0;
+};
+
+class AbstractNamedOptionWithValue : public NamedOption, public AbstractOptionWithValue {
     public:
         AbstractNamedOptionWithValue() {}
         AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : NamedOption(undecorated_long_name) {};
-        AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): NamedOption(undecorated_long_name, undecorated_short_name) {};
-
-        
-        virtual const BaseValueSemantics& baseValueSemantics() const = 0;
-        virtual BaseValueSemantics& baseValueSemantics() = 0;
+        AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): NamedOption(undecorated_long_name, undecorated_short_name) {}
 
         bool valueRequired() {
             return true;
@@ -96,8 +98,6 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue {
         NamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOptionWithValue(undecorated_long_name) {};
         NamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name) {};   
         
-
-            
         const BaseValueSemantics& baseValueSemantics() const override {
             return valueSemantics();
         }
@@ -124,9 +124,28 @@ class NamedCommand : public NamedOption {
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
-class PositionalOption : public AbstractOption {
+class AbstractPositionalOption : public AbstractOption, public AbstractOptionWithValue {
     public:
         void accept(AbstractOptionVisitor& visitor) override;
+};
+
+template<class T>
+class PositionalOption : public AbstractPositionalOption {
+    public:
+        const BaseValueSemantics& baseValueSemantics() const override {
+            return valueSemantics();
+        }
+        BaseValueSemantics& baseValueSemantics() override {
+            return valueSemantics();
+        }
+        ValueSemantics<T>& valueSemantics() {
+            return value_semantics_;
+        }
+        const ValueSemantics<T>& valueSemantics() const {
+            return value_semantics_;
+        }
+    private:
+        ValueSemantics<T> value_semantics_;
 };
 
 class OptionsGroup : public AbstractOption {
@@ -232,8 +251,8 @@ inline void NamedOptionWithValue<T>::accept(AbstractOptionVisitor& visitor) {
 inline void NamedCommand::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<NamedCommand>(shared_from_this()));
 }
-inline void PositionalOption::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<PositionalOption>(shared_from_this()));
+inline void AbstractPositionalOption::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<AbstractPositionalOption>(shared_from_this()));
 }
 inline void OptionsGroup::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<OptionsGroup>(shared_from_this()));

@@ -25,6 +25,7 @@ struct TypedSemanticParseResult : public SemanticParseResult {
 class BaseValueSemantics {
     public:
         virtual std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) = 0; // TODO replace shared_ptr with something located on the stack
+        virtual std::shared_ptr<SemanticParseResult> defaultValue() { return nullptr; }; // TODO replace shared_ptr with something located on the stack
         virtual void storeTo(std::shared_ptr<SemanticParseResult> value, std::any valueptr) = 0;
 };
 
@@ -38,6 +39,19 @@ class TypedValueSemantics : public BaseValueSemantics {
                 value_typed->store(*value_typed_ptr);
             }
         }
+        std::shared_ptr<SemanticParseResult> defaultValue() override {
+            if(!default_value_.has_value())
+                return nullptr;
+            return std::make_shared<TypedSemanticParseResult<T>>(default_value_.value());
+        }
+        void setDefaultValue(const T& v) {
+            default_value_ = v;
+        }
+        bool hasDefaultValue() {
+            return default_value_.has_value();
+        }
+    private:
+        std::optional<T> default_value_;
 };
 
 inline const std::string trim(const std::string& src) { // TODO: move to details or use boost::spirit instead of trim
@@ -103,9 +117,9 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
                 }
             }
             return std::make_shared<TypedSemanticParseResult<IntType>>(res);
-        }
+        }        
     private:
-        std::optional<IntType> min_, max_;                
+        std::optional<IntType> min_, max_;
 };
 
 template<std::floating_point FloatType>

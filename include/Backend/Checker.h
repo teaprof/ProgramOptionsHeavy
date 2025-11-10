@@ -32,7 +32,7 @@ public:
         unlocks.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
-    void visit(std::shared_ptr<PositionalOption> opt) override {
+    void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
         addVisited(opt);
         unlocks.push_back(opt);        
         visit(std::static_pointer_cast<AbstractOption>(opt));

@@ -287,7 +287,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 unlocks = opt->unlocks;
             };
         }
-        void visit(std::shared_ptr<PositionalOption> opt) override {
+        void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
             match_index = std::nullopt;
             unlocks.clear();
             switch(grammar_parser_.current_result.token_type) {
@@ -357,12 +357,31 @@ class Parser {
                 if(!option_matched)
                     throw UnknownOption(args.getRawOptionString());
             }
+            // Apply default values
+            for(auto opt : all_options_)
+            {
+                if(!opt->required() || opts_counter_.count(opt) > 0) {
+                    continue;
+                }
+                if(auto p = std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(opt)) {
+                    if(p->baseValueSemantics().defaultValue() == nullptr) {
+                        throw RequiredOptionIsNotSet(p);
+                    }
+                    setDefaultValue(p);
+                } else 
+                if(auto p = std::dynamic_pointer_cast<AbstractPositionalOption>(opt)) {
+                    if(p->baseValueSemantics().defaultValue() == nullptr) {
+                        throw TooFewPositionalOptions();
+                    }
+                    setDefaultValue(p);
+                };
+            }
             // check that all required options are used
             for(auto p : all_options_)
             {
                 if(p->required() && opts_counter_.count(p) == 0) {
-                    if(auto q = std::dynamic_pointer_cast<PositionalOption>(p)) {
-                        throw TooFewPositionalOptions(); /// \todo: how many pos options are expected
+                    if(auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p)) {
+                        throw TooFewPositionalOptions(); /// TODO how many pos options are expected
                     } else {
                         throw RequiredOptionIsNotSet(q);
                     }
@@ -394,6 +413,22 @@ class Parser {
                 auto semantic_parse_result = p->baseValueSemantics().semanticParse(matcher.value);                
                 storage.addValue(p, matcher.value, semantic_parse_result);
             }
+            opts_counter_[opt]++;;
+        }
+        void setDefaultValue(std::shared_ptr<AbstractNamedOptionWithValue> opt) { 
+            checkMaxOccurrence(opt);
+            auto semantic_parse_result = opt->baseValueSemantics().defaultValue();
+            assert(semantic_parse_result != nullptr);
+            storage.addValue(opt, "", semantic_parse_result);
+            storage.setDefault(opt, true);
+            opts_counter_[opt]++;;
+        }
+        void setDefaultValue(std::shared_ptr<AbstractPositionalOption> opt) { 
+            checkMaxOccurrence(opt);
+            auto semantic_parse_result = opt->baseValueSemantics().defaultValue();
+            assert(semantic_parse_result != nullptr);
+            storage.addValue(opt, "", semantic_parse_result);
+            storage.setDefault(opt, true);
             opts_counter_[opt]++;;
         }
 };

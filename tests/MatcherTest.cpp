@@ -7,12 +7,12 @@ class MatcherFixtureSimple : public ::testing::Test {
         std::shared_ptr<AbstractOption> options;
         std::shared_ptr<NamedOption> opt1;
         std::shared_ptr<NamedOptionWithValue<int>> opt2;
-        std::shared_ptr<PositionalOption> opt3;
+        std::shared_ptr<PositionalOption<std::string>> opt3;
         void SetUp() override {
             options = std::make_shared<OptionsGroup>();
             opt1 = std::make_shared<NamedOption>("--opt1", "-1");
             opt2 = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
-            opt3 = std::make_shared<PositionalOption>();
+            opt3 = std::make_shared<PositionalOption<std::string>>();
             options->addUnlock(opt1);
             options->addUnlock(opt2);
             options->addUnlock(opt3);
@@ -53,7 +53,10 @@ TEST_F(MatcherFixtureSimple, Test1) {
     int v{0};
     parser.storage.setExternalStorage<int>(opt2, &v);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
-    EXPECT_TRUE(parser.parse("-1"));
+    opt3->setRequired(true);
+    EXPECT_TRUE(parser.parse("-1 filename"));
+    EXPECT_TRUE(parser.parse("filename -1"));
+    opt3->setRequired(false);
     ASSERT_EQ(v, 0);
     EXPECT_TRUE(parser.parse("--opt1"));
     ASSERT_EQ(v, 0);

@@ -1,3 +1,4 @@
+#include <Backend/ValueSemantics.h>
 #include <Backend/Checker.h>
 
 #include <gtest/gtest.h>
@@ -21,8 +22,8 @@ TEST(CheckerTest, Simple2) {
 TEST(CheckerTest, SimplePositionalOptions) {
     auto option = std::make_shared<NamedOption>("--opt1", "-o");
     option->addUnlock(std::make_shared<NamedOption>("--opt2"));
-    option->addUnlock(std::make_shared<PositionalOption>());
-    option->addUnlock(std::make_shared<PositionalOption>());
+    option->addUnlock(std::make_shared<PositionalOption<int>>());
+    option->addUnlock(std::make_shared<PositionalOption<int>>());
     Checker checker;
     EXPECT_NO_THROW(option->accept(checker));
 }

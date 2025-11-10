@@ -10,7 +10,7 @@
 #include <optional>
 
 class AbstractNamedOptionWithValue;
-class PositionalOption;
+class AbstractPositionalOption;
 
 /*!
  * Value storage do the following things:
@@ -22,7 +22,7 @@ class BaseValueStorage {
     public:
         std::vector<std::string> raw_values_;
         std::string raw_value_;
-        bool is_defaulted{true};
+        bool is_defaulted{false};
 
         virtual void setValue(BaseValueSemantics& value_semantics, std::shared_ptr<SemanticParseResult> parse_result, const std::string& raw_value, std::optional<std::any> external_value_ptr = std::nullopt) {            
             raw_values_.push_back(raw_value);
@@ -51,7 +51,7 @@ class TypedValueStorage : public BaseValueStorage {
 
 class ValuesStorage {
     public:
-    void addValue(std::shared_ptr<AbstractNamedOptionWithValue> opt, const std::string& raw_value, std::shared_ptr<SemanticParseResult> parse_result) {
+    void addValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value, std::shared_ptr<SemanticParseResult> parse_result) {
         auto value = std::make_shared<BaseValueStorage>();
         if(external_pointers_.count(opt) > 0) {
             value->setValue(opt->baseValueSemantics(), parse_result, raw_value, external_pointers_[opt]);
@@ -60,23 +60,27 @@ class ValuesStorage {
         }
         values_map_[opt] = value;
     }
+    void setDefault(std::shared_ptr<AbstractOptionWithValue> opt, bool flag) {
+        assert(values_map_.count(opt) > 0);
+        values_map_[opt]->is_defaulted = flag;
+    }
     void clear() {
         values_map_.clear();
     }
-    std::shared_ptr<BaseValueStorage>& operator[](std::shared_ptr<AbstractNamedOptionWithValue> opt) {
+    std::shared_ptr<BaseValueStorage>& operator[](std::shared_ptr<AbstractOptionWithValue> opt) {
         return values_map_[opt];
     }
-    bool contains(std::shared_ptr<AbstractNamedOptionWithValue> opt) {
+    bool contains(std::shared_ptr<AbstractOptionWithValue> opt) {
         return values_map_.count(opt) > 0;
     }
     template<class T>
-    void setExternalStorage(std::shared_ptr<AbstractOption> opt, T* val_ptr) {
+    void setExternalStorage(std::shared_ptr<AbstractOptionWithValue> opt, T* val_ptr) {
         external_pointers_[opt] = val_ptr;
     }
     // TODO: add setExternalStorage as std::vector
     private:
-    std::map<std::shared_ptr<AbstractNamedOptionWithValue>, std::shared_ptr<BaseValueStorage>> values_map_;
-    std::map<std::shared_ptr<AbstractOption>, std::any> external_pointers_;
+    std::map<std::shared_ptr<AbstractOptionWithValue>, std::shared_ptr<BaseValueStorage>> values_map_;
+    std::map<std::shared_ptr<AbstractOptionWithValue>, std::any> external_pointers_;
         
 };
 
