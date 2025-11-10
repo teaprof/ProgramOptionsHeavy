@@ -119,6 +119,7 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue {
 
 class NamedCommand : public NamedOption {
     /// \todo: this should be a separate class without support of values and short names
+    /// TODO remove this class?
     public:          
         NamedCommand(const std::string long_name) : NamedOption(long_name) {};
         void accept(AbstractOptionVisitor& visitor) override;
@@ -149,8 +150,9 @@ class PositionalOption : public AbstractPositionalOption {
 };
 
 class OptionsGroup : public AbstractOption {
+    /// TODO what does required_ mean in this case?
     public:
-        void accept(AbstractOptionVisitor& visitor) override;
+        void accept(AbstractOptionVisitor& visitor) override;        
 };
 
 class OneOf : public AbstractOption {

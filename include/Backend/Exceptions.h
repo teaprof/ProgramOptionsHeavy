@@ -83,7 +83,7 @@ class TooFewPositionalOptions : public std::runtime_error {
 
 class TooManyPositionalOptions : public std::runtime_error {
     public:
-        TooManyPositionalOptions() : std::runtime_error("too few positional options are specified") {}
+        TooManyPositionalOptions(const std::string& str): std::runtime_error("too many positional options are specified: {str}") {}
 };
 
 class OnlyOneChoiseIsAllowed : public BaseOptionError {

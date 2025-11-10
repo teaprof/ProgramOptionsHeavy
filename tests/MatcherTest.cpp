@@ -55,7 +55,6 @@ TEST_F(MatcherFixtureSimple, Test1) {
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     opt3->setRequired(true);
     EXPECT_TRUE(parser.parse("-1 filename"));
-    return;
     EXPECT_TRUE(parser.parse("filename -1"));
     opt3->setRequired(false);
     ASSERT_EQ(v, 0);
@@ -163,7 +162,21 @@ TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
     ASSERT_EQ(int_storage->values(0), 20);
     ASSERT_EQ(int_storage->values(1), 30);
     ASSERT_EQ(d, 30);
-    ASSERT_THROW(parser.parse("20 30 40"), MaxOptionOccurenceIsExceeded);
+    ASSERT_THROW(parser.parse("20 30 40"), TooManyPositionalOptions);
+}
+
+TEST(Matcher, TwoPositionalOptions) {
+    auto opt1 = std::make_shared<PositionalOption<std::string>>();
+    auto opt2 = std::make_shared<PositionalOption<int>>();
+    opt2->setMaxOccurreneCount(2);
+    auto opt = std::make_shared<OptionsGroup>()->addUnlock(opt1)->addUnlock(opt2);
+
+    Parser parser(opt);
+    EXPECT_NO_THROW(parser.parse({}));
+    EXPECT_NO_THROW(parser.parse("file1"));
+    EXPECT_NO_THROW(parser.parse("file1 10"));
+    EXPECT_NO_THROW(parser.parse("file1 10 20"));
+    EXPECT_THROW(parser.parse("file1 10 20 30"), TooManyPositionalOptions);
 }
 
 TEST(Matcher, PositionalAndNamed) {
@@ -181,6 +194,6 @@ TEST(Matcher, PositionalAndNamed) {
     EXPECT_NO_THROW(parser.parse("--opt1 10 --opt1 20 filename"));
     EXPECT_NO_THROW(parser.parse("--opt1 10 filename1 filename2"));
     EXPECT_NO_THROW(parser.parse("--opt1 10 --opt1 20 filename1 filename2"));
-    EXPECT_THROW(parser.parse("--opt1 10 --opt1 20 filename1 filename2 filename3"), MaxOptionOccurenceIsExceeded);
+    EXPECT_THROW(parser.parse("--opt1 10 --opt1 20 filename1 filename2 filename3"), TooManyPositionalOptions);
     EXPECT_NO_THROW(parser.parse("filename --opt1 10 filename --opt1 20"));
 }

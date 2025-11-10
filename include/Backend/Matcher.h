@@ -230,7 +230,8 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
     private:
         ArgGrammarParser& grammar_parser_;
     public:
-        std::optional<size_t> match_index;
+        //std::optional<size_t> match_index;
+        bool match;
         std::string value;
         std::vector<std::shared_ptr<AbstractOption>> unlocks;
         SingleOptionMatcher(ArgGrammarParser& args) : grammar_parser_{args} {}
@@ -239,9 +240,9 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             assert(false);
         }
         void visit(std::shared_ptr<NamedOption> opt) override {
-            match_index = std::nullopt;
+            //match_index = std::nullopt;
             unlocks.clear();
-            bool match = false;
+            match = false;
             switch(grammar_parser_.current_result.token_type) {
                 case ArgGrammarParser::TokenTypes::long_option:                    
                 case ArgGrammarParser::TokenTypes::long_option_eq_value:
@@ -256,14 +257,14 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                     /* nothing to do*/;
             }            
             if(match) {
-                match_index = 0;
+                //match_index = 0;
                 unlocks = opt->unlocks;
             };
         }
         void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
-            match_index = std::nullopt;
+            //match_index = std::nullopt;
             unlocks.clear();
-            bool match = false;
+            match = false;
             switch(grammar_parser_.current_result.token_type) {
                 case ArgGrammarParser::TokenTypes::long_option:                    
                 case ArgGrammarParser::TokenTypes::long_option_eq_value:
@@ -278,7 +279,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                     /* nothing to do*/;
             }            
             if(match) {
-                match_index = 0;
+                //match_index = 0;
                 if(opt->valueRequired()) {
                     value = grammar_parser_.getValue(opt);
                 }
@@ -286,9 +287,9 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             };
         }
         void visit(std::shared_ptr<NamedCommand> opt) override {
-            match_index = std::nullopt;
+            //match_index = std::nullopt;
             unlocks.clear();
-            bool match = false;
+            match = false;
             switch(grammar_parser_.current_result.token_type) {
                 case ArgGrammarParser::TokenTypes::long_option:                    
                 case ArgGrammarParser::TokenTypes::long_option_eq_value:                    
@@ -301,12 +302,13 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                     }                    
             }            
             if(match) {
-                match_index = 0;                
+                //match_index = 0;
                 unlocks = opt->unlocks;
             };
         }
         void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-            match_index = std::nullopt;
+            //match_index = std::nullopt;
+            match = false;
             unlocks.clear();
             switch(grammar_parser_.current_result.token_type) {
                 case ArgGrammarParser::TokenTypes::long_option:
@@ -318,21 +320,26 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 case ArgGrammarParser::TokenTypes::value:
                     /* nothing to do */;
             }
-            match_index = 0;
+            //match_index = 0;
+            match = true;
             value = grammar_parser_.getValue(opt);
             unlocks = opt->unlocks;
         }
         void visit(std::shared_ptr<OptionsGroup> opt) override {
-            match_index = 0;            
+            assert(false);
+            //match_index = 0;
+            match = true;
             unlocks = opt->unlocks;
         }
         void visit(std::shared_ptr<OneOf> opt) override {
-            match_index = std::nullopt;
+            //match_index = std::nullopt;
+            match = false;
             unlocks.clear();
             for(size_t n = 0; n < opt->alternatives.size(); n++) {
                 opt->alternatives[n]->accept(*this);
-                if(match_index.has_value()) {
-                    match_index = n;
+                if(match) {
+                    //match_index = n;
+                    // TODO test for nested alternatives
                     unlocks = opt->alternatives[n]->unlocks;
                     return;
                 }
@@ -350,33 +357,39 @@ class Parser {
         bool parse(ArgGrammarParser args) {
             storage.clear();
             opts_counter_.clear();
-            std::vector<std::shared_ptr<AbstractOption>> all_options_;
-
-            if(auto q = std::dynamic_pointer_cast<OptionsGroup>(options_)) {
-                all_options_ = options_->unlocks;
-            } else {
-                all_options_.push_back(options_);
-            }            
+            std::vector<std::shared_ptr<AbstractOption>> all_options;
+            unpackGroups({options_}, all_options);
+            SingleOptionMatcher matcher(args);
             while(!args.eof()) {
-                args.getNextOption(); 
-                SingleOptionMatcher matcher(args);
+                args.getNextOption();                
                 bool option_matched = false;
-                for(auto it = all_options_.begin(); it != all_options_.end(); it++) {
-                    (*it)->accept(matcher);
-                    if(matcher.match_index.has_value()) {
-                        setValue(*it, matcher);
-                        //all_options_.erase(it);
-                        all_options_.insert(all_options_.end(), matcher.unlocks.begin(), matcher.unlocks.end());
+                for(auto it : all_options) {
+                    bool is_positional = (std::dynamic_pointer_cast<AbstractPositionalOption>(it) != nullptr);
+                    if(is_positional) {
+                        if(optionEncountered(it) == it->maxOccurrence()) {
+                            continue; // skip this positional option
+                        }
+                    }
+                    it->accept(matcher);
+                    if(matcher.match) {
+                        setValue(it, matcher);
                         option_matched = true;
                         break;
-                    };
+                    }                    
                 }
-                // unknown option
-                if(!option_matched)
-                    throw UnknownOption(args.getRawOptionString());
+                if(option_matched) {
+                    unpackGroups(matcher.unlocks, all_options); // TODO: what should we do if this option was unpacked (multiple occurrence)
+                } else {
+                    if(args.current_result.token_type == ArgGrammarParser::value)  {
+                        throw TooManyPositionalOptions(args.getRawOptionString());
+                    } else {
+                        // unknown option
+                        throw UnknownOption(args.getRawOptionString());
+                    }
+                }
             }
             // Apply default values
-            for(auto opt : all_options_)
+            for(auto opt : all_options)
             {
                 if(opts_counter_.count(opt) > 0) {
                     continue;
@@ -391,7 +404,7 @@ class Parser {
                 };
             }
             // check that all required options are used
-            for(auto p : all_options_)
+            for(auto p : all_options)
             {
                 if(p->required() && opts_counter_.count(p) == 0) {
                     if(auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p)) {
@@ -405,11 +418,15 @@ class Parser {
         }
     private:
         std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
-        void checkMaxOccurrence(std::shared_ptr<AbstractOption> opt)  {
+        size_t optionEncountered(std::shared_ptr<AbstractOption> opt) {
             size_t counter = 0;
             if(opts_counter_.count(opt) > 0) {
                 counter = opts_counter_[opt];
             }
+            return counter;
+        }
+        void checkMaxOccurrence(std::shared_ptr<AbstractOption> opt)  {
+            size_t counter = optionEncountered(opt);
             if(counter >= opt->maxOccurrence()) {
                 if(auto p = std::dynamic_pointer_cast<OneOf>(opt)) {
                     throw OnlyOneChoiseIsAllowed(p);
@@ -442,6 +459,16 @@ class Parser {
             storage.setDefault(opt, true);
             opts_counter_[abs_opt]++;;
         }
+        void unpackGroups(const std::vector<std::shared_ptr<AbstractOption>>& options, 
+            std::vector<std::shared_ptr<AbstractOption>>& unpacked) {
+            for(auto it : options) {
+                if(auto p = std::dynamic_pointer_cast<OptionsGroup>(it)) {
+                    unpackGroups(p->unlocks, unpacked);
+                } else {
+                    unpacked.push_back(it);
+                }                
+            }
+        }
 };
 
-#endif 
+#endif

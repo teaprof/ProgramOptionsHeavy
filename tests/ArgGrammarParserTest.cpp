@@ -47,6 +47,14 @@ TEST(ArgGrammarParser, ShortOption) {
     EXPECT_EQ(parser4.current_result.value, "10");
     EXPECT_EQ(parser4.getValue(nullptr), "10");
     EXPECT_TRUE(parser4.eof());
+
+    ArgGrammarParser parser5("\\--escaped");
+    EXPECT_FALSE(parser5.eof());
+    parser5.getNextOption();
+    EXPECT_EQ(parser5.current_result.token_type, ArgGrammarParser::value);
+    EXPECT_EQ(parser5.getValue(nullptr), "--escaped");
+    EXPECT_TRUE(parser5.eof());
+    
 }
 
 TEST(ArgGrammarParser, LongOption) {    
