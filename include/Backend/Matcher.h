@@ -23,12 +23,13 @@
 
 class ArgLexer {
         /*
-        Examples of possible tokens:
+        Possible tokens:
         --long_name
         --long_name=value        
         -xyz
         -xyz=value  
-        value
+        value        
+        -- // unimplemented yet
         */
        /// todo: add "--" support (which signalizes that after it all arguments are treated as positional options)
     private:
@@ -67,7 +68,7 @@ class ArgLexer {
             if(std::regex_match(arg, match, long_option_eq_value_ex)) {
                 assert(match.size() == 3);
                 res.long_option_name = match[1];
-                res.value = match[2];
+                res.value = undecorateValue(match[2]);
                 res.type = long_option_eq_value;
             } else 
             if(std::regex_match(arg, match, short_options_ex)) {
@@ -78,14 +79,19 @@ class ArgLexer {
             if(std::regex_match(arg, match, short_options_eq_value_ex)) {
                 assert(match.size() == 3);
                 res.short_option_names = match[1];
-                res.value = match[2];
+                res.value = undecorateValue(match[2]);
                 res.type = short_options_eq_value;
             } else {
-                res.value = arg;
+                res.value = undecorateValue(arg);
                 res.type = value;
             }
             return res;
-        }        
+        } 
+        static std::string undecorateValue(const std::string& str) {
+            if(str.length() == 0 || str[0] != '\\')
+                return str;
+            return str.substr(1, std::string::npos);
+        }
 };
 
 
@@ -200,11 +206,17 @@ class ArgGrammarParser {
                     throw ExpectedValue(opt);
                 }                    
                 case TokenTypes::long_option:
-                case TokenTypes::short_option:
+                case TokenTypes::short_option: {
                     if(eof()) {
                         throw ExpectedValue(opt);
                     }
-                    return args_[idx++];
+                    ArgLexer::Result lex_result = ArgLexer::lex(args_[idx++]);
+                    if(lex_result.type == ArgLexer::value) {
+                        return lex_result.value;
+                    }
+                    //return args_[idx++]; // force next arg as value
+                    throw ExpectedValue(opt);
+                }
                 case TokenTypes::value:
                 case TokenTypes::short_option_eq_value:
                 case TokenTypes::long_option_eq_value:
