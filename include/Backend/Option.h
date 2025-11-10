@@ -91,7 +91,7 @@ class AbstractNamedOptionWithValue : public NamedOption, public AbstractOptionWi
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
-template<class T>
+template<class T> /// TODO actually this class can be non-template (type-agnostic)
 class NamedOptionWithValue : public AbstractNamedOptionWithValue {
     public:
         NamedOptionWithValue() {}

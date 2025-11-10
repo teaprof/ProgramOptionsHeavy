@@ -78,7 +78,7 @@ TEST(ValueSematics, String) {
 }
 
 TEST(ValueSematics, Bool) {
-    using dest_type = TypedSemanticParseResult<float>;
+    using dest_type = TypedSemanticParseResult<bool>;
     ValueSemantics<bool> semantics;
     auto r = std::static_pointer_cast<dest_type>(semantics.semanticParse(" TRUE"));
     ASSERT_TRUE(r->value);

@@ -18,6 +18,7 @@
 
 /* Todo:
 1. support for escape character: "--a" is named option, but "\--a" is value converted to "--a"
+2. support for "--": all args after it are treated as positional 
 */
 
 class ArgLexer {

@@ -2,6 +2,7 @@
 #define __BACKEND_VALUE_SEMANTICS__
 
 #include "Exceptions.h"
+#include "SemanticParseResult.h"
 #include <any>
 #include <optional>
 #include <string>
@@ -10,23 +11,14 @@
 #include <type_traits>
 #include <utility>
 
-struct SemanticParseResult {
-};
-
-template<class T>
-struct TypedSemanticParseResult : public SemanticParseResult {
-    T value;
-    TypedSemanticParseResult(const T& v) : value{v} {}
-    void store(T& external_storage) {
-        external_storage = value;
-    }
-};
+class BaseValueStorage;
 
 class BaseValueSemantics {
     public:
         virtual std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) = 0; // TODO replace shared_ptr with something located on the stack
         virtual std::shared_ptr<SemanticParseResult> defaultValue() { return nullptr; }; // TODO replace shared_ptr with something located on the stack
-        virtual void storeTo(std::shared_ptr<SemanticParseResult> value, std::any valueptr) = 0;
+        virtual void storeTo(std::shared_ptr<SemanticParseResult> value, std::any valueptr) = 0; // TODO unused
+        virtual std::shared_ptr<BaseValueStorage> createStorage() = 0;
 };
 
 template<class T>
@@ -49,6 +41,9 @@ class TypedValueSemantics : public BaseValueSemantics {
         }
         bool hasDefaultValue() {
             return default_value_.has_value();
+        }
+        std::shared_ptr<BaseValueStorage> createStorage() override {
+            return std::make_shared<TypedValueStorage<T>>();
         }
     private:
         std::optional<T> default_value_;

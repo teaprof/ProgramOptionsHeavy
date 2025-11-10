@@ -123,12 +123,12 @@ TEST(Matcher, MultipleOccurrenceOfNamedOption) {
     ASSERT_EQ(d, 10);
     EXPECT_TRUE(parser.parse("--opt1 20"));
     EXPECT_EQ(parser.storage[opt]->size(), 1);
-    EXPECT_EQ(parser.storage[opt]->raw_values_[0], "20");
+    EXPECT_EQ(parser.storage[opt]->rawValues(0), "20");
     ASSERT_EQ(d, 20);
     EXPECT_TRUE(parser.parse("--opt1 20 --opt1 30"));
     EXPECT_TRUE(parser.storage[opt]->size() == 2);
-    EXPECT_EQ(parser.storage[opt]->raw_values_[0], "20");
-    EXPECT_EQ(parser.storage[opt]->raw_values_[1], "30");
+    EXPECT_EQ(parser.storage[opt]->rawValues(0), "20");
+    EXPECT_EQ(parser.storage[opt]->rawValues(1), "30");
     ASSERT_EQ(d, 30);
     ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1 40"), MaxOptionOccurenceIsExceeded);
 }
@@ -151,12 +151,17 @@ TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
     ASSERT_EQ(d, 10);
     EXPECT_TRUE(parser.parse("20"));
     EXPECT_EQ(parser.storage[opt]->size(), 1);
-    EXPECT_EQ(parser.storage[opt]->raw_values_[0], "20");
+    EXPECT_EQ(parser.storage[opt]->rawValues(0), "20");
+    auto int_storage = std::dynamic_pointer_cast<TypedValueStorage<int>>(parser.storage[opt]);
+    ASSERT_EQ(int_storage->values(0), 20);
     ASSERT_EQ(d, 20);
     EXPECT_TRUE(parser.parse("20 30"));
     EXPECT_TRUE(parser.storage[opt]->size() == 2);
-    EXPECT_EQ(parser.storage[opt]->raw_values_[0], "20");
-    EXPECT_EQ(parser.storage[opt]->raw_values_[1], "30");
+    EXPECT_EQ(parser.storage[opt]->rawValues(0), "20");
+    EXPECT_EQ(parser.storage[opt]->rawValues(1), "30");
+    int_storage = std::dynamic_pointer_cast<TypedValueStorage<int>>(parser.storage[opt]);
+    ASSERT_EQ(int_storage->values(0), 20);
+    ASSERT_EQ(int_storage->values(1), 30);
     ASSERT_EQ(d, 30);
     ASSERT_THROW(parser.parse("20 30 40"), MaxOptionOccurenceIsExceeded);
 }
