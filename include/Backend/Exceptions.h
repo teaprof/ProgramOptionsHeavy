@@ -71,12 +71,6 @@ class MaxOptionOccurenceIsExceeded  : public BaseOptionError {
         MaxOptionOccurenceIsExceeded(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
 };
 
-/// TODO unused class, remove
-class CycleIsFound : public std::logic_error { 
-    public:
-        CycleIsFound(std::shared_ptr<AbstractOption> opt) : std::logic_error("option should be specified only once") {}
-};
-
 class DuplicateOption : public std::logic_error {
     public:
         DuplicateOption(std::shared_ptr<AbstractOption> opt) : std::logic_error("option should be specified only once") {}

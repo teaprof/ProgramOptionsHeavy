@@ -11,7 +11,7 @@ class Checker : public AbstractOptionVisitor {
 // TODO checker should check 
 // - if the default value is within [min, max]
 // - if the default value satisfies regex
-// - only one positional option can have multiple occurrence
+// - only the last positional option can have multiple occurrence
 // - such positional option should be placed at the end of command line (should be implemented in matcher)
 
 public:    

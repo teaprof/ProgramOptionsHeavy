@@ -15,6 +15,11 @@
 #include <queue>
 #include <boost/spirit/include/classic.hpp>
 
+
+/* Todo:
+1. support for escape character: "--a" is named option, but "\--a" is value converted to "--a"
+*/
+
 class ArgLexer {
         /*
         Examples of possible tokens:

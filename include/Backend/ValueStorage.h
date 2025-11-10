@@ -82,7 +82,7 @@ class ValuesStorage {
     void setExternalStorage(std::shared_ptr<AbstractOptionWithValue> opt, T* val_ptr) {
         external_pointers_[opt] = val_ptr;
     }
-    // TODO: add setExternalStorage as std::vector
+    // TODO: add setExternalStorage for std::vector<T> support
     private:
     std::map<std::shared_ptr<AbstractOptionWithValue>, std::shared_ptr<BaseValueStorage>> values_map_;
     std::map<std::shared_ptr<AbstractOptionWithValue>, std::any> external_pointers_;

@@ -11,8 +11,8 @@
 
 class AbstractOption;
 class NamedOption;
-class AbstractNamedOptionWithValue; // TODO rename
-class AbstractPositionalOption; // TODO rename
+class AbstractNamedOptionWithValue;
+class AbstractPositionalOption;
 class NamedCommand;
 class OneOf;
 class OptionsGroup;
