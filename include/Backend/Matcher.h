@@ -28,7 +28,7 @@ class ArgLexer {
         --long_name=value        
         -xyz
         -xyz=value  
-        value        
+        value   
         -- // unimplemented yet
         */
        /// todo: add "--" support (which signalizes that after it all arguments are treated as positional options)
@@ -357,39 +357,50 @@ class Parser {
         bool parse(ArgGrammarParser args) {
             storage.clear();
             opts_counter_.clear();
-            std::vector<std::shared_ptr<AbstractOption>> all_options;
-            unpackGroups({options_}, all_options);
+            std::vector<std::shared_ptr<AbstractOption>> remaining_options;
+            std::vector<std::shared_ptr<AbstractOption>> used_options;
+            unpackGroups({options_}, remaining_options);
             SingleOptionMatcher matcher(args);
             while(!args.eof()) {
                 args.getNextOption();                
                 bool option_matched = false;
-                for(auto it : all_options) {
+                for(auto it : remaining_options) {
+                    // TODO remove used options but fallback to them to generate error message
                     bool is_positional = (std::dynamic_pointer_cast<AbstractPositionalOption>(it) != nullptr);
-                    if(is_positional) {
-                        if(optionEncountered(it) == it->maxOccurrence()) {
-                            continue; // skip this positional option
-                        }
-                    }
                     it->accept(matcher);
                     if(matcher.match) {
                         setValue(it, matcher);
                         option_matched = true;
+                        if(optionEncountered(it) == it->maxOccurrence()) {
+                            std::erase(remaining_options, it);
+                            used_options.push_back(it);
+                        }
                         break;
                     }                    
                 }
                 if(option_matched) {
-                    unpackGroups(matcher.unlocks, all_options); // TODO: what should we do if this option was unpacked (multiple occurrence)
+                    unpackGroups(matcher.unlocks, remaining_options); // TODO: what should we do if this option was unpacked (multiple occurrence)
                 } else {
+                    // maybe this options is correct but occurred more than allowed number of times
+                    for(auto it : used_options) {
+                        if(auto p = std::dynamic_pointer_cast<AbstractPositionalOption>(it)) {
+                            continue;                            
+                        }
+                        it->accept(matcher);
+                        if(matcher.match) {
+                            checkMaxOccurrence(it); // should throw
+                            assert(false);
+                        }
+                    }
                     if(args.current_result.token_type == ArgGrammarParser::value)  {
                         throw TooManyPositionalOptions(args.getRawOptionString());
                     } else {
-                        // unknown option
                         throw UnknownOption(args.getRawOptionString());
                     }
                 }
             }
             // Apply default values
-            for(auto opt : all_options)
+            for(auto opt : remaining_options)
             {
                 if(opts_counter_.count(opt) > 0) {
                     continue;
@@ -404,7 +415,7 @@ class Parser {
                 };
             }
             // check that all required options are used
-            for(auto p : all_options)
+            for(auto p : remaining_options)
             {
                 if(p->required() && opts_counter_.count(p) == 0) {
                     if(auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p)) {

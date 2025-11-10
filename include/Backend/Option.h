@@ -162,7 +162,7 @@ class OneOf : public AbstractOption {
         OneOf(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2);
         OneOf(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<AbstractOption> alt2, std::shared_ptr<AbstractOption> alt3);
 
-        std::shared_ptr<AbstractOption> addAlternative(std::shared_ptr<AbstractOption> opt);
+        std::shared_ptr<OneOf> addAlternative(std::shared_ptr<AbstractOption> opt);
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
@@ -231,9 +231,9 @@ inline OneOf::OneOf(std::shared_ptr<AbstractOption> alt1, std::shared_ptr<Abstra
     alternatives.push_back(alt3);
 }
 
-inline std::shared_ptr<AbstractOption> OneOf::addAlternative(std::shared_ptr<AbstractOption> opt) {
+inline std::shared_ptr<OneOf> OneOf::addAlternative(std::shared_ptr<AbstractOption> opt) {
     alternatives.push_back(opt);
-    return shared_from_this();
+    return std::static_pointer_cast<OneOf>(shared_from_this());
 }
 
 

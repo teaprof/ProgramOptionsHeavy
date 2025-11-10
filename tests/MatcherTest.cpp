@@ -197,3 +197,57 @@ TEST(Matcher, PositionalAndNamed) {
     EXPECT_THROW(parser.parse("--opt1 10 --opt1 20 filename1 filename2 filename3"), TooManyPositionalOptions);
     EXPECT_NO_THROW(parser.parse("filename --opt1 10 filename --opt1 20"));
 }
+
+TEST(Matcher, NestedAlternatives) {
+    auto alt_nested_1 = std::make_shared<OneOf>()->addAlternative(
+        std::make_shared<NamedCommand>("alt11")->addUnlock(std::make_shared<NamedOption>("--opt11"))
+    )->addAlternative(
+        std::make_shared<NamedCommand>("alt12")->addUnlock(std::make_shared<NamedOption>("--opt12"))
+    );
+    auto alt_nested_2 = std::make_shared<OneOf>()->addAlternative(
+        std::make_shared<NamedCommand>("alt21")->addUnlock(std::make_shared<NamedOption>("--opt21"))
+    )->addAlternative(
+        std::make_shared<NamedCommand>("alt22")->addUnlock(std::make_shared<NamedOption>("--opt22"))
+    );
+    auto opts = std::make_shared<OneOf>()->addAlternative(
+        std::make_shared<NamedCommand>("alt1")->addUnlock(alt_nested_1)
+    )->addAlternative(
+        std::make_shared<NamedCommand>("alt2")->addUnlock(alt_nested_2)
+    );
+
+    Parser parser(opts);
+    ASSERT_NO_THROW(parser.parse("alt1 alt11 --opt11"));
+    ASSERT_NO_THROW(parser.parse("alt1 alt12 --opt12"));
+    ASSERT_NO_THROW(parser.parse("alt2 alt21 --opt21"));
+    ASSERT_NO_THROW(parser.parse("alt2 alt22 --opt22"));
+
+    ASSERT_THROW(parser.parse("--opt11"), UnknownOption);
+    ASSERT_THROW(parser.parse("alt1 alt12 --opt12 --unknown"), UnknownOption);
+    ASSERT_THROW(parser.parse("alt2 --opt21"), UnknownOption);
+    ASSERT_THROW(parser.parse("alt1 alt2"), OnlyOneChoiseIsAllowed); 
+    ASSERT_THROW(parser.parse("alt1 alt11 alt12"), OnlyOneChoiseIsAllowed); 
+}
+
+TEST(Matcher, NestedAlternativesWithEqualNames) {
+    auto alt_nested_1 = std::make_shared<OneOf>()->addAlternative(
+        std::make_shared<NamedCommand>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1"))
+    )->addAlternative(
+        std::make_shared<NamedCommand>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2"))
+    );
+    auto alt_nested_2 = std::make_shared<OneOf>()->addAlternative(
+        std::make_shared<NamedCommand>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1"))
+    )->addAlternative(
+        std::make_shared<NamedCommand>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2"))
+    );
+    auto opts = std::make_shared<OneOf>()->addAlternative(
+        std::make_shared<NamedCommand>("alt1")->addUnlock(alt_nested_1)
+    )->addAlternative(
+        std::make_shared<NamedCommand>("alt2")->addUnlock(alt_nested_2)
+    );
+
+    Parser parser(opts);
+    ASSERT_NO_THROW(parser.parse("alt1 alt1 --opt1"));
+    ASSERT_NO_THROW(parser.parse("alt1 alt2 --opt2"));
+    ASSERT_NO_THROW(parser.parse("alt2 alt1 --opt1"));
+    ASSERT_NO_THROW(parser.parse("alt2 alt2 --opt2"));
+}
