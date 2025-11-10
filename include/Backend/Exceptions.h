@@ -43,7 +43,7 @@ class UnknownOption : public std::runtime_error { /// TODO: make abstract base c
 
 class RequiredOptionIsNotSet : public std::runtime_error {
      public:
-        RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt) : std::runtime_error("123") {}
+        RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt) : std::runtime_error("required option is not set") {}
 };
 
 class ExpectedValue  : public BaseOptionError {

@@ -360,20 +360,16 @@ class Parser {
             // Apply default values
             for(auto opt : all_options_)
             {
-                if(!opt->required() || opts_counter_.count(opt) > 0) {
+                if(opts_counter_.count(opt) > 0) {
                     continue;
                 }
-                if(auto p = std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(opt)) {
+                if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
                     if(p->baseValueSemantics().defaultValue() == nullptr) {
-                        throw RequiredOptionIsNotSet(p);
+                        if(opt->required())
+                            throw RequiredOptionIsNotSet(opt);
+                    } else {
+                        setDefaultValue(p);
                     }
-                    setDefaultValue(p);
-                } else 
-                if(auto p = std::dynamic_pointer_cast<AbstractPositionalOption>(opt)) {
-                    if(p->baseValueSemantics().defaultValue() == nullptr) {
-                        throw TooFewPositionalOptions();
-                    }
-                    setDefaultValue(p);
                 };
             }
             // check that all required options are used
@@ -392,7 +388,11 @@ class Parser {
     private:
         std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
         void checkMaxOccurrence(std::shared_ptr<AbstractOption> opt)  {
-            if(opts_counter_.count(opt) >= opt->maxOccurrence()) {
+            size_t counter = 0;
+            if(opts_counter_.count(opt) > 0) {
+                counter = opts_counter_[opt];
+            }
+            if(counter >= opt->maxOccurrence()) {
                 if(auto p = std::dynamic_pointer_cast<OneOf>(opt)) {
                     throw OnlyOneChoiseIsAllowed(p);
                 }
@@ -408,28 +408,21 @@ class Parser {
 
         void setValue(std::shared_ptr<AbstractOption> opt, const SingleOptionMatcher& matcher) { 
             checkMaxOccurrence(opt);
-            // TODO: support for positional options
-            if(auto p = std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(opt)) {
+            if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
                 auto semantic_parse_result = p->baseValueSemantics().semanticParse(matcher.value);                
                 storage.addValue(p, matcher.value, semantic_parse_result);
             }
             opts_counter_[opt]++;;
         }
-        void setDefaultValue(std::shared_ptr<AbstractNamedOptionWithValue> opt) { 
-            checkMaxOccurrence(opt);
+        void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt) { 
+            auto abs_opt = std::dynamic_pointer_cast<AbstractOption>(opt);
+            assert(abs_opt != nullptr);
+            checkMaxOccurrence(abs_opt);
             auto semantic_parse_result = opt->baseValueSemantics().defaultValue();
             assert(semantic_parse_result != nullptr);
             storage.addValue(opt, "", semantic_parse_result);
             storage.setDefault(opt, true);
-            opts_counter_[opt]++;;
-        }
-        void setDefaultValue(std::shared_ptr<AbstractPositionalOption> opt) { 
-            checkMaxOccurrence(opt);
-            auto semantic_parse_result = opt->baseValueSemantics().defaultValue();
-            assert(semantic_parse_result != nullptr);
-            storage.addValue(opt, "", semantic_parse_result);
-            storage.setDefault(opt, true);
-            opts_counter_[opt]++;;
+            opts_counter_[abs_opt]++;;
         }
 };
 

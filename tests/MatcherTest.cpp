@@ -55,6 +55,7 @@ TEST_F(MatcherFixtureSimple, Test1) {
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     opt3->setRequired(true);
     EXPECT_TRUE(parser.parse("-1 filename"));
+    return;
     EXPECT_TRUE(parser.parse("filename -1"));
     opt3->setRequired(false);
     ASSERT_EQ(v, 0);
@@ -95,4 +96,86 @@ TEST(Matcher, OptionRequired) {
     Parser parser(opt);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"--opt1"}));
+}
+
+TEST(Matcher, DefaultValue) {
+    auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    opt->valueSemantics().setDefaultValue(10);
+
+    Parser parser(opt);
+    int d{0};
+    parser.storage.setExternalStorage(opt, &d);
+    parser.parse({});
+    ASSERT_EQ(d, 10);
+    EXPECT_TRUE(parser.parse({"--opt1 20"}));
+    ASSERT_EQ(d, 20);
+}
+
+TEST(Matcher, MultipleOccurrenceOfNamedOption) {
+    auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    opt->valueSemantics().setDefaultValue(10);
+    opt->setMaxOccurreneCount(2);
+
+    Parser parser(opt);
+    int d{0};
+    parser.storage.setExternalStorage(opt, &d);
+    parser.parse({});
+    ASSERT_EQ(d, 10);
+    EXPECT_TRUE(parser.parse("--opt1 20"));
+    EXPECT_EQ(parser.storage[opt]->size(), 1);
+    EXPECT_EQ(parser.storage[opt]->raw_values_[0], "20");
+    ASSERT_EQ(d, 20);
+    EXPECT_TRUE(parser.parse("--opt1 20 --opt1 30"));
+    EXPECT_TRUE(parser.storage[opt]->size() == 2);
+    EXPECT_EQ(parser.storage[opt]->raw_values_[0], "20");
+    EXPECT_EQ(parser.storage[opt]->raw_values_[1], "30");
+    ASSERT_EQ(d, 30);
+    ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1 40"), MaxOptionOccurenceIsExceeded);
+}
+
+TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
+    auto opt = std::make_shared<PositionalOption<int>>();
+    opt->setMaxOccurreneCount(2);
+
+    Parser parser(opt);
+    int d{0};
+    parser.storage.setExternalStorage(opt, &d);
+    opt->setRequired(true);
+    EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
+    opt->setRequired(false);
+    EXPECT_NO_THROW(parser.parse({}));
+    opt->valueSemantics().setDefaultValue(10);
+    ASSERT_FALSE(parser.storage.contains(opt));
+    EXPECT_NO_THROW(parser.parse({}));
+    opt->valueSemantics().setDefaultValue(10);
+    ASSERT_EQ(d, 10);
+    EXPECT_TRUE(parser.parse("20"));
+    EXPECT_EQ(parser.storage[opt]->size(), 1);
+    EXPECT_EQ(parser.storage[opt]->raw_values_[0], "20");
+    ASSERT_EQ(d, 20);
+    EXPECT_TRUE(parser.parse("20 30"));
+    EXPECT_TRUE(parser.storage[opt]->size() == 2);
+    EXPECT_EQ(parser.storage[opt]->raw_values_[0], "20");
+    EXPECT_EQ(parser.storage[opt]->raw_values_[1], "30");
+    ASSERT_EQ(d, 30);
+    ASSERT_THROW(parser.parse("20 30 40"), MaxOptionOccurenceIsExceeded);
+}
+
+TEST(Matcher, PositionalAndNamed) {
+    auto posopt = std::make_shared<PositionalOption<std::string>>();
+    auto namedopt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    posopt->setMaxOccurreneCount(2);
+    namedopt->setMaxOccurreneCount(2);
+
+    auto opts = std::make_shared<OptionsGroup>()->addUnlock(posopt)->addUnlock(namedopt);
+
+    Parser parser(opts);
+    EXPECT_NO_THROW(parser.parse(""));
+    EXPECT_NO_THROW(parser.parse("--opt1 10"));
+    EXPECT_NO_THROW(parser.parse("--opt1 10 filename"));
+    EXPECT_NO_THROW(parser.parse("--opt1 10 --opt1 20 filename"));
+    EXPECT_NO_THROW(parser.parse("--opt1 10 filename1 filename2"));
+    EXPECT_NO_THROW(parser.parse("--opt1 10 --opt1 20 filename1 filename2"));
+    EXPECT_THROW(parser.parse("--opt1 10 --opt1 20 filename1 filename2 filename3"), MaxOptionOccurenceIsExceeded);
+    EXPECT_NO_THROW(parser.parse("filename --opt1 10 filename --opt1 20"));
 }

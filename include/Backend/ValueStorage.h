@@ -33,7 +33,7 @@ class BaseValueStorage {
             }
         }
         size_t size() {
-            return raw_value_.size();
+            return raw_values_.size();
         }
 };
 
@@ -52,13 +52,18 @@ class TypedValueStorage : public BaseValueStorage {
 class ValuesStorage {
     public:
     void addValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value, std::shared_ptr<SemanticParseResult> parse_result) {
-        auto value = std::make_shared<BaseValueStorage>();
-        if(external_pointers_.count(opt) > 0) {
-            value->setValue(opt->baseValueSemantics(), parse_result, raw_value, external_pointers_[opt]);
+        std::shared_ptr<BaseValueStorage> v;
+        if(values_map_.count(opt) == 0) {
+            v = std::make_shared<BaseValueStorage>();
+            values_map_.insert(std::make_pair(opt, v));
         } else {
-            value->setValue(opt->baseValueSemantics(), parse_result, raw_value, std::nullopt);
+            v = values_map_[opt];
         }
-        values_map_[opt] = value;
+        if(external_pointers_.count(opt) > 0) {
+            v->setValue(opt->baseValueSemantics(), parse_result, raw_value, external_pointers_[opt]);
+        } else {
+            v->setValue(opt->baseValueSemantics(), parse_result, raw_value, std::nullopt);
+        }
     }
     void setDefault(std::shared_ptr<AbstractOptionWithValue> opt, bool flag) {
         assert(values_map_.count(opt) > 0);
