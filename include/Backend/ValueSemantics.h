@@ -5,17 +5,19 @@
 #include <any>
 #include <optional>
 #include <string>
+#include <regex>
 #include <concepts>
 #include <type_traits>
+#include <utility>
 
 struct SemanticParseResult {
 };
 
-template<class IntType>
+template<class T>
 struct TypedSemanticParseResult : public SemanticParseResult {
-    IntType value;
-    TypedSemanticParseResult(const IntType& v) : value{v} {}
-    void store(IntType& external_storage) {
+    T value;
+    TypedSemanticParseResult(const T& v) : value{v} {}
+    void store(T& external_storage) {
         external_storage = value;
     }
 };
@@ -23,22 +25,35 @@ struct TypedSemanticParseResult : public SemanticParseResult {
 class BaseValueSemantics {
     public:
         virtual std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) = 0; // TODO replace shared_ptr with something located on the stack
-        virtual void setValue(std::shared_ptr<SemanticParseResult> value, std::any valueptr) = 0;
+        virtual void storeTo(std::shared_ptr<SemanticParseResult> value, std::any valueptr) = 0;
 };
 
-template<class IntType>
+template<class T>
 class TypedValueSemantics : public BaseValueSemantics {
     public:
-        void setValue(std::shared_ptr<SemanticParseResult> value, std::any valueptr) override {
-            auto value_typed = std::static_pointer_cast<TypedSemanticParseResult<IntType>>(value);
+        void storeTo(std::shared_ptr<SemanticParseResult> value, std::any valueptr) override {
+            auto value_typed = std::static_pointer_cast<TypedSemanticParseResult<T>>(value);
             if(valueptr.has_value()) {
-                IntType* value_typed_ptr =  std::any_cast<IntType*>(valueptr);
+                T* value_typed_ptr =  std::any_cast<T*>(valueptr);
                 value_typed->store(*value_typed_ptr);
             }
         }
 };
 
-template<std::integral IntType> // TODO: any integral type
+inline const std::string trim(const std::string& src) { // TODO: move to details or use boost::spirit instead of trim
+    if(src.empty()) {
+        return src;
+    }
+    size_t start = 0;
+    while(start < src.size() && std::isspace(src[start]))
+        start++;
+    size_t end = src.length() - 1;
+    while(end > start && std::isspace(src[end]))
+        end--;
+    return src.substr(start, end - start + 1);
+}
+
+template<std::integral IntType>
 class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
     public:
         void setMinMax(IntType min, IntType max) {
@@ -52,19 +67,19 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
             max_ = max;
         }
         std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) override {
-            // TODO: trim value
+            const std::string& trimmed = trim(value);
             size_t pos;
             IntType res;
             try {
                 if constexpr(std::is_unsigned<IntType>::value) {
-                    unsigned long long tmp = stoll(value, &pos);
-                    if(tmp < std::numeric_limits<IntType>::min() || tmp > std::numeric_limits<IntType>::max()) { /// TODO check that type conversion work properly
+                    unsigned long long tmp = stoll(trimmed, &pos);
+                    if(std::cmp_less(tmp, std::numeric_limits<IntType>::min()) || std::cmp_greater(tmp, std::numeric_limits<IntType>::max())) {
                         throw ValueIsOutOfRange(nullptr, value, "min..max");                        
                     };
                     res = tmp;
                 } else {
-                    signed long long tmp = stoll(value, &pos);
-                    if(tmp < std::numeric_limits<IntType>::min() || tmp > std::numeric_limits<IntType>::max()) {
+                    signed long long tmp = stoll(trimmed, &pos);
+                    if(std::cmp_less(tmp, std::numeric_limits<IntType>::min()) || std::cmp_greater(tmp, std::numeric_limits<IntType>::max())) {
                         throw ValueIsOutOfRange(nullptr, value, "min..max");                        
                     };
                     res = tmp;
@@ -74,7 +89,7 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
             } catch (std::out_of_range) {
                 throw ValueIsOutOfRange(nullptr, value, "min..max");
             }
-            if(pos != value.length()) {
+            if(pos != trimmed.length()) {
                 throw InvalidValueType(nullptr, value, "int");
             }
             if(min_.has_value()) {
@@ -93,14 +108,86 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
         std::optional<IntType> min_, max_;                
 };
 
+template<std::floating_point FloatType>
+class ValueSemantics<FloatType> : public TypedValueSemantics<FloatType> {
+    public:
+        void setMinMax(FloatType min, FloatType max) {
+            min_ = min;
+            max_ = max;
+        }
+        void setMin(FloatType min) {
+            min_ = min;
+        }
+        void setMax(FloatType max) {
+            max_ = max;
+        }
+        std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) override {
+            const std::string& trimmed = trim(value);
+            size_t pos;
+            FloatType res;
+            try {
+                auto tmp = stold(trimmed, &pos);
+                if(tmp < std::numeric_limits<FloatType>::min() || tmp > std::numeric_limits<FloatType>::max()) {
+                    throw ValueIsOutOfRange(nullptr, value, "min..max");                        
+                };
+                res = static_cast<FloatType>(tmp);
+            } catch (std::invalid_argument) {
+                throw InvalidValueType(nullptr, value, "int");
+            } catch (std::out_of_range) {
+                throw ValueIsOutOfRange(nullptr, value, "min..max");
+            }
+            if(pos != trimmed.length()) {
+                throw InvalidValueType(nullptr, value, "int");
+            }
+            if(min_.has_value()) {
+                if(res < min_.value()) {
+                    throw ValueIsOutOfRange(nullptr, value, "min..max");
+                }
+            }
+            if(max_.has_value()) {
+                if(res > max_.value()) {
+                    throw ValueIsOutOfRange(nullptr, value, "min..max");
+                }
+            }
+            return std::make_shared<TypedSemanticParseResult<FloatType>>(res);
+        }
+    private:
+        std::optional<FloatType> min_, max_;                
+};
+
 template<> 
 class ValueSemantics<std::string> : public TypedValueSemantics<std::string> {
     public:
         std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) override {
+            if(regex_.has_value()) {
+                std::smatch m;
+                if(!std::regex_match(value, m, *regex_)) {
+                    assert(regex_hint_.has_value());
+                    throw ValueMustMatchRegex(nullptr, *regex_hint_);
+                }
+            }
             return std::make_shared<TypedSemanticParseResult<std::string>>(value);
+        }
+        void setRegex(const std::regex& regex, const std::string& regex_hint) {
+            regex_ = regex;
+            regex_hint_ = regex_hint;
+        }
+    private:
+        std::optional<std::regex> regex_;
+        std::optional<std::string> regex_hint_;
+};
+
+template<> 
+class ValueSemantics<bool> : public TypedValueSemantics<bool> {
+    public:
+        std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) override {
+            const std::string& trimmed = trim(value);
+            if(trimmed == "true" || trimmed == "TRUE" || trimmed == "True" || trimmed == "1") 
+                return std::make_shared<TypedSemanticParseResult<bool>>(true);
+            if(trimmed == "false" || trimmed == "FALSE" || trimmed == "False" || trimmed == "0") 
+                return std::make_shared<TypedSemanticParseResult<bool>>(false);
+            throw InvalidValueType(nullptr, value, "expected one of: TRUE, True, true, 1, FALSE, False, false, 0");
         }
 };
 
-// TODO ValueSemantics<bool>(TRUE, true, True, 1, FALSE, false, False, 0)
-// TODO ValueSemantics<double>, <float>
 #endif

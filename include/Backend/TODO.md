@@ -93,6 +93,7 @@ Value should store the following flags:
 
 4. Support for file names and dirs in autocompletion
 
+4. Python binding based on POHeavy
 
 TCLAP: multiSwitchArg:
 program -q // quiet

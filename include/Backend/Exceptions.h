@@ -56,12 +56,15 @@ class InvalidValueType  : public BaseOptionError {
         InvalidValueType(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
 };
 
-
 class ValueIsOutOfRange  : public BaseOptionError {
      public:
         ValueIsOutOfRange(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
 };
 
+class ValueMustMatchRegex : public BaseOptionError {
+    public:
+        ValueMustMatchRegex(std::shared_ptr<AbstractOption> opt, const std::string& regex) : BaseOptionError(opt) {};
+};
 
 class MaxOptionOccurenceIsExceeded  : public BaseOptionError {
      public:
