@@ -241,6 +241,25 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
         void visit(std::shared_ptr<AbstractOption> opt) override {
             assert(false);
         }
+        void visit(std::shared_ptr<LiteralString> opt) override {
+            unlocks.clear();
+            match = false;
+            switch(grammar_parser_.current_result.token_type) {
+                case ArgGrammarParser::TokenTypes::long_option:                    
+                case ArgGrammarParser::TokenTypes::long_option_eq_value:                    
+                case ArgGrammarParser::TokenTypes::short_option:
+                case ArgGrammarParser::TokenTypes::short_option_without_value:
+                case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                break;
+                case ArgGrammarParser::TokenTypes::value:
+                    match = opt->str() == grammar_parser_.current_result.value;
+                    break;
+
+            }            
+            if(match) {
+                unlocks = opt->unlocks;
+            };
+        }
         void visit(std::shared_ptr<NamedOption> opt) override {
             unlocks.clear();
             match = false;
@@ -255,11 +274,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                     match = opt->shortName().has_value() && opt->shortName().value() == grammar_parser_.current_result.short_option_name;
                     break;
                 case ArgGrammarParser::TokenTypes::value:
-                    if(auto p = std::dynamic_pointer_cast<NamedCommand>(opt)) {
-                        match = opt->longName().has_value() && opt->longName().value() == grammar_parser_.current_result.value;
-                    };
                     break;
-
             }            
             if(match) {
                 unlocks = opt->unlocks;

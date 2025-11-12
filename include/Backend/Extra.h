@@ -4,9 +4,9 @@
 #include "Option.h"
 #include <string>
 
-class NamedCommand : public NamedOption {
+class NamedCommand : public LiteralString {
 public:          
-    NamedCommand(const std::string& command_name) : NamedOption(command_name) {}
+    NamedCommand(const std::string& command_name) : LiteralString(command_name) {}
 };
 
 #endif

@@ -22,6 +22,11 @@ public:
             u->accept(*this);
         }
     }
+    void visit(std::shared_ptr<LiteralString> opt) override {
+        addVisited(opt);
+        unlocks.push_back(opt);
+        visit(std::static_pointer_cast<AbstractOption>(opt));
+    }
     void visit(std::shared_ptr<NamedOption> opt) override {
         addVisited(opt);
         checkCompatibility(opt);

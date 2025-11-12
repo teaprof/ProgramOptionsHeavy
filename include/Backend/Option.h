@@ -11,6 +11,7 @@
 #include <limits>
 
 class AbstractOption;
+class LiteralString;
 class NamedOption;
 class AbstractNamedOptionWithValue;
 class AbstractPositionalOption;
@@ -27,6 +28,7 @@ class AbstractOptionVisitor {
     public:
         virtual ~AbstractOptionVisitor() {};
         virtual void visit(std::shared_ptr<AbstractOption>) = 0;
+        virtual void visit(std::shared_ptr<LiteralString>) = 0;
         virtual void visit(std::shared_ptr<NamedOption>) = 0;
         virtual void visit(std::shared_ptr<AbstractNamedOptionWithValue>) = 0;
         virtual void visit(std::shared_ptr<AbstractPositionalOption>) = 0;
@@ -56,6 +58,16 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
     private:
         bool required_{false};
         size_t max_occurence_{1};
+};
+
+class LiteralString : public AbstractOption {
+public:          
+    LiteralString(const std::string& str) : str_{str} {}
+
+    const std::string& str() const;
+    void accept(AbstractOptionVisitor& visitor) override;
+private:
+    std::string str_;
 };
 
 class NamedOption : public virtual AbstractOption {
@@ -186,6 +198,10 @@ inline size_t AbstractOption::maxOccurrence() const {
     return max_occurence_;
 }
 
+inline const std::string& LiteralString::str() const {
+    return str_;
+}
+
 inline NamedOption::NamedOption(const std::string& undecorated_long_name) : undecorated_long_name_{undecorated_long_name} {
     sanitizeNames();
 }
@@ -241,6 +257,10 @@ inline std::shared_ptr<OneOf> OneOf::addAlternative(std::shared_ptr<AbstractOpti
 inline void AbstractOption::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(shared_from_this());
 }
+inline void LiteralString::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::dynamic_pointer_cast<LiteralString>(shared_from_this()));
+}
+
 inline void NamedOption::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::dynamic_pointer_cast<NamedOption>(shared_from_this()));
 }
