@@ -97,3 +97,24 @@ TEST(ValueSematics, Bool) {
     r = std::static_pointer_cast<dest_type>(semantics.semanticParse("0 "));
     ASSERT_FALSE(r->value);
 }
+
+TEST(ValueSematics, UnlockByValue) {
+    using dest_type = TypedSemanticParseResult<int>;
+    ValueSemantics<int> semantics;
+    semantics.unlocks(0);
+    semantics.unlocks(1).push_back(nullptr);
+    auto r = std::static_pointer_cast<dest_type>(semantics.semanticParse("0"));
+    ASSERT_EQ(r->unlocks.size(), 0);
+    r = std::static_pointer_cast<dest_type>(semantics.semanticParse("1"));
+    ASSERT_EQ(r->unlocks.size(), 1);
+    ASSERT_EQ(r->unlocks[0], nullptr);
+}
+
+
+TEST(ValueSematics, InvalidValue) {
+    using dest_type = TypedSemanticParseResult<int>;
+    ValueSemantics<int> semantics;
+    semantics.unlocks(0);
+    semantics.unlocks(1).push_back(nullptr);
+    ASSERT_THROW(semantics.semanticParse("2"), InvalidOptionValue);
+}

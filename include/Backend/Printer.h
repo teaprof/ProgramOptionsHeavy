@@ -44,10 +44,6 @@ class Printer : public AbstractOptionVisitor {
         void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
             visit(std::static_pointer_cast<NamedOption>(opt));
         }
-        void visit(std::shared_ptr<NamedCommand> opt) override {
-            /// todo: implement this function instead of the following:
-            visit(std::static_pointer_cast<NamedOption>(opt));
-        }
         void visit(std::shared_ptr<AbstractPositionalOption>) override {
             assert(false);
         }
@@ -55,19 +51,6 @@ class Printer : public AbstractOptionVisitor {
             std::cout<<"OptionsGroup"<<std::endl;
             auto old_prefix{prefix};
             prefix = std::string("  ") + prefix;
-            std::cout<<prefix<<"unlocks:"<<std::endl;
-            for(auto it : opt->unlocks) {                
-                it->accept(*this);
-            }
-            prefix = old_prefix;
-        }
-        void visit(std::shared_ptr<OneOf> opt) override {
-            std::cout<<"OneOf"<<std::endl;
-            auto old_prefix{prefix};
-            prefix = std::string("  ") + prefix;
-            for(auto it : opt->alternatives) {
-                it->accept(*this);
-            }
             std::cout<<prefix<<"unlocks:"<<std::endl;
             for(auto it : opt->unlocks) {                
                 it->accept(*this);

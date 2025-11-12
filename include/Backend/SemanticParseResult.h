@@ -5,18 +5,24 @@
 #include <string>
 #include <memory>
 #include <optional>
+#include <vector>
+
+class AbstractOption;
 
 struct SemanticParseResult {
     virtual ~SemanticParseResult() {};
+    std::vector<std::shared_ptr<AbstractOption>> unlocks; // what options does the specified value unlock
 };
 
 template<class T>
 struct TypedSemanticParseResult : public SemanticParseResult {
-    T value;
+    T value;    
+
     TypedSemanticParseResult(const T& v) : value{v} {}
     void store(T& external_storage) {
         external_storage = value;
-    }
+    }        
+        
 };
 
 /*!
@@ -51,7 +57,7 @@ class BaseValueStorage { // TODO rename this file
 };
 
 template<class T>
-class TypedValueStorage : public BaseValueStorage { // TODO unused
+class TypedValueStorage : public BaseValueStorage {
     public:
         void setValue(std::shared_ptr<SemanticParseResult> parse_result, const std::string& raw_value, std::optional<std::any> external_value_ptr = std::nullopt) override {
             BaseValueStorage::setRawValue(raw_value);

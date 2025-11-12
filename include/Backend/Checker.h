@@ -20,7 +20,7 @@ public:
     void visit(std::shared_ptr<AbstractOption> opt) override {
         for(auto u : opt->unlocks) {
             u->accept(*this);
-        }        
+        }
     }
     void visit(std::shared_ptr<NamedOption> opt) override {
         addVisited(opt);
@@ -30,12 +30,6 @@ public:
     }
     void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
         visit(std::static_pointer_cast<NamedOption>(opt));
-    }
-    void visit(std::shared_ptr<NamedCommand> opt) override {
-        addVisited(opt);
-        checkCompatibility(opt);
-        unlocks.push_back(opt);
-        visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
         addVisited(opt);

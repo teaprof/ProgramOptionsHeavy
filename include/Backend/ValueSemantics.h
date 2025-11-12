@@ -15,26 +15,21 @@ class BaseValueStorage;
 
 class BaseValueSemantics {
     public:
-        virtual std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) = 0; // TODO replace shared_ptr with something located on the stack
-        virtual std::shared_ptr<SemanticParseResult> defaultValue() { return nullptr; }; // TODO replace shared_ptr with something located on the stack
-        virtual void storeTo(std::shared_ptr<SemanticParseResult> value, std::any valueptr) = 0; // TODO unused
+        // TODO replace shared_ptr with something faster located on the stack
+        virtual std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) = 0; 
+        virtual std::shared_ptr<SemanticParseResult> defaultValue() { return nullptr; }; 
         virtual std::shared_ptr<BaseValueStorage> createStorage() = 0;
+        // TODO add setImplicitValue
+        
 };
 
 template<class T>
 class TypedValueSemantics : public BaseValueSemantics {
     public:
-        void storeTo(std::shared_ptr<SemanticParseResult> value, std::any valueptr) override {
-            auto value_typed = std::static_pointer_cast<TypedSemanticParseResult<T>>(value);
-            if(valueptr.has_value()) {
-                T* value_typed_ptr =  std::any_cast<T*>(valueptr);
-                value_typed->store(*value_typed_ptr);
-            }
-        }
         std::shared_ptr<SemanticParseResult> defaultValue() override {
             if(!default_value_.has_value())
                 return nullptr;
-            return std::make_shared<TypedSemanticParseResult<T>>(default_value_.value());
+            return constructResult(default_value_.value());
         }
         void setDefaultValue(const T& v) {
             default_value_ = v;
@@ -44,9 +39,29 @@ class TypedValueSemantics : public BaseValueSemantics {
         }
         std::shared_ptr<BaseValueStorage> createStorage() override {
             return std::make_shared<TypedValueStorage<T>>();
+        } 
+
+        /// std::enable_if T is not floating point
+        std::vector<std::shared_ptr<AbstractOption>>& unlocks(const T& value) {
+            return unlocks_[value];
+        }
+        const std::vector<std::shared_ptr<AbstractOption>>& unlocks(const T& value) const {
+            return unlocks_[value];
+        }
+    protected:
+        std::shared_ptr<TypedSemanticParseResult<T>> constructResult(const T& value)  {
+            auto res = std::make_shared<TypedSemanticParseResult<T>>(value);
+            if(!unlocks_.empty())  {
+                if(unlocks_.count(value) == 0) {
+                    throw InvalidOptionValue(nullptr, "", "");
+                }
+                res->unlocks = unlocks_[value];
+            }
+            return res;
         }
     private:
         std::optional<T> default_value_;
+        std::map<T, std::vector<std::shared_ptr<AbstractOption>>> unlocks_;
 };
 
 inline const std::string trim(const std::string& src) { // TODO: move to details or use boost::spirit instead of trim
@@ -111,7 +126,7 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
                     throw ValueIsOutOfRange(nullptr, value, "min..max");
                 }
             }
-            return std::make_shared<TypedSemanticParseResult<IntType>>(res);
+            return TypedValueSemantics<IntType>::constructResult(res);
         }        
     private:
         std::optional<IntType> min_, max_;
@@ -158,7 +173,7 @@ class ValueSemantics<FloatType> : public TypedValueSemantics<FloatType> {
                     throw ValueIsOutOfRange(nullptr, value, "min..max");
                 }
             }
-            return std::make_shared<TypedSemanticParseResult<FloatType>>(res);
+            return TypedValueSemantics<FloatType>::constructResult(res);
         }
     private:
         std::optional<FloatType> min_, max_;                
@@ -175,7 +190,7 @@ class ValueSemantics<std::string> : public TypedValueSemantics<std::string> {
                     throw ValueMustMatchRegex(nullptr, *regex_hint_);
                 }
             }
-            return std::make_shared<TypedSemanticParseResult<std::string>>(value);
+            return constructResult(value);
         }
         void setRegex(const std::regex& regex, const std::string& regex_hint) {
             regex_ = regex;
@@ -192,9 +207,9 @@ class ValueSemantics<bool> : public TypedValueSemantics<bool> {
         std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) override {
             const std::string& trimmed = trim(value);
             if(trimmed == "true" || trimmed == "TRUE" || trimmed == "True" || trimmed == "1") 
-                return std::make_shared<TypedSemanticParseResult<bool>>(true);
+                return TypedValueSemantics<bool>::constructResult(true);
             if(trimmed == "false" || trimmed == "FALSE" || trimmed == "False" || trimmed == "0") 
-                return std::make_shared<TypedSemanticParseResult<bool>>(false);
+                return TypedValueSemantics<bool>::constructResult(false);
             throw InvalidValueType(nullptr, value, "expected one of: TRUE, True, true, 1, FALSE, False, false, 0");
         }
 };

@@ -18,9 +18,9 @@ class BaseOptionError : public std::runtime_error {
             return str.str();
         }
         static std::string displayName(std::shared_ptr<AbstractOption> opt) {
-            if(auto p = std::dynamic_pointer_cast<NamedCommand>(opt)) {
+            /*if(auto p = std::dynamic_pointer_cast<NamedCommand>(opt)) {
                 return p->displayName();
-            }
+            }*/
             return "";            
         }
 
@@ -54,6 +54,11 @@ class ExpectedValue  : public BaseOptionError {
 class InvalidValueType  : public BaseOptionError {
      public:
         InvalidValueType(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
+};
+
+class InvalidOptionValue  : public BaseOptionError {
+     public:
+        InvalidOptionValue(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected) : BaseOptionError(opt) {}
 };
 
 class ValueIsOutOfRange  : public BaseOptionError {

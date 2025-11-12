@@ -29,7 +29,7 @@ alt2.addCompatible(repack)
 
 
 int main(int argc, char* argv[]) {
-    auto helpOption = std::make_shared<NamedOption>("--help", "-h");
+    /*auto helpOption = std::make_shared<NamedOption>("--help", "-h");
     auto hypercubeOptions = std::make_shared<OneOf>(
         helpOption,
         std::make_shared<NamedOption>("run")->
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     hypercubeOptions->accept(printer);
 
     Parser parser(hypercubeOptions);
-    std::cout<<parser.parse({"run", "--dim"})<<std::endl;
+    std::cout<<parser.parse({"run", "--dim"})<<std::endl;*/
 
     return 0;
 }

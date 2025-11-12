@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <optional>
+#include <string>
 #include <cassert>
 #include <variant>
 #include <functional>
@@ -13,8 +14,9 @@ class AbstractOption;
 class NamedOption;
 class AbstractNamedOptionWithValue;
 class AbstractPositionalOption;
-class NamedCommand;
 class OneOf;
+//class NamedCommand;
+//class OneOf;
 class OptionsGroup;
 
 class BaseValueSemantics;
@@ -27,10 +29,10 @@ class AbstractOptionVisitor {
         virtual void visit(std::shared_ptr<AbstractOption>) = 0;
         virtual void visit(std::shared_ptr<NamedOption>) = 0;
         virtual void visit(std::shared_ptr<AbstractNamedOptionWithValue>) = 0;
-        virtual void visit(std::shared_ptr<NamedCommand>) = 0;
         virtual void visit(std::shared_ptr<AbstractPositionalOption>) = 0;
         virtual void visit(std::shared_ptr<OptionsGroup>) = 0;
         virtual void visit(std::shared_ptr<OneOf>) = 0;
+        //virtual void visit(std::shared_ptr<NamedCommand>) = 0;        
 };
 
 class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
@@ -56,7 +58,7 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         size_t max_occurence_{1};
 };
 
-class NamedOption : public AbstractOption {
+class NamedOption : public virtual AbstractOption {
     public:
         NamedOption() {}
         NamedOption(const std::string& undecorated_long_name);
@@ -73,8 +75,9 @@ class NamedOption : public AbstractOption {
         std::optional<std::string> undecorated_short_name_; // short name without leading "-"
 };
 
-class AbstractOptionWithValue {
+class AbstractOptionWithValue : public virtual AbstractOption {
     public:
+        virtual ~AbstractOptionWithValue() {}
         virtual const BaseValueSemantics& baseValueSemantics() const = 0;
         virtual BaseValueSemantics& baseValueSemantics() = 0;
 };
@@ -85,75 +88,73 @@ class AbstractNamedOptionWithValue : public NamedOption, public AbstractOptionWi
         AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : NamedOption(undecorated_long_name) {};
         AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): NamedOption(undecorated_long_name, undecorated_short_name) {}
 
-        bool valueRequired() {
-            return true;
-        }
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
-template<class T> /// TODO actually this class can be non-template (type-agnostic)
-class NamedOptionWithValue : public AbstractNamedOptionWithValue {
+template<class T>
+class OptionWithValue  {
     public:
-        NamedOptionWithValue() {}
-        NamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOptionWithValue(undecorated_long_name) {};
-        NamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name) {};   
-        
-        const BaseValueSemantics& baseValueSemantics() const override {
+        /*const BaseValueSemantics& baseValueSemantics() const override {
             return valueSemantics();
         }
         BaseValueSemantics& baseValueSemantics() override {
             return valueSemantics();
-        }
-
+        }*/
         ValueSemantics<T>& valueSemantics() {
             return value_semantics_;
         }
         const ValueSemantics<T>& valueSemantics() const {
             return value_semantics_;
         }
-        void accept(AbstractOptionVisitor& visitor) override;
     private:
         ValueSemantics<T> value_semantics_;
 };
 
 
-class NamedCommand : public NamedOption {
-    /// \todo: this should be a separate class without support of values and short names
-    /// TODO remove this class?
-    public:          
-        NamedCommand(const std::string long_name) : NamedOption(long_name) {};
-        void accept(AbstractOptionVisitor& visitor) override;
-};
+template<class T> /// TODO actually this class can be non-template (type-agnostic)
+class NamedOptionWithValue : public AbstractNamedOptionWithValue, public OptionWithValue<T> {
+    public:
+        NamedOptionWithValue() {}
+        NamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOptionWithValue(undecorated_long_name) {};
+        NamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name): AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name) {};   
 
-class AbstractPositionalOption : public AbstractOption, public AbstractOptionWithValue {
+        const BaseValueSemantics& baseValueSemantics() const override {
+            return OptionWithValue<T>::valueSemantics();
+        }
+        BaseValueSemantics& baseValueSemantics() override {
+            return OptionWithValue<T>::valueSemantics();
+        }
+    };
+
+
+class AbstractPositionalOption : public virtual AbstractOptionWithValue {
     public:
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
 template<class T>
-class PositionalOption : public AbstractPositionalOption {
+class PositionalOption : public AbstractPositionalOption, public OptionWithValue<T>  {
     public:
         const BaseValueSemantics& baseValueSemantics() const override {
-            return valueSemantics();
+            return OptionWithValue<T>::valueSemantics();
         }
         BaseValueSemantics& baseValueSemantics() override {
-            return valueSemantics();
+            return OptionWithValue<T>::valueSemantics();
         }
-        ValueSemantics<T>& valueSemantics() {
-            return value_semantics_;
-        }
-        const ValueSemantics<T>& valueSemantics() const {
-            return value_semantics_;
-        }
-    private:
-        ValueSemantics<T> value_semantics_;
 };
 
-class OptionsGroup : public AbstractOption {
+class OptionsGroup : public virtual AbstractOption {
     /// TODO what does required_ mean in this case?
     public:
         void accept(AbstractOptionVisitor& visitor) override;        
 };
+
+/*class NamedCommand : public PositionalOption<std::string> {
+    public:          
+        NamedCommand(const std::string& command_name) {
+            this->valueSemantics().unlocks(command_name);
+        }
+};*/
 
 class OneOf : public AbstractOption {
     public:
@@ -241,24 +242,21 @@ inline void AbstractOption::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(shared_from_this());
 }
 inline void NamedOption::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<NamedOption>(shared_from_this()));
+    visitor.visit(std::dynamic_pointer_cast<NamedOption>(shared_from_this()));
 }
 inline void AbstractNamedOptionWithValue::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<AbstractNamedOptionWithValue>(shared_from_this()));
-}
-template<class T>
-inline void NamedOptionWithValue<T>::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<AbstractNamedOptionWithValue>(shared_from_this()));
-}
-inline void NamedCommand::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<NamedCommand>(shared_from_this()));
+    visitor.visit(std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(shared_from_this()));
 }
 inline void AbstractPositionalOption::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<AbstractPositionalOption>(shared_from_this()));
+    visitor.visit(std::dynamic_pointer_cast<AbstractPositionalOption>(shared_from_this()));
 }
 inline void OptionsGroup::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<OptionsGroup>(shared_from_this()));
+    visitor.visit(std::dynamic_pointer_cast<OptionsGroup>(shared_from_this()));
 }
+
+/*inline void NamedCommand::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<NamedCommand>(shared_from_this()));
+}*/
 
 inline void OneOf::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<OneOf>(shared_from_this()));

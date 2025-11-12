@@ -1,5 +1,6 @@
 #include <Backend/ValueSemantics.h>
 #include <Backend/Matcher.h>
+#include <Backend/Extra.h>
 #include <gtest/gtest.h>
 
 class MatcherFixtureSimple : public ::testing::Test {
@@ -48,6 +49,30 @@ class MatcherFixture : public ::testing::Test {
         }        
 };
 
+
+class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
+    protected:
+        std::shared_ptr<AbstractOption> options;
+        std::shared_ptr<NamedOption> common_option;
+        std::shared_ptr<PositionalOption<std::string>> command;
+
+        void SetUp() override {
+            options = std::make_shared<OptionsGroup>();
+
+            common_option = std::make_shared<NamedOption>("--common", "-c");
+            options->addUnlock(common_option);            
+
+            command = std::make_shared<PositionalOption<std::string>>();
+            command->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--dim", "-d"));
+            command->valueSemantics().unlocks("gather").push_back(std::make_shared<NamedOption>("--gatheropt", "-g"));
+            options->addUnlock(command);
+        }
+
+        void TearDown() override {
+        }        
+};
+
+
 TEST_F(MatcherFixtureSimple, Test1) {
     Parser parser(options);
     int v{0};
@@ -84,6 +109,17 @@ TEST_F(MatcherFixture, Test2) {
     EXPECT_TRUE(parser.parse({"run"}));
     EXPECT_TRUE(parser.parse({"gather", "-g"}));
     EXPECT_THROW(parser.parse({"run", "gather", "-g"}), OnlyOneChoiseIsAllowed);
+    EXPECT_TRUE(parser.parse({"run", "--common"}));
+    EXPECT_TRUE(parser.parse({"--common", "run", "-d"}));
+}
+
+TEST_F(MatcherFixtureWithUnlocksByValue, Test2) {
+    Parser parser(options);
+    command->setRequired(true);
+    EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
+    EXPECT_TRUE(parser.parse({"run"}));
+    EXPECT_TRUE(parser.parse({"gather", "-g"}));
+    EXPECT_THROW(parser.parse({"run", "gather", "-g"}), TooManyPositionalOptions);
     EXPECT_TRUE(parser.parse({"run", "--common"}));
     EXPECT_TRUE(parser.parse({"--common", "run", "-d"}));
 }
@@ -244,6 +280,48 @@ TEST(Matcher, NestedAlternativesWithEqualNames) {
     )->addAlternative(
         std::make_shared<NamedCommand>("alt2")->addUnlock(alt_nested_2)
     );
+
+    Parser parser(opts);
+    ASSERT_NO_THROW(parser.parse("alt1 alt1 --opt1"));
+    ASSERT_NO_THROW(parser.parse("alt1 alt2 --opt2"));
+    ASSERT_NO_THROW(parser.parse("alt2 alt1 --opt1"));
+    ASSERT_NO_THROW(parser.parse("alt2 alt2 --opt2"));
+}
+
+TEST(MatcherWithUnlocksByValue, NestedAlternatives) {
+    auto alt_nested_1 = std::make_shared<PositionalOption<std::string>>();
+    alt_nested_1->valueSemantics().unlocks("alt11").push_back(std::make_shared<NamedOption>("--opt11"));
+    alt_nested_1->valueSemantics().unlocks("alt12").push_back(std::make_shared<NamedOption>("--opt12"));
+    auto alt_nested_2 = std::make_shared<PositionalOption<std::string>>();
+    alt_nested_2->valueSemantics().unlocks("alt21").push_back(std::make_shared<NamedOption>("--opt21"));
+    alt_nested_2->valueSemantics().unlocks("alt22").push_back(std::make_shared<NamedOption>("--opt22"));
+    auto opts = std::make_shared<PositionalOption<std::string>>();
+    opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
+    opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
+
+    Parser parser(opts);
+    ASSERT_NO_THROW(parser.parse("alt1 alt11 --opt11"));
+    ASSERT_NO_THROW(parser.parse("alt1 alt12 --opt12"));
+    ASSERT_NO_THROW(parser.parse("alt2 alt21 --opt21"));
+    ASSERT_NO_THROW(parser.parse("alt2 alt22 --opt22"));
+
+    ASSERT_THROW(parser.parse("--opt11"), UnknownOption);
+    ASSERT_THROW(parser.parse("alt1 alt12 --opt12 --unknown"), UnknownOption);
+    ASSERT_THROW(parser.parse("alt2 --opt21"), UnknownOption);
+    ASSERT_THROW(parser.parse("alt1 alt2"), InvalidOptionValue); 
+    ASSERT_THROW(parser.parse("alt1 alt11 alt12"), TooManyPositionalOptions); 
+}
+
+TEST(MatcherWithUnlocksByValue, NestedAlternativesWithEqualNames) {
+    auto alt_nested_1 = std::make_shared<PositionalOption<std::string>>();
+    alt_nested_1->valueSemantics().unlocks("alt1").push_back(std::make_shared<NamedOption>("--opt1"));
+    alt_nested_1->valueSemantics().unlocks("alt2").push_back(std::make_shared<NamedOption>("--opt2"));
+    auto alt_nested_2 = std::make_shared<PositionalOption<std::string>>();
+    alt_nested_2->valueSemantics().unlocks("alt1").push_back(std::make_shared<NamedOption>("--opt1"));
+    alt_nested_2->valueSemantics().unlocks("alt2").push_back(std::make_shared<NamedOption>("--opt2"));
+    auto opts = std::make_shared<PositionalOption<std::string>>();
+    opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
+    opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
 
     Parser parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt1 --opt1"));
