@@ -29,6 +29,16 @@ TEST(CheckerTest, SimplePositionalOptions) {
     EXPECT_NO_THROW(options->accept(checker));
 }
 
+TEST(CheckerTest, TooManyPositionalOptions) {
+    auto options = std::make_shared<OptionsGroup>();
+    auto posopt = std::make_shared<PositionalOption<int>>();
+    posopt->setMaxOccurreneCount(2);
+    options->addUnlock(posopt);
+    options->addUnlock(std::make_shared<PositionalOption<int>>());
+    Checker checker;
+    EXPECT_THROW(options->accept(checker), MultipleOccurenceOnlyForLastPosopt);
+}
+
 TEST(CheckerTest, OneOf) {
     auto option = std::make_shared<OneOf>(
         std::make_shared<NamedCommand>("run"),

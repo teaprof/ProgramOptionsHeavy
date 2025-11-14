@@ -11,24 +11,21 @@ class Checker : public AbstractOptionVisitor {
 // TODO checker should check 
 // - if the default value is within [min, max]
 // - if the default value satisfies regex
-// - only the last positional option can have multiple occurrence
-// - such positional option should be placed at the end of command line (should be implemented in matcher)
 
 public:    
     std::vector<std::shared_ptr<AbstractOption>> unlocks;
 
     void visit(std::shared_ptr<AbstractOption> opt) override {
+        addVisited(opt);
         for(auto u : opt->unlocks) {
             u->accept(*this);
         }
     }
     void visit(std::shared_ptr<LiteralString> opt) override {
-        addVisited(opt);
         unlocks.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<NamedOption> opt) override {
-        addVisited(opt);
         checkCompatibility(opt);
         unlocks.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
@@ -37,32 +34,38 @@ public:
         visit(std::static_pointer_cast<NamedOption>(opt));
     }
     void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-        addVisited(opt);
-        unlocks.push_back(opt);        
+        unlocks.push_back(opt);
+        if(has_positional_option_with_multiple_occurrence) {
+            throw MultipleOccurenceOnlyForLastPosopt(opt);
+        }
+        if(opt->maxOccurrence() != 1) {
+            has_positional_option_with_multiple_occurrence = true;
+        }
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<OptionsGroup> opt) override {
-        addVisited(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<OneOf> opt) override {
         size_t cur_size = unlocks.size();
-        auto visited_old = visited;
+        auto visited_old = visited_options;
         for(auto alt : opt->alternatives) {
             alt->accept(*this);
             unlocks.erase(unlocks.begin() + cur_size, unlocks.end());
-            visited = visited_old;
+            visited_options = visited_old;
         }
+        visit(std::static_pointer_cast<AbstractOption>(opt));
     }
 private:    
-    std::set<std::shared_ptr<AbstractOption>> visited;
+    std::set<std::shared_ptr<AbstractOption>> visited_options;
+    bool has_positional_option_with_multiple_occurrence{false};
 
     void addVisited(std::shared_ptr<AbstractOption> opt) {
-        if(visited.contains(opt)) {   
+        if(visited_options.contains(opt)) {   
             /// returned to option opt         
             throw DuplicateOption(opt);
         }
-        visited.insert(opt);
+        visited_options.insert(opt);
     }
 
     void checkCompatibility(std::shared_ptr<NamedOption> opt) {

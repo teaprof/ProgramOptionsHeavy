@@ -96,6 +96,10 @@ class OnlyOneChoiseIsAllowed : public BaseOptionError {
         OnlyOneChoiseIsAllowed(std::shared_ptr<OneOf> opt) : BaseOptionError(opt) {}
 };
 
+class MultipleOccurenceOnlyForLastPosopt : public std::logic_error {
+    public:
+        MultipleOccurenceOnlyForLastPosopt(std::shared_ptr<AbstractPositionalOption> opt) : std::logic_error("123") {}
+};
 /*
 TODO:
 From boost::program_options
