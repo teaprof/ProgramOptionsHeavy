@@ -93,8 +93,7 @@ class ArgLexer {
 
 class ArgGrammarParser {
         std::vector<std::string> args_;
-        size_t idx{0};
-        size_t subidx{0};
+        size_t idx_{0};
     public:
         enum TokenTypes {
             long_option, 
@@ -109,6 +108,7 @@ class ArgGrammarParser {
             std::string long_option_name; 
             std::string short_option_name;
             std::string value;
+            size_t index;
         };
         Result current_result;        
         std::queue<Result> results;     
@@ -137,20 +137,21 @@ class ArgGrammarParser {
         }
 
         bool eof() {
-            return idx == args_.size() && results.empty();
+            return idx_ == args_.size() && results.empty();
         }
 
         Result getNextOption() {
             assert(eof() == false);
             if(results.empty()) {
-                assert(idx < args_.size());
-                auto lex_result = ArgLexer::lex(args_[idx++]);
+                assert(idx_ < args_.size());
+                size_t cur_idx = idx_;
+                auto lex_result = ArgLexer::lex(args_[idx_++]);
                 switch(lex_result.type) {
                     case ArgLexer::long_option:
-                        results.push(Result{TokenTypes::long_option, lex_result.long_option_name, "", ""});
+                        results.push(Result{TokenTypes::long_option, lex_result.long_option_name, "", "", cur_idx});
                         break;
                     case ArgLexer::long_option_eq_value:
-                        results.push(Result{TokenTypes::long_option_eq_value, lex_result.long_option_name, "", lex_result.value});
+                        results.push(Result{TokenTypes::long_option_eq_value, lex_result.long_option_name, "", lex_result.value, cur_idx});
                         break;
                     case ArgLexer::short_options: {
                         for(size_t n = 0; n + 1 < lex_result.short_option_names.size(); n++) {
@@ -158,20 +159,20 @@ class ArgGrammarParser {
                             results.push(Result{TokenTypes::short_option_without_value, "", str, ""});
                         }
                         std::string str{lex_result.short_option_names.back()};
-                        results.push(Result{TokenTypes::short_option, "", str, ""});
+                        results.push(Result{TokenTypes::short_option, "", str, "", cur_idx});
                         break;
                         }
                     case ArgLexer::short_options_eq_value: {
                         for(size_t n = 0; n + 1 < lex_result.short_option_names.size(); n++) {
                             std::string str{lex_result.short_option_names[n]};
-                            results.push(Result{TokenTypes::short_option_without_value, "", str, ""});
+                            results.push(Result{TokenTypes::short_option_without_value, "", str, "", cur_idx});
                         }
                         std::string str{lex_result.short_option_names.back()};
-                        results.push(Result{TokenTypes::short_option_eq_value, "", str, lex_result.value});
+                        results.push(Result{TokenTypes::short_option_eq_value, "", str, lex_result.value, cur_idx});
                         break;
                         }
                     case ArgLexer::value:
-                        results.push(Result{TokenTypes::value, "", "", lex_result.value});
+                        results.push(Result{TokenTypes::value, "", "", lex_result.value, cur_idx});
                 }
             }
             current_result = std::move(results.front());
@@ -206,7 +207,7 @@ class ArgGrammarParser {
                     if(eof()) {
                         throw ExpectedValue(opt);
                     }
-                    ArgLexer::Result lex_result = ArgLexer::lex(args_[idx++]);
+                    ArgLexer::Result lex_result = ArgLexer::lex(args_[idx_++]);
                     if(lex_result.type == ArgLexer::value) {
                         return lex_result.value;
                     }
@@ -219,6 +220,13 @@ class ArgGrammarParser {
                     return current_result.value;
             }
             return ""; // to suppress warning "no return value"
+        }
+        size_t getNextIndex() {
+            // return arg index that will be parsed on next call of getNextOption()
+            return idx_;
+        }
+        size_t size() {
+            return args_.size();
         }
 };
 

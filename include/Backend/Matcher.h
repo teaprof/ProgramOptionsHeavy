@@ -219,6 +219,11 @@ class BaseMatcher {
             return true;
         }
 
+        void parseNext(ArgGrammarParser& args) {
+            SingleOptionMatcher matcher(args);
+            eatNextToken(args, matcher);
+        }
+
         void parse(ArgGrammarParser args) {
             clear();
             SingleOptionMatcher matcher(args);
