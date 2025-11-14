@@ -50,6 +50,9 @@ public:
         size_t cur_size = unlocks.size();
         auto visited_old = visited_options;
         for(auto alt : opt->alternatives) {
+            if(auto p = std::dynamic_pointer_cast<OptionsGroup>(alt)) {
+                throw IncorrectAlternative(alt);
+            }
             alt->accept(*this);
             unlocks.erase(unlocks.begin() + cur_size, unlocks.end());
             visited_options = visited_old;

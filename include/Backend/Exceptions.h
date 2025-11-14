@@ -31,19 +31,19 @@ class BaseOptionError : public std::runtime_error {
         std::shared_ptr<AbstractOption> opt_;
 };
 
-class ExpectedOption : public std::runtime_error {
+class ExpectedOption : public BaseOptionError {
     public:
-        ExpectedOption() : std::runtime_error("Expected option") {}
+        ExpectedOption() : BaseOptionError(nullptr) {} //"Expected option") {}
 };
 
-class UnknownOption : public std::runtime_error { /// TODO: make abstract base class to avoid direct inheritance from std::runtime_error
+class UnknownOption : public BaseOptionError { /// TODO: make abstract base class to avoid direct inheritance from std::runtime_error
     public:
-        UnknownOption(std::string str) : std::runtime_error("Unknown option") {}
+        UnknownOption(std::string str) : BaseOptionError(nullptr) {} // std::runtime_error("Unknown option") {}
 };
 
-class RequiredOptionIsNotSet : public std::runtime_error {
+class RequiredOptionIsNotSet : public BaseOptionError {
      public:
-        RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt) : std::runtime_error("required option is not set") {}
+        RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {} // std::runtime_error("required option is not set") {}
 };
 
 class ExpectedValue  : public BaseOptionError {
@@ -81,14 +81,14 @@ class DuplicateOption : public std::logic_error {
         DuplicateOption(std::shared_ptr<AbstractOption> opt) : std::logic_error("option should be specified only once") {}
 };
 
-class TooFewPositionalOptions : public std::runtime_error {
+class TooFewPositionalOptions : public BaseOptionError {
     public:
-        TooFewPositionalOptions() : std::runtime_error("too few positional options are specified") {}
+        TooFewPositionalOptions() : BaseOptionError(nullptr) {} //::runtime_error("too few positional options are specified") {}
 };
 
-class TooManyPositionalOptions : public std::runtime_error {
+class TooManyPositionalOptions : public BaseOptionError {
     public:
-        TooManyPositionalOptions(const std::string& str): std::runtime_error("too many positional options are specified: {str}") {}
+        TooManyPositionalOptions(const std::string& str): BaseOptionError(nullptr) {} //::runtime_error("too many positional options are specified: {str}") {}
 };
 
 class OnlyOneChoiseIsAllowed : public BaseOptionError {
@@ -99,6 +99,11 @@ class OnlyOneChoiseIsAllowed : public BaseOptionError {
 class MultipleOccurenceOnlyForLastPosopt : public std::logic_error {
     public:
         MultipleOccurenceOnlyForLastPosopt(std::shared_ptr<AbstractPositionalOption> opt) : std::logic_error("123") {}
+};
+
+class IncorrectAlternative : public std::logic_error {
+    public:
+        IncorrectAlternative(std::shared_ptr<AbstractOption> opt) : std::logic_error("incorrect alternative") {}
 };
 /*
 TODO:
