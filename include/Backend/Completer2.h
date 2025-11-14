@@ -91,6 +91,8 @@ class Completer : public BaseMatcher {
                 if(!args.eof())
                     BaseMatcher::parseNext(args);
                 assert(args.eof());
+            } catch (ExpectedValue& err) {
+                return {};
             } catch (BaseOptionError& err) {
                 switch(args.current_result.token_type)  {
                     case ArgGrammarParser::short_option:

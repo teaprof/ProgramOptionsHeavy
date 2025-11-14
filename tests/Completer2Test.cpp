@@ -109,3 +109,10 @@ TEST_F(Completer2Fixture, OptionsNotMatch) {
     std::vector<std::string> expected = {};
     ASSERT_EQ(received, expected);
 }
+
+TEST_F(Completer2Fixture, WaitForValue) {
+    Completer completer(exename_with_options);
+    auto received = completer.getCompletionVariants("exename run --dim");
+    std::vector<std::string> expected = {};
+    ASSERT_EQ(received, expected);
+}
