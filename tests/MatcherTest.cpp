@@ -74,7 +74,7 @@ class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
 
 
 TEST_F(MatcherFixtureSimple, Test1) {
-    Parser parser(options);
+    Matcher parser(options);
     int v{0};
     parser.storage.setExternalStorage<int>(opt2, &v);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
@@ -98,12 +98,12 @@ TEST_F(MatcherFixtureSimple, Test1) {
 }
 
 TEST_F(MatcherFixture, Test1) {
-    Parser parser(options);
+    Matcher parser(options);
     EXPECT_TRUE(parser.parse({}));
 }
 
 TEST_F(MatcherFixture, Test2) {
-    Parser parser(options);
+    Matcher parser(options);
     command->setRequired(true);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"run"}));
@@ -114,7 +114,7 @@ TEST_F(MatcherFixture, Test2) {
 }
 
 TEST_F(MatcherFixtureWithUnlocksByValue, Test2) {
-    Parser parser(options);
+    Matcher parser(options);
     command->setRequired(true);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"run"}));
@@ -128,7 +128,7 @@ TEST(Matcher, OptionRequired) {
     auto opt = std::make_shared<NamedOption>("--opt1");
     opt->setRequired(true);
 
-    Parser parser(opt);
+    Matcher parser(opt);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"--opt1"}));
 }
@@ -137,7 +137,7 @@ TEST(Matcher, DefaultValue) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
 
-    Parser parser(opt);
+    Matcher parser(opt);
     int d{0};
     parser.storage.setExternalStorage(opt, &d);
     parser.parse({});
@@ -151,7 +151,7 @@ TEST(Matcher, MultipleOccurrenceOfNamedOption) {
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(2);
 
-    Parser parser(opt);
+    Matcher parser(opt);
     int d{0};
     parser.storage.setExternalStorage(opt, &d);
     parser.parse({});
@@ -172,7 +172,7 @@ TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
     auto opt = std::make_shared<PositionalOption<int>>();
     opt->setMaxOccurreneCount(2);
 
-    Parser parser(opt);
+    Matcher parser(opt);
     int d{0};
     parser.storage.setExternalStorage(opt, &d);
     opt->setRequired(true);
@@ -207,7 +207,7 @@ TEST(Matcher, TwoPositionalOptions) {
     opt2->setMaxOccurreneCount(2);
     auto opt = std::make_shared<OptionsGroup>()->addUnlock(opt1)->addUnlock(opt2);
 
-    Parser parser(opt);
+    Matcher parser(opt);
     EXPECT_NO_THROW(parser.parse({}));
     EXPECT_NO_THROW(parser.parse("file1"));
     EXPECT_NO_THROW(parser.parse("file1 10"));
@@ -223,7 +223,7 @@ TEST(Matcher, PositionalAndNamed) {
 
     auto opts = std::make_shared<OptionsGroup>()->addUnlock(posopt)->addUnlock(namedopt);
 
-    Parser parser(opts);
+    Matcher parser(opts);
     EXPECT_NO_THROW(parser.parse(""));
     EXPECT_NO_THROW(parser.parse("--opt1 10"));
     EXPECT_NO_THROW(parser.parse("--opt1 10 filename"));
@@ -251,7 +251,7 @@ TEST(Matcher, NestedAlternatives) {
         std::make_shared<NamedCommand>("alt2")->addUnlock(alt_nested_2)
     );
 
-    Parser parser(opts);
+    Matcher parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt11 --opt11"));
     ASSERT_NO_THROW(parser.parse("alt1 alt12 --opt12"));
     ASSERT_NO_THROW(parser.parse("alt2 alt21 --opt21"));
@@ -281,7 +281,7 @@ TEST(Matcher, NestedAlternativesWithEqualNames) {
         std::make_shared<NamedCommand>("alt2")->addUnlock(alt_nested_2)
     );
 
-    Parser parser(opts);
+    Matcher parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt1 --opt1"));
     ASSERT_NO_THROW(parser.parse("alt1 alt2 --opt2"));
     ASSERT_NO_THROW(parser.parse("alt2 alt1 --opt1"));
@@ -299,7 +299,7 @@ TEST(MatcherWithUnlocksByValue, NestedAlternatives) {
     opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
     opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
 
-    Parser parser(opts);
+    Matcher parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt11 --opt11"));
     ASSERT_NO_THROW(parser.parse("alt1 alt12 --opt12"));
     ASSERT_NO_THROW(parser.parse("alt2 alt21 --opt21"));
@@ -323,7 +323,7 @@ TEST(MatcherWithUnlocksByValue, NestedAlternativesWithEqualNames) {
     opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
     opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
 
-    Parser parser(opts);
+    Matcher parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt1 --opt1"));
     ASSERT_NO_THROW(parser.parse("alt1 alt2 --opt2"));
     ASSERT_NO_THROW(parser.parse("alt2 alt1 --opt1"));

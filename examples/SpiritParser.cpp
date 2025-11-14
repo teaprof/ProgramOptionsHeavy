@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     Printer printer;
     hypercubeOptions->accept(printer);
 
-    Parser parser(hypercubeOptions);
+    Matcher parser(hypercubeOptions);
     std::cout<<parser.parse({"run", "--dim"})<<std::endl;*/
 
     return 0;

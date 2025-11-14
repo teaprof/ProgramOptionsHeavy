@@ -37,14 +37,14 @@ opt1->tie(v, opt2val);
 ```
 
 0. Value semantic class \<Type\>:
-    - is used to check if the actual value can be accepted
+    + is used to check if the actual value can be accepted
 
 0. Option \<Type\> :
-    - long and short names
-    - with value or not
-    - \<TYPE\> of the value
-    - default value
-    - is required
+    + long and short names
+    + with value or not
+    + \<TYPE\> of the value
+    + default value
+    + is required
     - multiple_values vs multiple_occurrences
     - implicit value (requires reconsidering of the parser and lexer)
     - what is allow_long_disguise (using single "-" for long options)?
@@ -55,8 +55,7 @@ opt1->tie(v, opt2val);
     - support of implicit value (only if no positional options are specified)
 
 1. Value storage
-    - value regex
-    - value converter
+    + value regex
     - expected value type and range (or validator, generally)
 How it could be done? What is the best way? I don't want to associate values with options
 
@@ -70,12 +69,12 @@ Value should store the following flags:
 2. Examples of different way to initialize
 
 3. Checker:
-    - check duplicates among long and short names
+    + check duplicates among long and short names
 
 
 2. Help constructor
 3. Help printers (to plain text, to html, to yaml or json)
-4. Default -h,--help,--version behavior
+4. Default -h,--help,--version, --init-auto-complete behavior
 4. Add support of value constraints in the help message
 4. Different formats of help
 
@@ -99,4 +98,3 @@ TCLAP: multiSwitchArg:
 program -q // quiet
 program -qq // more quiet
 
-UnlabeledMultiArg - only one such arg is allowed (this is a special case of positional option with multiplicity = true)
