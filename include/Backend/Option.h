@@ -62,7 +62,7 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         size_t max_occurence_{1};
 };
 
-class NamedOption : public virtual AbstractOption {
+class NamedOption : public AbstractOption {
     public:
         NamedOption() {}
         NamedOption(const std::string& undecorated_long_name);
@@ -79,14 +79,14 @@ class NamedOption : public virtual AbstractOption {
         std::optional<std::string> undecorated_short_name_; // short name without leading "-"
 };
 
-class AbstractOptionWithValue : public virtual AbstractOption {
+class AbstractOptionWithValue  { 
     public:
         virtual ~AbstractOptionWithValue() {}
         virtual const BaseValueSemantics& baseValueSemantics() const = 0;
         virtual BaseValueSemantics& baseValueSemantics() = 0;
 };
 
-class AbstractPositionalOption : public virtual AbstractOption {
+class AbstractPositionalOption : public AbstractOption {
     public:
         void accept(AbstractOptionVisitor& visitor) override;
 };
