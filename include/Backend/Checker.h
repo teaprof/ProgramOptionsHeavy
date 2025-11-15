@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <set>
+#include <queue>
 
 class Checker : public AbstractOptionVisitor {
 // TODO checker should check 
@@ -13,28 +14,25 @@ class Checker : public AbstractOptionVisitor {
 // - if the default value satisfies regex
 
 public:    
-    std::vector<std::shared_ptr<AbstractOption>> encountered;
+    std::set<std::shared_ptr<AbstractOption>> encountered;
 
     void visit(std::shared_ptr<AbstractOption> opt) override {
         addVisited(opt);
-        for(auto u : opt->unlocks) {
-            u->accept(*this);
-        }
+        for(auto it : opt->unlocks)        
+            remaining_options.push(it);
+        next();
     }
     void visit(std::shared_ptr<LiteralString> opt) override {
-        encountered.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<NamedOption> opt) override {
         checkCompatibility(opt);
-        encountered.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
         visit(std::static_pointer_cast<NamedOption>(opt));
     }
     void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-        encountered.push_back(opt);
         if(has_positional_option_with_multiple_occurrence) {
             throw MultipleOccurenceOnlyForLastPosopt(opt);
         }
@@ -47,28 +45,35 @@ public:
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<OneOf> opt) override {
-        size_t cur_size = encountered.size();
-        auto visited_old = visited_options;
+        visit(std::static_pointer_cast<AbstractOption>(opt));
+        auto encountered_safe = encountered;        
         for(auto alt : opt->alternatives) {
             if(auto p = std::dynamic_pointer_cast<OptionsGroup>(alt)) {
                 throw IncorrectAlternative(alt);
             }
             alt->accept(*this);
-            encountered.erase(encountered.begin() + cur_size, encountered.end());
-            visited_options = visited_old;
+            encountered = encountered_safe;
+        }        
+    }
+    void next() {
+        std::shared_ptr<AbstractOption> head = nullptr;
+        while(head == nullptr && !remaining_options.empty()) {
+            head = remaining_options.front();
+            remaining_options.pop();
         }
-        visit(std::static_pointer_cast<AbstractOption>(opt));
+        if(head != nullptr)
+            head->accept(*this);
     }
 private:    
-    std::set<std::shared_ptr<AbstractOption>> visited_options;
+    std::queue<std::shared_ptr<AbstractOption>> remaining_options;    
     bool has_positional_option_with_multiple_occurrence{false};
 
     void addVisited(std::shared_ptr<AbstractOption> opt) {
-        if(visited_options.contains(opt)) {   
+        if(encountered.contains(opt)) {   
             /// returned to option opt         
             throw DuplicateOption(opt);
         }
-        visited_options.insert(opt);
+        encountered.insert(opt);
     }
 
     void checkCompatibility(std::shared_ptr<NamedOption> opt) {
