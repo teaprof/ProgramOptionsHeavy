@@ -36,9 +36,9 @@ class ExpectedOption : public BaseOptionError {
         ExpectedOption() : BaseOptionError(nullptr) {} //"Expected option") {}
 };
 
-class UnknownOption : public BaseOptionError { /// TODO: make abstract base class to avoid direct inheritance from std::runtime_error
+class UnknownNamedOption : public BaseOptionError { /// TODO: make abstract base class to avoid direct inheritance from std::runtime_error
     public:
-        UnknownOption(std::string str) : BaseOptionError(nullptr) {} // std::runtime_error("Unknown option") {}
+        UnknownNamedOption(std::string str) : BaseOptionError(nullptr) {} // std::runtime_error("Unknown option") {}
 };
 
 class RequiredOptionIsNotSet : public BaseOptionError {
@@ -89,6 +89,11 @@ class TooFewPositionalOptions : public BaseOptionError {
 class TooManyPositionalOptions : public BaseOptionError {
     public:
         TooManyPositionalOptions(const std::string& str): BaseOptionError(nullptr) {} //::runtime_error("too many positional options are specified: {str}") {}
+};
+
+class UnexpectedValueForPositionalOption : public BaseOptionError {
+    public:
+        UnexpectedValueForPositionalOption(const std::string& str): BaseOptionError(nullptr) {} //::runtime_error("too many positional options are specified: {str}") {}
 };
 
 class OnlyOneChoiseIsAllowed : public BaseOptionError {

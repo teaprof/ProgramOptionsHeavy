@@ -259,9 +259,9 @@ TEST(Matcher, NestedAlternatives) {
     ASSERT_NO_THROW(parser.parse("alt2 alt21 --opt21"));
     ASSERT_NO_THROW(parser.parse("alt2 alt22 --opt22"));
 
-    ASSERT_THROW(parser.parse("--opt11"), UnknownOption);
-    ASSERT_THROW(parser.parse("alt1 alt12 --opt12 --unknown"), UnknownOption);
-    ASSERT_THROW(parser.parse("alt2 --opt21"), UnknownOption);
+    ASSERT_THROW(parser.parse("--opt11"), UnknownNamedOption);
+    ASSERT_THROW(parser.parse("alt1 alt12 --opt12 --unknown"), UnknownNamedOption);
+    ASSERT_THROW(parser.parse("alt2 --opt21"), UnknownNamedOption);
     ASSERT_THROW(parser.parse("alt1 alt2"), OnlyOneChoiseIsAllowed); 
     ASSERT_THROW(parser.parse("alt1 alt11 alt12"), OnlyOneChoiseIsAllowed); 
 }
@@ -307,9 +307,9 @@ TEST(MatcherWithUnlocksByValue, NestedAlternatives) {
     ASSERT_NO_THROW(parser.parse("alt2 alt21 --opt21"));
     ASSERT_NO_THROW(parser.parse("alt2 alt22 --opt22"));
 
-    ASSERT_THROW(parser.parse("--opt11"), UnknownOption);
-    ASSERT_THROW(parser.parse("alt1 alt12 --opt12 --unknown"), UnknownOption);
-    ASSERT_THROW(parser.parse("alt2 --opt21"), UnknownOption);
+    ASSERT_THROW(parser.parse("--opt11"), UnknownNamedOption);
+    ASSERT_THROW(parser.parse("alt1 alt12 --opt12 --unknown"), UnknownNamedOption);
+    ASSERT_THROW(parser.parse("alt2 --opt21"), UnknownNamedOption);
     ASSERT_THROW(parser.parse("alt1 alt2"), InvalidOptionValue); 
     ASSERT_THROW(parser.parse("alt1 alt11 alt12"), TooManyPositionalOptions); 
 }

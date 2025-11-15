@@ -183,28 +183,36 @@ class BaseMatcher {
             if(!option_matched) {
                 // maybe this options is correct but occurred more than allowed number of times
                 for(auto it : used_options) {
+                    // skip positional options
                     if(auto p = std::dynamic_pointer_cast<AbstractPositionalOption>(it)) {
                         continue;                            
                     }
+                    // analyze named options - check if this option was already in use
                     it->accept(matcher);
                     if(matcher.match) {
                         checkMaxOccurrence(it); // should throw
                         assert(false);
                     }
                 }
+                // check for correct use of the positional options
                 if(args.current_result.token_type == ArgGrammarParser::value)  {
                     // TODO it could be LiteralString
-                    if(matcher.checked_positional_options.size() == 0)
+                    if(matcher.checked_positional_options.size() == 0) {
+                        // no positional option have been expected
                         throw TooManyPositionalOptions(args.getRawOptionString());
-                    if(matcher.checked_positional_options.size() == 1) {
-                        auto opt = matcher.checked_positional_options[0];
-                        if(auto p = std::dynamic_pointer_cast<LiteralString>(opt))
-                            throw IncorrectLiteralString(p, args.current_result.value);
-                        throw UnknownOption(args.getRawOptionString());
                     }
-                    throw UnknownOption(args.getRawOptionString());
+                    if(matcher.checked_positional_options.size() == 1) {
+                        // positional option was possible, but it doesn't match
+                        const auto& opt = matcher.checked_positional_options.front();
+                        if(auto p = std::dynamic_pointer_cast<LiteralString>(opt)) {                            
+                            throw IncorrectLiteralString(p, args.current_result.value);
+                        }                        
+                        throw UnexpectedValueForPositionalOption(args.getRawOptionString());
+                    }
+                    // If OneOf was encountered more than one positional option can be checked
+                    throw UnexpectedValueForPositionalOption(args.getRawOptionString());
                 } else {
-                    throw UnknownOption(args.getRawOptionString());
+                    throw UnknownNamedOption(args.getRawOptionString());
                 }
             }
             return true;

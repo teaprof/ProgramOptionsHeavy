@@ -102,12 +102,14 @@ class Completer : public BaseMatcher {
                 if(!args.eof())
                     BaseMatcher::parseNext(args);
                 assert(args.eof());
+            } catch (const UnexpectedValueForPositionalOption& err) {
+                regexstr = args.current_result.value + ".*";
             } catch (const IncorrectLiteralString& err) {
                 //return {err.literal_string_->str()};
-                regexstr = args.current_result.value + ".*";                
+                regexstr = args.current_result.value + ".*";
             } catch (const ExpectedValue& err) {
                 return {};
-            } catch (const UnknownOption& err) {
+            } catch (const UnknownNamedOption& err) {
                 switch(args.current_result.token_type)  {
                     case ArgGrammarParser::short_option:
                     case ArgGrammarParser::short_option_eq_value:
