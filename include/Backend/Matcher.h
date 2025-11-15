@@ -22,7 +22,6 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
     private:
         ArgGrammarParser& grammar_parser_;
     public:
-        //std::optional<size_t> match_index;
         bool match;
         std::string value;
         std::vector<std::shared_ptr<AbstractOption>> unlocks;
@@ -31,6 +30,24 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
 
         void visit(std::shared_ptr<AbstractOption> opt) override {
             assert(false);
+        }
+        void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
+            match = false;
+            unlocks.clear();
+            checked_positional_options.push_back(opt);
+            switch(grammar_parser_.current_result.token_type) {
+                case ArgGrammarParser::TokenTypes::long_option:
+                case ArgGrammarParser::TokenTypes::long_option_eq_value:
+                case ArgGrammarParser::TokenTypes::short_option:
+                case ArgGrammarParser::TokenTypes::short_option_without_value:
+                case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                    return;
+                case ArgGrammarParser::TokenTypes::value:
+                    /* nothing to do */;
+            }
+            match = true;
+            value = grammar_parser_.getValue(opt);
+            unlocks = opt->unlocks;
         }
         void visit(std::shared_ptr<LiteralString> opt) override {
             unlocks.clear();
@@ -94,22 +111,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             };
         }
         void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-            match = false;
-            unlocks.clear();
-            checked_positional_options.push_back(opt);
-            switch(grammar_parser_.current_result.token_type) {
-                case ArgGrammarParser::TokenTypes::long_option:
-                case ArgGrammarParser::TokenTypes::long_option_eq_value:
-                case ArgGrammarParser::TokenTypes::short_option:
-                case ArgGrammarParser::TokenTypes::short_option_without_value:
-                case ArgGrammarParser::TokenTypes::short_option_eq_value:
-                    return;
-                case ArgGrammarParser::TokenTypes::value:
-                    /* nothing to do */;
-            }
-            match = true;
-            value = grammar_parser_.getValue(opt);
-            unlocks = opt->unlocks;
+            assert(false);
         }
         void visit(std::shared_ptr<OptionsGroup> opt) override {
             assert(false);
@@ -117,15 +119,12 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             unlocks = opt->unlocks;
         }
         void visit(std::shared_ptr<OneOf> opt) override {
-            //match_index = std::nullopt;
             match = false;
             unlocks.clear();
             for(size_t n = 0; n < opt->alternatives.size(); n++) {
                 auto alt = opt->alternatives[n];
                 alt->accept(*this);
                 if(match) {
-                    //match_index = n;
-                    // TODO test for nested alternatives
                     unlocks = opt->alternatives[n]->unlocks;
                     return;
                 }
@@ -180,6 +179,7 @@ class BaseMatcher {
                     break;
                 };
             }
+            // Process parsing error
             if(!option_matched) {
                 // maybe this options is correct but occurred more than allowed number of times
                 for(auto it : used_options) {

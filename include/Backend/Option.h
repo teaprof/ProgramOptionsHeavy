@@ -15,6 +15,7 @@ class LiteralString;
 class NamedOption;
 class AbstractNamedOptionWithValue;
 class AbstractPositionalOption;
+class AbstractPositionalOptionWithValue;
 class OneOf;
 //class NamedCommand;
 //class OneOf;
@@ -28,10 +29,11 @@ class AbstractOptionVisitor {
     public:
         virtual ~AbstractOptionVisitor() {};
         virtual void visit(std::shared_ptr<AbstractOption>) = 0;
-        virtual void visit(std::shared_ptr<LiteralString>) = 0;
-        virtual void visit(std::shared_ptr<NamedOption>) = 0;
-        virtual void visit(std::shared_ptr<AbstractNamedOptionWithValue>) = 0;
         virtual void visit(std::shared_ptr<AbstractPositionalOption>) = 0;
+        virtual void visit(std::shared_ptr<NamedOption>) = 0;
+        virtual void visit(std::shared_ptr<LiteralString>) = 0;
+        virtual void visit(std::shared_ptr<AbstractNamedOptionWithValue>) = 0;
+        virtual void visit(std::shared_ptr<AbstractPositionalOptionWithValue>) = 0;
         virtual void visit(std::shared_ptr<OptionsGroup>) = 0;
         virtual void visit(std::shared_ptr<OneOf>) = 0;
         //virtual void visit(std::shared_ptr<NamedCommand>) = 0;        
@@ -60,16 +62,6 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         size_t max_occurence_{1};
 };
 
-class LiteralString : public AbstractOption { // TODO consider to make it derivative from AbstractPositionalOption
-public:          
-    LiteralString(const std::string& str) : str_{str} {}
-
-    const std::string& str() const;
-    void accept(AbstractOptionVisitor& visitor) override;
-private:
-    std::string str_;
-};
-
 class NamedOption : public virtual AbstractOption {
     public:
         NamedOption() {}
@@ -93,6 +85,24 @@ class AbstractOptionWithValue : public virtual AbstractOption {
         virtual const BaseValueSemantics& baseValueSemantics() const = 0;
         virtual BaseValueSemantics& baseValueSemantics() = 0;
 };
+
+class AbstractPositionalOption : public virtual AbstractOption {
+    public:
+        void accept(AbstractOptionVisitor& visitor) override;
+};
+
+
+
+class LiteralString : public AbstractPositionalOption { // TODO consider to make it derivative from AbstractPositionalOption
+public:          
+    LiteralString(const std::string& str) : str_{str} {}
+
+    const std::string& str() const;
+    void accept(AbstractOptionVisitor& visitor) override;
+private:
+    std::string str_;
+};
+
 
 class AbstractNamedOptionWithValue : public NamedOption, public AbstractOptionWithValue {
     public:
@@ -138,14 +148,13 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue, public OptionW
         }
     };
 
-
-class AbstractPositionalOption : public virtual AbstractOptionWithValue {
+class AbstractPositionalOptionWithValue : public AbstractPositionalOption, public AbstractOptionWithValue {
     public:
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
 template<class T>
-class PositionalOption : public AbstractPositionalOption, public OptionWithValue<T>  {
+class PositionalOptionWithValue : public AbstractPositionalOptionWithValue, public OptionWithValue<T>  {
     public:
         const BaseValueSemantics& baseValueSemantics() const override {
             return OptionWithValue<T>::valueSemantics();
@@ -269,6 +278,9 @@ inline void AbstractNamedOptionWithValue::accept(AbstractOptionVisitor& visitor)
 }
 inline void AbstractPositionalOption::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::dynamic_pointer_cast<AbstractPositionalOption>(shared_from_this()));
+}
+inline void AbstractPositionalOptionWithValue::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::dynamic_pointer_cast<AbstractPositionalOptionWithValue>(shared_from_this()));
 }
 inline void OptionsGroup::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::dynamic_pointer_cast<OptionsGroup>(shared_from_this()));

@@ -25,6 +25,15 @@ public:
     void visit(std::shared_ptr<LiteralString> opt) override {
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
+    void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
+        if(has_positional_option_with_multiple_occurrence) {
+            throw MultipleOccurenceOnlyForLastPosopt(opt);
+        }
+        if(opt->maxOccurrence() != 1) {
+            has_positional_option_with_multiple_occurrence = true;
+        }
+        visit(std::static_pointer_cast<AbstractOption>(opt));
+    }
     void visit(std::shared_ptr<NamedOption> opt) override {
         checkCompatibility(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
@@ -33,13 +42,7 @@ public:
         visit(std::static_pointer_cast<NamedOption>(opt));
     }
     void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-        if(has_positional_option_with_multiple_occurrence) {
-            throw MultipleOccurenceOnlyForLastPosopt(opt);
-        }
-        if(opt->maxOccurrence() != 1) {
-            has_positional_option_with_multiple_occurrence = true;
-        }
-        visit(std::static_pointer_cast<AbstractOption>(opt));
+        assert(false);
     }
     void visit(std::shared_ptr<OptionsGroup> opt) override {
         visit(std::static_pointer_cast<AbstractOption>(opt));

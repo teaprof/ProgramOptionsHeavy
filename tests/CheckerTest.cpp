@@ -23,18 +23,18 @@ TEST(CheckerTest, Simple2) {
 TEST(CheckerTest, SimplePositionalOptions) {
     auto options = std::make_shared<NamedOption>("--opt1", "-o");
     options->addUnlock(std::make_shared<NamedOption>("--opt2"));
-    options->addUnlock(std::make_shared<PositionalOption<int>>());
-    options->addUnlock(std::make_shared<PositionalOption<int>>());
+    options->addUnlock(std::make_shared<PositionalOptionWithValue<int>>());
+    options->addUnlock(std::make_shared<PositionalOptionWithValue<int>>());
     Checker checker;
     EXPECT_NO_THROW(options->accept(checker));
 }
 
 TEST(CheckerTest, TooManyPositionalOptions) {
     auto options = std::make_shared<OptionsGroup>();
-    auto posopt = std::make_shared<PositionalOption<int>>();
+    auto posopt = std::make_shared<PositionalOptionWithValue<int>>();
     posopt->setMaxOccurreneCount(2);
     options->addUnlock(posopt);
-    options->addUnlock(std::make_shared<PositionalOption<int>>());
+    options->addUnlock(std::make_shared<PositionalOptionWithValue<int>>());
     Checker checker;
     EXPECT_THROW(options->accept(checker), MultipleOccurenceOnlyForLastPosopt);
 }
@@ -105,7 +105,7 @@ TEST(CheckerTest, RepeatedOption) {
 }
 
 TEST(CheckerTest, PositionalWithAllowedOptions) {
-    auto options = std::make_shared<PositionalOption<std::string>>();
+    auto options = std::make_shared<PositionalOptionWithValue<std::string>>();
     options->valueSemantics().unlocks("run");
     options->valueSemantics().unlocks("gather");
     options->valueSemantics().unlocks("clean");
@@ -114,7 +114,7 @@ TEST(CheckerTest, PositionalWithAllowedOptions) {
 }
 
 TEST(CheckerTest, PositionalWithAllowedOptions2) {
-    auto options = std::make_shared<PositionalOption<std::string>>();
+    auto options = std::make_shared<PositionalOptionWithValue<std::string>>();
     options->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--opt1"));
     options->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--opt2"));
     options->valueSemantics().unlocks("gather").push_back(std::make_shared<NamedOption>("--opt1"));
@@ -140,7 +140,7 @@ TEST(CheckerTest, OneOfAlternatives3) {
 
 TEST(CheckerTest, Complex) {
     auto helpOption = std::make_shared<NamedOption>("--help", "-h");
-    auto options = std::make_shared<PositionalOption<std::string>>();
+    auto options = std::make_shared<PositionalOptionWithValue<std::string>>();
     //option->addUnlock(helpOption);
     options->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--dim", "-d"));
     options->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--mIntervalsPerDim", "-m"));
@@ -162,13 +162,13 @@ TEST(CheckerTest, Cycle) {
 }
 
 TEST(CheckerTest, NestedAlternatives) {
-    auto alt_nested_1 = std::make_shared<PositionalOption<std::string>>();
+    auto alt_nested_1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     alt_nested_1->valueSemantics().unlocks("alt1").push_back(std::make_shared<NamedOption>("--opt1"));
     alt_nested_1->valueSemantics().unlocks("alt2").push_back(std::make_shared<NamedOption>("--opt2"));
-    auto alt_nested_2 = std::make_shared<PositionalOption<std::string>>();
+    auto alt_nested_2 = std::make_shared<PositionalOptionWithValue<std::string>>();
     alt_nested_2->valueSemantics().unlocks("alt1").push_back(std::make_shared<NamedOption>("--opt1"));
     alt_nested_2->valueSemantics().unlocks("alt2").push_back(std::make_shared<NamedOption>("--opt2"));
-    auto opts = std::make_shared<PositionalOption<std::string>>();
+    auto opts = std::make_shared<PositionalOptionWithValue<std::string>>();
     opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
     opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
 
