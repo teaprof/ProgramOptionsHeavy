@@ -105,6 +105,11 @@ class IncorrectAlternative : public std::logic_error {
     public:
         IncorrectAlternative(std::shared_ptr<AbstractOption> opt) : std::logic_error("incorrect alternative") {}
 };
+class IncorrectLiteralString : public ExpectedValue {
+    public:
+        IncorrectLiteralString(std::shared_ptr<LiteralString> expected, std::string received) : ExpectedValue(expected), literal_string_{expected} {}
+        std::shared_ptr<LiteralString> literal_string_;
+};
 /*
 TODO:
 From boost::program_options

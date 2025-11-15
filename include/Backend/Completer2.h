@@ -78,11 +78,19 @@ class Completer : public BaseMatcher {
 
             clear();
 
-            //Parse all arguments except the last
+            // Cases
+            // exename run -d 10 -> NO ERROR -> REMAINING_OPTIONS
+            // exename run --d -> UNKNOWN_OPTION -> REMAINING OPTIONS WITH REGEX
+            // exename run -d -> EXPECTED_VALUE -> TAKE PREV OPTION
+            // exename run -- -> POSITIONAL ARG STARTING WITH -- -> REMAINING LONG OPTIONS
+            // exename run - -> REMAINING LONG AND SHORT OPTIONS
+
+            //Parse all arguments except the last, but the last argument can be still consumed if the previous one requires the value
             try {
-                while(args.getNextIndex() + 1 < args.size())
-                    BaseMatcher::parseNext(args);
+                while(args.getNextIndex() + 1 < args.size())                    
+                    BaseMatcher::parseNext(args);            
             } catch (BaseOptionError& err) {
+                // in case of error return empty results
                 return results;
             }
 
@@ -91,9 +99,12 @@ class Completer : public BaseMatcher {
                 if(!args.eof())
                     BaseMatcher::parseNext(args);
                 assert(args.eof());
-            } catch (ExpectedValue& err) {
+            } catch (const IncorrectLiteralString& err) {
+                //return {err.literal_string_->str()};
+                regexstr = args.current_result.value + ".*";                
+            } catch (const ExpectedValue& err) {
                 return {};
-            } catch (BaseOptionError& err) {
+            } catch (const UnknownOption& err) {
                 switch(args.current_result.token_type)  {
                     case ArgGrammarParser::short_option:
                     case ArgGrammarParser::short_option_eq_value:
@@ -108,8 +119,13 @@ class Completer : public BaseMatcher {
                         regexstr = args.current_result.value + ".*";
 
                 }
+            } catch (const BaseOptionError& err) {
+
+            } catch (const std::runtime_error& err) {
+
             } catch (...) {
-                assert(false);
+                //std::cerr<<__LINE__<<std::endl;
+                assert(false);                
             }
 
             CompleterVisitor visitor(results, regexstr);

@@ -27,6 +27,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
         std::string value;
         std::vector<std::shared_ptr<AbstractOption>> unlocks;
         SingleOptionMatcher(ArgGrammarParser& args) : grammar_parser_{args} {}
+        std::vector<std::shared_ptr<AbstractOption>> checked_positional_options;
 
         void visit(std::shared_ptr<AbstractOption> opt) override {
             assert(false);
@@ -34,6 +35,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
         void visit(std::shared_ptr<LiteralString> opt) override {
             unlocks.clear();
             match = false;
+            checked_positional_options.push_back(opt);
             switch(grammar_parser_.current_result.token_type) {
                 case ArgGrammarParser::TokenTypes::long_option:                    
                 case ArgGrammarParser::TokenTypes::long_option_eq_value:                    
@@ -91,30 +93,10 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 unlocks = opt->unlocks;
             };
         }
-/*        void visit(std::shared_ptr<NamedCommand> opt) override {
-            //match_index = std::nullopt;
-            unlocks.clear();
-            match = false;
-            switch(grammar_parser_.current_result.token_type) {
-                case ArgGrammarParser::TokenTypes::long_option:                    
-                case ArgGrammarParser::TokenTypes::long_option_eq_value:                    
-                case ArgGrammarParser::TokenTypes::short_option:
-                case ArgGrammarParser::TokenTypes::short_option_without_value:
-                case ArgGrammarParser::TokenTypes::short_option_eq_value:
-                case ArgGrammarParser::TokenTypes::value:
-                    if(grammar_parser_.current_result.value == opt->longName()) {
-                        match = true;
-                    }                    
-            }            
-            if(match) {
-                //match_index = 0;
-                unlocks = opt->unlocks;
-            };
-        }*/
-
         void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
             match = false;
             unlocks.clear();
+            checked_positional_options.push_back(opt);
             switch(grammar_parser_.current_result.token_type) {
                 case ArgGrammarParser::TokenTypes::long_option:
                 case ArgGrammarParser::TokenTypes::long_option_eq_value:
@@ -172,31 +154,31 @@ class BaseMatcher {
             already_joined.clear();
             storage.clear();
             opts_counter_.clear();
-            jointOptionsTo({options_}, remaining_options);
+            joinOptionsTo({options_}, remaining_options);
         }
 
         bool eatNextToken(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
             args.getNextOption();                
             bool option_matched = false;
+            bool arg_is_value = args.current_result.token_type == ArgGrammarParser::value; 
+            matcher.checked_positional_options.clear();
             for(auto it : remaining_options) {
-                // TODO remove used options but fallback to them to generate error message
-                bool is_positional = (std::dynamic_pointer_cast<AbstractPositionalOption>(it) != nullptr);
                 it->accept(matcher);
                 if(matcher.match) {
                     std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value;
                     setValue(it, matcher, unlocked_by_value);
-                    jointOptionsTo(unlocked_by_value, remaining_options);
+                    joinOptionsTo(unlocked_by_value, remaining_options);
                     if(!already_joined.contains(it)) {
-                        jointOptionsTo(matcher.unlocks, remaining_options); // TODO: what should we do if this option was unpacked (multiple occurrence)
+                        joinOptionsTo(matcher.unlocks, remaining_options); // TODO: what should we do if this option was unpacked (multiple occurrence)
                         already_joined.insert(it);
                     }
-                    option_matched = true;
                     if(optionEncountered(it) == it->maxOccurrence()) {
                         std::erase(remaining_options, it);
                         used_options.push_back(it);
                     }
+                    option_matched = true;
                     break;
-                }                    
+                };
             }
             if(!option_matched) {
                 // maybe this options is correct but occurred more than allowed number of times
@@ -211,7 +193,16 @@ class BaseMatcher {
                     }
                 }
                 if(args.current_result.token_type == ArgGrammarParser::value)  {
-                    throw TooManyPositionalOptions(args.getRawOptionString());
+                    // TODO it could be LiteralString
+                    if(matcher.checked_positional_options.size() == 0)
+                        throw TooManyPositionalOptions(args.getRawOptionString());
+                    if(matcher.checked_positional_options.size() == 1) {
+                        auto opt = matcher.checked_positional_options[0];
+                        if(auto p = std::dynamic_pointer_cast<LiteralString>(opt))
+                            throw IncorrectLiteralString(p, args.current_result.value);
+                        throw UnknownOption(args.getRawOptionString());
+                    }
+                    throw UnknownOption(args.getRawOptionString());
                 } else {
                     throw UnknownOption(args.getRawOptionString());
                 }
@@ -239,11 +230,11 @@ class BaseMatcher {
             }
             return counter;
         }
-        void jointOptionsTo(const std::vector<std::shared_ptr<AbstractOption>>& src_options, 
+        void joinOptionsTo(const std::vector<std::shared_ptr<AbstractOption>>& src_options, 
             std::vector<std::shared_ptr<AbstractOption>>& dst_options) {
             for(auto it : src_options) {
                 if(auto p = std::dynamic_pointer_cast<OptionsGroup>(it)) {
-                    jointOptionsTo(p->unlocks, dst_options);
+                    joinOptionsTo(p->unlocks, dst_options);
                 } else {
                     dst_options.push_back(it);
                 }                
@@ -311,7 +302,7 @@ class Matcher : public BaseMatcher {
                         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value;
                         setDefaultValue(p, unlocked_by_value);
                         assert(unlocked_by_value.empty()); // TODO: process unlocks for default values of options
-                        //jointOptionsTo(unlocked_by_value, remaining_options);
+                        //joinOptionsTo(unlocked_by_value, remaining_options);
                     }
                 };
             }

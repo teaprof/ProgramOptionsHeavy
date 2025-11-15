@@ -60,7 +60,7 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         size_t max_occurence_{1};
 };
 
-class LiteralString : public AbstractOption {
+class LiteralString : public AbstractOption { // TODO consider to make it derivative from AbstractPositionalOption
 public:          
     LiteralString(const std::string& str) : str_{str} {}
 
@@ -280,6 +280,10 @@ inline void OptionsGroup::accept(AbstractOptionVisitor& visitor) {
 
 inline void OneOf::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<OneOf>(shared_from_this()));
+}
+
+inline bool isPositional(std::shared_ptr<AbstractOption> opt) {
+    return std::dynamic_pointer_cast<AbstractPositionalOption>(opt) != nullptr || std::dynamic_pointer_cast<LiteralString>(opt) != nullptr;
 }
 
 #endif

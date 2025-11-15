@@ -160,3 +160,32 @@ TEST(CheckerTest, Cycle) {
     Checker checker;
     EXPECT_THROW(option1->accept(checker), DuplicateOption);
 }
+
+TEST(CheckerTest, NestedAlternatives) {
+    auto alt_nested_1 = std::make_shared<PositionalOption<std::string>>();
+    alt_nested_1->valueSemantics().unlocks("alt1").push_back(std::make_shared<NamedOption>("--opt1"));
+    alt_nested_1->valueSemantics().unlocks("alt2").push_back(std::make_shared<NamedOption>("--opt2"));
+    auto alt_nested_2 = std::make_shared<PositionalOption<std::string>>();
+    alt_nested_2->valueSemantics().unlocks("alt1").push_back(std::make_shared<NamedOption>("--opt1"));
+    alt_nested_2->valueSemantics().unlocks("alt2").push_back(std::make_shared<NamedOption>("--opt2"));
+    auto opts = std::make_shared<PositionalOption<std::string>>();
+    opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
+    opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
+
+    Checker checker;
+    opts->accept(checker);
+}
+
+TEST(CheckerTest, NestedAlternativesWithConflict) {
+    auto opts_nested = std::make_shared<OneOf>();
+    opts_nested->alternatives.push_back(
+        std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--dim"))
+    );
+    auto opts = std::make_shared<OneOf>();
+    opts->alternatives.push_back(
+        std::make_shared<LiteralString>("alt")->addUnlock(opts_nested)->addUnlock(std::make_shared<NamedOption>("--dim"))
+    );
+
+    Checker checker;
+    EXPECT_THROW(opts->accept(checker), DuplicateOption);
+}

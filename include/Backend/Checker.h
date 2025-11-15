@@ -13,7 +13,7 @@ class Checker : public AbstractOptionVisitor {
 // - if the default value satisfies regex
 
 public:    
-    std::vector<std::shared_ptr<AbstractOption>> unlocks;
+    std::vector<std::shared_ptr<AbstractOption>> encountered;
 
     void visit(std::shared_ptr<AbstractOption> opt) override {
         addVisited(opt);
@@ -22,19 +22,19 @@ public:
         }
     }
     void visit(std::shared_ptr<LiteralString> opt) override {
-        unlocks.push_back(opt);
+        encountered.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<NamedOption> opt) override {
         checkCompatibility(opt);
-        unlocks.push_back(opt);
+        encountered.push_back(opt);
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
         visit(std::static_pointer_cast<NamedOption>(opt));
     }
     void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-        unlocks.push_back(opt);
+        encountered.push_back(opt);
         if(has_positional_option_with_multiple_occurrence) {
             throw MultipleOccurenceOnlyForLastPosopt(opt);
         }
@@ -47,14 +47,14 @@ public:
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<OneOf> opt) override {
-        size_t cur_size = unlocks.size();
+        size_t cur_size = encountered.size();
         auto visited_old = visited_options;
         for(auto alt : opt->alternatives) {
             if(auto p = std::dynamic_pointer_cast<OptionsGroup>(alt)) {
                 throw IncorrectAlternative(alt);
             }
             alt->accept(*this);
-            unlocks.erase(unlocks.begin() + cur_size, unlocks.end());
+            encountered.erase(encountered.begin() + cur_size, encountered.end());
             visited_options = visited_old;
         }
         visit(std::static_pointer_cast<AbstractOption>(opt));
@@ -72,7 +72,7 @@ private:
     }
 
     void checkCompatibility(std::shared_ptr<NamedOption> opt) {
-        for(auto unlock: unlocks) 
+        for(auto unlock: encountered) 
             if(checkCompatibility(opt, unlock) == false) {
                 std::stringstream str;
                 throw DuplicateOption(opt);
