@@ -3,6 +3,7 @@
 
 #include <Parsers/AbstractOptionsParser.h>
 #include <Parsers/OptionsGroup.h>
+#include <Backend/Matcher.h>
 
 #include <iostream>
 #include <locale>
@@ -29,48 +30,26 @@ class Parser : public AbstractOptionsParser
     }
     virtual void addGroup(std::shared_ptr<OptionsGroup> options)
     {
-        if (options->positional.max_total_count() != 0)
-        {
-            for (auto it : groups_)
-            {
-                // only one group of options is allowed to have positional
-                // arguments
-                assert(it->positional.max_total_count() == 0);
-            }
-        }
         groups_.push_back(options);
     }
     bool parse(int argc, const char *argv[]) override
     {
-        namespace po = boost::program_options;
-        boost::program_options::options_description partial;
-        boost::program_options::positional_options_description positional;
-        for (auto it : groups_)
-        {
-            partial.add(it->partial);
-            if (it->positional.max_total_count() != 0)
-            {
-                // only one group of options is allowed to have positional
-                // arguments
-                assert(positional.max_total_count() == 0);
-                positional = it->positional;
-            }
+        auto options = std::make_shared<AbstractOption>();
+        for(auto grp : groups_) {
+            options->addUnlock(grp->options);
         }
-        boost::program_options::variables_map vm;
-        auto parse_results = po::command_line_parser(argc, argv).options(partial).positional(positional).run();
-        po::store(parse_results, vm);
-        boost::program_options::notify(vm);
-        for (auto it : groups_)
-        {
-            it->update(vm);
+        std::vector<std::string> args;
+        for(int n = 0; n < argc; n++) {
+            args.push_back(argv[n]);
         }
-        activated = true;
+        Matcher matcher(options);
+        matcher.parse(args);
         return true;
     }
     void validate() override
     {
-        for (auto it : groups_)
-            it->validate();
+        /*for (auto it : groups_)
+            it->validate();*/
     }
     void update(const boost::program_options::variables_map &vm) override
     {

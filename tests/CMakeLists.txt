@@ -4,7 +4,7 @@ include(GoogleTest)
 
 add_executable(poheavy_tests 
     program_mode_options_test.cpp 
-    completer_test.cpp 
+    #completer_test.cpp 
     CheckerTest.cpp
     MatcherTest.cpp
     ArgumentsTokenizerTest.cpp

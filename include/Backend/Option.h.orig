@@ -164,7 +164,11 @@ class PositionalOptionWithValue : public AbstractPositionalOptionWithValue, publ
         }
 };
 
+<<<<<<< Updated upstream
 class OptionsGroup2 : public AbstractOption {
+=======
+class OptionsGroup : public AbstractOption {
+>>>>>>> Stashed changes
     /// TODO what does required_ mean in this case?
     public:
         void accept(AbstractOptionVisitor& visitor) override;        

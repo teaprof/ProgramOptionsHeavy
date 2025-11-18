@@ -1,6 +1,7 @@
 #ifndef __BACKEND_PARSER_H__
 #define __BACKEND_PARSER_H__
 
+#include "Exceptions.h"
 #include "Option.h"
 
 #include <cassert>

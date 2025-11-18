@@ -8,7 +8,7 @@ using program_options_heavy::printers::PrettyPrinter;
 
 
 int main(int argc, const char* argv[]) {
-    Parser parser(argc, argv);
+    /*Parser parser(argc, argv);
     auto help_options = std::make_shared<HelpOptions>();
     auto multithreading_options = std::make_shared<MultithreadOptions>();
     parser.addGroup(help_options);
@@ -18,6 +18,6 @@ int main(int argc, const char* argv[]) {
     auto dom = printer.print(parser);
 
     PrettyPrinter pp;
-    dom->accept(pp);
+    dom->accept(pp);*/
     return 0;
 }

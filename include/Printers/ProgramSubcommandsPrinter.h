@@ -98,7 +98,7 @@ class ProgramSubcommandsPrinter
         res->title = grp.groupName();
         res->add_paragraph(grp.description.str());
         std::stringstream options_list;
-        options_list << grp.visible;
+        //options_list << grp.visible;
         res->add_paragraph(options_list.str());
         return res;
     }

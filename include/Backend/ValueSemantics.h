@@ -135,6 +135,7 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
         std::optional<IntType> min_, max_;
 };
 
+
 template<std::floating_point FloatType>
 class ValueSemantics<FloatType> : public TypedValueSemantics<FloatType> {
     public:

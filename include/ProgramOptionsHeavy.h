@@ -1,5 +1,6 @@
 #ifndef __PROGRAM_OPTIONS_H__
 #define __PROGRAM_OPTIONS_H__
+#include <Backend/wrapper.h>
 #include <Parsers/AbstractOptionsParser.h>
 #include <Parsers/BasicOptions.h>
 #include <Parsers/HelpSubcommand.h>
@@ -9,5 +10,5 @@
 #include <Printers/PrettyPrinter.h>
 #include <Printers/ProgramOptionsPrinter.h>
 #include <Printers/ProgramSubcommandsPrinter.h>
-#include <completer.h>
+//#include <completer.h>
 #endif

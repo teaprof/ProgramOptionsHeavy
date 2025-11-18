@@ -14,6 +14,8 @@ int main() {
     auto commands_parser = std::make_shared<ParserWithSubcommands>("completer");
     auto runOptions = std::make_shared<OptionsGroup>("run group");
     size_t dim;
+    ValueSemantics<int>()
+    runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(), "hypercube dimension");
     runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(), "hypercube dimension");
     auto gatherOptions= std::make_shared<OptionsGroup>("gather group");
     size_t gather_opt;
