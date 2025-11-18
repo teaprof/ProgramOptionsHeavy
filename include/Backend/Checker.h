@@ -44,14 +44,14 @@ public:
     void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
         assert(false);
     }
-    void visit(std::shared_ptr<OptionsGroup> opt) override {
+    void visit(std::shared_ptr<OptionsGroup2> opt) override {
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<OneOf> opt) override {
         visit(std::static_pointer_cast<AbstractOption>(opt));
         auto encountered_safe = encountered;        
         for(auto alt : opt->alternatives) {
-            if(auto p = std::dynamic_pointer_cast<OptionsGroup>(alt)) {
+            if(auto p = std::dynamic_pointer_cast<OptionsGroup2>(alt)) {
                 throw IncorrectAlternative(alt);
             }
             alt->accept(*this);

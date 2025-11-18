@@ -26,6 +26,8 @@ class BaseValueSemantics {
 template<class T>
 class TypedValueSemantics : public BaseValueSemantics {
     public:
+        TypedValueSemantics() {}
+        TypedValueSemantics(T& ref) : ref_{ref} {}
         std::shared_ptr<SemanticParseResult> defaultValue() override {
             if(!default_value_.has_value())
                 return nullptr;
@@ -59,6 +61,7 @@ class TypedValueSemantics : public BaseValueSemantics {
             }
             return res;
         }
+        std::optional<std::reference_wrapper<T>> ref_;
     private:
         std::optional<T> default_value_;
         std::map<T, std::vector<std::shared_ptr<AbstractOption>>> unlocks_;

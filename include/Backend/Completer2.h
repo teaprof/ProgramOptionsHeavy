@@ -58,7 +58,7 @@ class CompleterVisitor : public AbstractOptionVisitor {
         void visit(std::shared_ptr<AbstractPositionalOption>) override {
             /* not implemented yet */
         }
-        void visit(std::shared_ptr<OptionsGroup> opt) override {
+        void visit(std::shared_ptr<OptionsGroup2> opt) override {
             for(auto& p : opt->unlocks) {
                 p->accept(*this);
             }

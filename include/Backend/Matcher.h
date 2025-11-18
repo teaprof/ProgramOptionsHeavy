@@ -113,7 +113,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
         void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
             assert(false);
         }
-        void visit(std::shared_ptr<OptionsGroup> opt) override {
+        void visit(std::shared_ptr<OptionsGroup2> opt) override {
             assert(false);
             match = true;
             unlocks = opt->unlocks;
@@ -241,7 +241,7 @@ class BaseMatcher {
         void joinOptionsTo(const std::vector<std::shared_ptr<AbstractOption>>& src_options, 
             std::vector<std::shared_ptr<AbstractOption>>& dst_options) {
             for(auto it : src_options) {
-                if(auto p = std::dynamic_pointer_cast<OptionsGroup>(it)) {
+                if(auto p = std::dynamic_pointer_cast<OptionsGroup2>(it)) {
                     joinOptionsTo(p->unlocks, dst_options);
                 } else {
                     dst_options.push_back(it);

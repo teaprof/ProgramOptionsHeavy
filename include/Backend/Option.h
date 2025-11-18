@@ -19,7 +19,7 @@ class AbstractPositionalOptionWithValue;
 class OneOf;
 //class NamedCommand;
 //class OneOf;
-class OptionsGroup;
+class OptionsGroup2;
 
 class BaseValueSemantics;
 template<class T> class ValueSemantics;
@@ -34,7 +34,7 @@ class AbstractOptionVisitor {
         virtual void visit(std::shared_ptr<LiteralString>) = 0;
         virtual void visit(std::shared_ptr<AbstractNamedOptionWithValue>) = 0;
         virtual void visit(std::shared_ptr<AbstractPositionalOptionWithValue>) = 0;
-        virtual void visit(std::shared_ptr<OptionsGroup>) = 0;
+        virtual void visit(std::shared_ptr<OptionsGroup2>) = 0;
         virtual void visit(std::shared_ptr<OneOf>) = 0;
         //virtual void visit(std::shared_ptr<NamedCommand>) = 0;        
 };
@@ -93,7 +93,7 @@ class AbstractPositionalOption : public AbstractOption {
 
 
 
-class LiteralString : public AbstractPositionalOption { // TODO consider to make it derivative from AbstractPositionalOption
+class LiteralString : public AbstractPositionalOption {
 public:          
     LiteralString(const std::string& str) : str_{str} {}
 
@@ -164,7 +164,7 @@ class PositionalOptionWithValue : public AbstractPositionalOptionWithValue, publ
         }
 };
 
-class OptionsGroup : public virtual AbstractOption {
+class OptionsGroup2 : public AbstractOption {
     /// TODO what does required_ mean in this case?
     public:
         void accept(AbstractOptionVisitor& visitor) override;        
@@ -282,8 +282,8 @@ inline void AbstractPositionalOption::accept(AbstractOptionVisitor& visitor) {
 inline void AbstractPositionalOptionWithValue::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::dynamic_pointer_cast<AbstractPositionalOptionWithValue>(shared_from_this()));
 }
-inline void OptionsGroup::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::dynamic_pointer_cast<OptionsGroup>(shared_from_this()));
+inline void OptionsGroup2::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::dynamic_pointer_cast<OptionsGroup2>(shared_from_this()));
 }
 
 /*inline void NamedCommand::accept(AbstractOptionVisitor& visitor) {

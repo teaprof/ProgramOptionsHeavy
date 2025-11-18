@@ -10,7 +10,7 @@ class MatcherFixtureSimple : public ::testing::Test {
         std::shared_ptr<NamedOptionWithValue<int>> opt2;
         std::shared_ptr<PositionalOptionWithValue<std::string>> opt3;
         void SetUp() override {
-            options = std::make_shared<OptionsGroup>();
+            options = std::make_shared<OptionsGroup2>();
             opt1 = std::make_shared<NamedOption>("--opt1", "-1");
             opt2 = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
             opt3 = std::make_shared<PositionalOptionWithValue<std::string>>();
@@ -33,7 +33,7 @@ class MatcherFixture : public ::testing::Test {
         std::shared_ptr<OneOf> command;
         void SetUp() override {
             common_option = std::make_shared<NamedOption>("--common", "-c");
-            options = std::make_shared<OptionsGroup>();
+            options = std::make_shared<OptionsGroup2>();
             options->addUnlock(common_option);            
             auto runOptions = std::make_shared<NamedCommand>("run");
             runOptions->addUnlock(
@@ -57,7 +57,7 @@ class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
         std::shared_ptr<PositionalOptionWithValue<std::string>> command;
 
         void SetUp() override {
-            options = std::make_shared<OptionsGroup>();
+            options = std::make_shared<OptionsGroup2>();
 
             common_option = std::make_shared<NamedOption>("--common", "-c");
             options->addUnlock(common_option);            
@@ -207,7 +207,7 @@ TEST(Matcher, TwoPositionalOptions) {
     auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
     opt2->setMaxOccurreneCount(2);
-    auto opt = std::make_shared<OptionsGroup>()->addUnlock(opt1)->addUnlock(opt2);
+    auto opt = std::make_shared<OptionsGroup2>()->addUnlock(opt1)->addUnlock(opt2);
 
     Matcher parser(opt);
     EXPECT_NO_THROW(parser.parse({}));
@@ -223,7 +223,7 @@ TEST(Matcher, PositionalAndNamed) {
     posopt->setMaxOccurreneCount(2);
     namedopt->setMaxOccurreneCount(2);
 
-    auto opts = std::make_shared<OptionsGroup>()->addUnlock(posopt)->addUnlock(namedopt);
+    auto opts = std::make_shared<OptionsGroup2>()->addUnlock(posopt)->addUnlock(namedopt);
 
     Matcher parser(opts);
     EXPECT_NO_THROW(parser.parse(""));

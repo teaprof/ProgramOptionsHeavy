@@ -47,7 +47,7 @@ class Printer : public AbstractOptionVisitor {
         void visit(std::shared_ptr<AbstractPositionalOption>) override {
             assert(false);
         }
-        void visit(std::shared_ptr<OptionsGroup> opt) override {
+        void visit(std::shared_ptr<OptionsGroup2> opt) override {
             std::cout<<"OptionsGroup"<<std::endl;
             auto old_prefix{prefix};
             prefix = std::string("  ") + prefix;

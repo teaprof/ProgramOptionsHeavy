@@ -30,7 +30,7 @@ TEST(CheckerTest, SimplePositionalOptions) {
 }
 
 TEST(CheckerTest, TooManyPositionalOptions) {
-    auto options = std::make_shared<OptionsGroup>();
+    auto options = std::make_shared<OptionsGroup2>();
     auto posopt = std::make_shared<PositionalOptionWithValue<int>>();
     posopt->setMaxOccurreneCount(2);
     options->addUnlock(posopt);
