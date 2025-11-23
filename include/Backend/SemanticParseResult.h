@@ -51,6 +51,10 @@ class BaseValueStorage { // TODO rename this file
         const std::string& rawValues(size_t idx) const {
             return raw_values_[idx];
         }
+
+        virtual std::any getValue() const = 0;
+        virtual size_t valuesCount() const = 0;
+        virtual std::any getValues(size_t index) const = 0;
     private:
         std::vector<std::string> raw_values_;
         std::string raw_value_;
@@ -77,6 +81,15 @@ class TypedValueStorage : public BaseValueStorage {
         }
         const T& values(size_t idx) const {
             return values_[idx];
+        }
+        size_t valuesCount() const {
+            return values_.size();
+        }
+        std::any getValue() const {
+            return value_;
+        }
+        std::any getValues(size_t index) const {
+            return values_[index];
         }
     private:
         std::vector<T> values_;

@@ -91,8 +91,6 @@ class AbstractPositionalOption : public AbstractOption {
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
-
-
 class LiteralString : public AbstractPositionalOption {
 public:          
     LiteralString(const std::string& str) : str_{str} {}

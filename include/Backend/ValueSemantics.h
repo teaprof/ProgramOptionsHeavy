@@ -13,19 +13,28 @@
 
 class BaseValueStorage;
 
-class BaseValueSemantics { // TODO rename to ValueParser
+class BaseValueSemantics { // TODO rename to ValueParser and all variables of this type
     public:
         // TODO replace shared_ptr with something faster located on the stack
-        virtual void semanticParse(const std::string& value) = 0;  // TODO rename to parseAndSetValue
+        virtual std::any semanticParse(const std::string& value) = 0;  // TODO rename to parseAndSetValue
         //virtual std::shared_ptr<BaseValueStorage> createStorage() = 0;
         // TODO add setImplicitValue
 
         virtual bool hasDefaultValue() = 0;
         virtual bool hasImplicitValue() = 0;
-        virtual void setToDefault() = 0;
-        virtual void setToImplicit() = 0;        
+        virtual std::any setToDefault() = 0;
+        virtual std::any setToImplicit() = 0;
+        
+        /// @brief throw or not an exception if parsed value is not in Unlocks
+        void setOnlyAllowedValues(bool flag) {
+            only_allowed_values_ = flag;
+        }        
+
+        virtual void store(const std::any& value, std::any& dest_any_pointer) = 0;
 
         virtual std::vector<std::shared_ptr<AbstractOption>> getUnlocks() = 0;
+    protected:
+        bool only_allowed_values_{false};
 };
 
 template<class T>
@@ -54,18 +63,24 @@ class TypedValueSemantics : public BaseValueSemantics {
             return implicit_value_.has_value();
         }
         void setValue(const T& val) {
+            checkIfValueIsInList(val);
             value_ = val;
             if(external_ref_.has_value()) {
                 external_ref_.value().get() = val;
             }
         }
-        void setToDefault() override {
+        void store(const std::any& value, std::any& dest_any_pointer) override {
+            *std::any_cast<T*>(dest_any_pointer) = std::any_cast<T>(value);
+        }
+        std::any setToDefault() override {
             assert(default_value_.has_value());
             setValue(*default_value_);
+            return *default_value_;
         }
-        void setToImplicit() override {
+        std::any setToImplicit() override {
             assert(implicit_value_.has_value());
             setValue(*implicit_value_);
+            return *implicit_value_;
         }
         /// std::enable_if T is not floating point
         std::vector<std::shared_ptr<AbstractOption>>& unlocks(const T& value) {
@@ -89,7 +104,14 @@ class TypedValueSemantics : public BaseValueSemantics {
         std::optional<T> default_value_;
         std::optional<T> implicit_value_;
         std::map<T, std::vector<std::shared_ptr<AbstractOption>>> unlocks_;
-};
+
+        void checkIfValueIsInList(const T& val) {
+            if(only_allowed_values_ == false)
+                return;
+            if(unlocks_.contains(val) == false)
+                throw InvalidOptionValue(nullptr, "", "");
+        }
+    };
 
 inline const std::string trim(const std::string& src) { // TODO: move to details or use boost::spirit instead of trim
     if(src.empty()) {
@@ -117,7 +139,7 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
         void setMax(IntType max) {
             max_ = max;
         }
-        void semanticParse(const std::string& value) override {
+        std::any semanticParse(const std::string& value) override {
             const std::string& trimmed = trim(value);
             size_t pos;
             IntType res;
@@ -154,6 +176,7 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
                 }
             }
             TypedValueSemantics<IntType>::setValue(res);
+            return res;
         }        
     private:
         std::optional<IntType> min_, max_;
@@ -173,7 +196,7 @@ class ValueSemantics<FloatType> : public TypedValueSemantics<FloatType> {
         void setMax(FloatType max) {
             max_ = max;
         }
-        void semanticParse(const std::string& value) override {
+        std::any semanticParse(const std::string& value) override {
             const std::string& trimmed = trim(value);
             size_t pos;
             FloatType res;
@@ -202,6 +225,7 @@ class ValueSemantics<FloatType> : public TypedValueSemantics<FloatType> {
                 }
             }
             TypedValueSemantics<FloatType>::setValue(res);
+            return res;
         }
     private:
         std::optional<FloatType> min_, max_;                
@@ -210,7 +234,7 @@ class ValueSemantics<FloatType> : public TypedValueSemantics<FloatType> {
 template<> 
 class ValueSemantics<std::string> : public TypedValueSemantics<std::string> {
     public:
-        void semanticParse(const std::string& value) override {
+        std::any semanticParse(const std::string& value) override {
             if(regex_.has_value()) {
                 std::smatch m;
                 if(!std::regex_match(value, m, *regex_)) {
@@ -219,6 +243,7 @@ class ValueSemantics<std::string> : public TypedValueSemantics<std::string> {
                 }
             }
             TypedValueSemantics<std::string>::setValue(value);
+            return value;
         }
         void setRegex(const std::regex& regex, const std::string& regex_hint) {
             regex_ = regex;
@@ -232,15 +257,15 @@ class ValueSemantics<std::string> : public TypedValueSemantics<std::string> {
 template<> 
 class ValueSemantics<bool> : public TypedValueSemantics<bool> {
     public:
-        void semanticParse(const std::string& value) override {
+        std::any semanticParse(const std::string& value) override {
             const std::string& trimmed = trim(value);
             if(trimmed == "true" || trimmed == "TRUE" || trimmed == "True" || trimmed == "1")  {
                 setValue(true);
-                return;
+                return true;
             };
             if(trimmed == "false" || trimmed == "FALSE" || trimmed == "False" || trimmed == "0") {
                 setValue(false);
-                return;
+                return false;
             }
             throw InvalidValueType(nullptr, value, "expected one of: TRUE, True, true, 1, FALSE, False, false, 0");
         }

@@ -160,13 +160,13 @@ TEST(Matcher, MultipleOccurrenceOfNamedOption) {
     parser.parse({});
     ASSERT_EQ(d, 10);
     EXPECT_TRUE(parser.parse("--opt1 20"));
-    EXPECT_EQ(parser.storage[opt]->size(), 1);
-    EXPECT_EQ(parser.storage[opt]->rawValues(0), "20");
+    EXPECT_EQ(parser.storage[opt].size(), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
     ASSERT_EQ(d, 20);
     EXPECT_TRUE(parser.parse("--opt1 20 --opt1 30"));
-    EXPECT_TRUE(parser.storage[opt]->size() == 2);
-    EXPECT_EQ(parser.storage[opt]->rawValues(0), "20");
-    EXPECT_EQ(parser.storage[opt]->rawValues(1), "30");
+    EXPECT_TRUE(parser.storage[opt].size() == 2);
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(1), "30");
     ASSERT_EQ(d, 30);
     ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1 40"), MaxOptionOccurenceIsExceeded);
 }
@@ -189,18 +189,20 @@ TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
     opt->valueSemantics().setDefaultValue(10);
     ASSERT_EQ(d, 10);
     EXPECT_TRUE(parser.parse("20"));
-    EXPECT_EQ(parser.storage[opt]->size(), 1);
-    EXPECT_EQ(parser.storage[opt]->rawValues(0), "20");
-    auto int_storage = std::dynamic_pointer_cast<TypedValueStorage<int>>(parser.storage[opt]);
-    ASSERT_EQ(int_storage->values(0), 20);
+    EXPECT_EQ(parser.storage[opt].size(), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].size(), 1);
+    ASSERT_EQ(parser.storage[opt].valueAs<int>(0), 20);
     ASSERT_EQ(d, 20);
     EXPECT_TRUE(parser.parse("20 30"));
-    EXPECT_TRUE(parser.storage[opt]->size() == 2);
-    EXPECT_EQ(parser.storage[opt]->rawValues(0), "20");
-    EXPECT_EQ(parser.storage[opt]->rawValues(1), "30");
-    int_storage = std::dynamic_pointer_cast<TypedValueStorage<int>>(parser.storage[opt]);
-    ASSERT_EQ(int_storage->values(0), 20);
-    ASSERT_EQ(int_storage->values(1), 30);
+    EXPECT_TRUE(parser.storage[opt].size() == 2);
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(1), "30");
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].size(), 2);
+    ASSERT_EQ(parser.storage[opt].valueAs<int>(0), 20);
+    ASSERT_EQ(parser.storage[opt].valueAs<int>(1), 30);
     ASSERT_EQ(d, 30);
     ASSERT_THROW(parser.parse("20 30 40"), TooManyPositionalOptions);
 }
@@ -296,6 +298,7 @@ TEST(MatcherWithUnlocksByValue, NestedAlternatives) {
     auto alt_nested_1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     alt_nested_1->valueSemantics().unlocks("alt11").push_back(std::make_shared<NamedOption>("--opt11"));
     alt_nested_1->valueSemantics().unlocks("alt12").push_back(std::make_shared<NamedOption>("--opt12"));
+    alt_nested_1->valueSemantics().setOnlyAllowedValues(true);
     auto alt_nested_2 = std::make_shared<PositionalOptionWithValue<std::string>>();
     alt_nested_2->valueSemantics().unlocks("alt21").push_back(std::make_shared<NamedOption>("--opt21"));
     alt_nested_2->valueSemantics().unlocks("alt22").push_back(std::make_shared<NamedOption>("--opt22"));
