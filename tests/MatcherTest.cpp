@@ -76,6 +76,7 @@ class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
 TEST_F(MatcherFixtureSimple, Test1) {
     Matcher parser(options);
     int v{0};
+    opt2->valueSemantics().setExternalStorage(v);
     parser.storage.setExternalStorage<int>(opt2, &v);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     opt3->setRequired(true);
@@ -106,9 +107,7 @@ TEST_F(MatcherFixture, Test2) {
     Matcher parser(options);
     command->setRequired(true);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
-    return;
     EXPECT_TRUE(parser.parse({"run"}));
-    return;
     EXPECT_TRUE(parser.parse({"gather", "-g"}));
     EXPECT_THROW(parser.parse({"run", "gather", "-g"}), OnlyOneChoiseIsAllowed);
     EXPECT_TRUE(parser.parse({"run", "--common"}));
@@ -137,10 +136,11 @@ TEST(Matcher, OptionRequired) {
 
 TEST(Matcher, DefaultValue) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
-    opt->valueSemantics().setDefaultValue(10);
+    opt->valueSemantics().setDefaultValue(10);    
 
     Matcher parser(opt);
     int d{0};
+    opt->valueSemantics().setExternalStorage(d);
     parser.storage.setExternalStorage(opt, &d);
     parser.parse({});
     ASSERT_EQ(d, 10);
@@ -155,6 +155,7 @@ TEST(Matcher, MultipleOccurrenceOfNamedOption) {
 
     Matcher parser(opt);
     int d{0};
+    opt->valueSemantics().setExternalStorage(d);
     parser.storage.setExternalStorage(opt, &d);
     parser.parse({});
     ASSERT_EQ(d, 10);
@@ -176,6 +177,7 @@ TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
 
     Matcher parser(opt);
     int d{0};
+    opt->valueSemantics().setExternalStorage(d);
     parser.storage.setExternalStorage(opt, &d);
     opt->setRequired(true);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);

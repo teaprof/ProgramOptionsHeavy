@@ -13,36 +13,60 @@
 
 class BaseValueStorage;
 
-class BaseValueSemantics {
+class BaseValueSemantics { // TODO rename to ValueParser
     public:
         // TODO replace shared_ptr with something faster located on the stack
-        virtual std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) = 0; 
-        virtual std::shared_ptr<SemanticParseResult> defaultValue() { return nullptr; }; 
-        virtual std::shared_ptr<BaseValueStorage> createStorage() = 0;
+        virtual void semanticParse(const std::string& value) = 0;  // TODO rename to parseAndSetValue
+        //virtual std::shared_ptr<BaseValueStorage> createStorage() = 0;
         // TODO add setImplicitValue
-        
+
+        virtual bool hasDefaultValue() = 0;
+        virtual bool hasImplicitValue() = 0;
+        virtual void setToDefault() = 0;
+        virtual void setToImplicit() = 0;        
+
+        virtual std::vector<std::shared_ptr<AbstractOption>> getUnlocks() = 0;
 };
 
 template<class T>
 class TypedValueSemantics : public BaseValueSemantics {
     public:
         TypedValueSemantics() {}
-        TypedValueSemantics(T& ref) : ref_{ref} {}
-        std::shared_ptr<SemanticParseResult> defaultValue() override {
+        TypedValueSemantics(T& ref) : external_ref_{ref} {}
+        /*std::shared_ptr<SemanticParseResult> defaultValue() override {
             if(!default_value_.has_value())
                 return nullptr;
             return constructResult(default_value_.value());
+        }*/
+        void setExternalStorage(T& ref) {
+            external_ref_ = ref;        
         }
         void setDefaultValue(const T& v) {
             default_value_ = v;
         }
-        bool hasDefaultValue() {
+        bool hasDefaultValue() override {
             return default_value_.has_value();
         }
-        std::shared_ptr<BaseValueStorage> createStorage() override {
-            return std::make_shared<TypedValueStorage<T>>();
-        } 
-
+        void setImplicitValue(const T& v) {
+            implicit_value_ = v;
+        }
+        bool hasImplicitValue() override {
+            return implicit_value_.has_value();
+        }
+        void setValue(const T& val) {
+            value_ = val;
+            if(external_ref_.has_value()) {
+                external_ref_.value().get() = val;
+            }
+        }
+        void setToDefault() override {
+            assert(default_value_.has_value());
+            setValue(*default_value_);
+        }
+        void setToImplicit() override {
+            assert(implicit_value_.has_value());
+            setValue(*implicit_value_);
+        }
         /// std::enable_if T is not floating point
         std::vector<std::shared_ptr<AbstractOption>>& unlocks(const T& value) {
             return unlocks_[value];
@@ -50,20 +74,20 @@ class TypedValueSemantics : public BaseValueSemantics {
         const std::vector<std::shared_ptr<AbstractOption>>& unlocks(const T& value) const {
             return unlocks_[value];
         }
-    protected:
-        std::shared_ptr<TypedSemanticParseResult<T>> constructResult(const T& value)  {
-            auto res = std::make_shared<TypedSemanticParseResult<T>>(value);
-            if(!unlocks_.empty())  {
-                if(unlocks_.count(value) == 0) {
-                    throw InvalidOptionValue(nullptr, "", "");
-                }
-                res->unlocks = unlocks_[value];
-            }
-            return res;
+        std::vector<std::shared_ptr<AbstractOption>> getUnlocks() override {
+            assert(value_.has_value());
+            return unlocks_[*value_];
         }
-        std::optional<std::reference_wrapper<T>> ref_;
+        const T& value() {
+            assert(value_.has_value());
+            return *value_;
+        }
+    protected:
+        std::optional<T> value_;
+        std::optional<std::reference_wrapper<T>> external_ref_;
     private:
         std::optional<T> default_value_;
+        std::optional<T> implicit_value_;
         std::map<T, std::vector<std::shared_ptr<AbstractOption>>> unlocks_;
 };
 
@@ -93,7 +117,7 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
         void setMax(IntType max) {
             max_ = max;
         }
-        std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) override {
+        void semanticParse(const std::string& value) override {
             const std::string& trimmed = trim(value);
             size_t pos;
             IntType res;
@@ -129,7 +153,7 @@ class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {
                     throw ValueIsOutOfRange(nullptr, value, "min..max");
                 }
             }
-            return TypedValueSemantics<IntType>::constructResult(res);
+            TypedValueSemantics<IntType>::setValue(res);
         }        
     private:
         std::optional<IntType> min_, max_;
@@ -149,7 +173,7 @@ class ValueSemantics<FloatType> : public TypedValueSemantics<FloatType> {
         void setMax(FloatType max) {
             max_ = max;
         }
-        std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) override {
+        void semanticParse(const std::string& value) override {
             const std::string& trimmed = trim(value);
             size_t pos;
             FloatType res;
@@ -177,7 +201,7 @@ class ValueSemantics<FloatType> : public TypedValueSemantics<FloatType> {
                     throw ValueIsOutOfRange(nullptr, value, "min..max");
                 }
             }
-            return TypedValueSemantics<FloatType>::constructResult(res);
+            TypedValueSemantics<FloatType>::setValue(res);
         }
     private:
         std::optional<FloatType> min_, max_;                
@@ -186,7 +210,7 @@ class ValueSemantics<FloatType> : public TypedValueSemantics<FloatType> {
 template<> 
 class ValueSemantics<std::string> : public TypedValueSemantics<std::string> {
     public:
-        std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) override {
+        void semanticParse(const std::string& value) override {
             if(regex_.has_value()) {
                 std::smatch m;
                 if(!std::regex_match(value, m, *regex_)) {
@@ -194,7 +218,7 @@ class ValueSemantics<std::string> : public TypedValueSemantics<std::string> {
                     throw ValueMustMatchRegex(nullptr, *regex_hint_);
                 }
             }
-            return constructResult(value);
+            TypedValueSemantics<std::string>::setValue(value);
         }
         void setRegex(const std::regex& regex, const std::string& regex_hint) {
             regex_ = regex;
@@ -208,12 +232,16 @@ class ValueSemantics<std::string> : public TypedValueSemantics<std::string> {
 template<> 
 class ValueSemantics<bool> : public TypedValueSemantics<bool> {
     public:
-        std::shared_ptr<SemanticParseResult> semanticParse(const std::string& value) override {
+        void semanticParse(const std::string& value) override {
             const std::string& trimmed = trim(value);
-            if(trimmed == "true" || trimmed == "TRUE" || trimmed == "True" || trimmed == "1") 
-                return TypedValueSemantics<bool>::constructResult(true);
-            if(trimmed == "false" || trimmed == "FALSE" || trimmed == "False" || trimmed == "0") 
-                return TypedValueSemantics<bool>::constructResult(false);
+            if(trimmed == "true" || trimmed == "TRUE" || trimmed == "True" || trimmed == "1")  {
+                setValue(true);
+                return;
+            };
+            if(trimmed == "false" || trimmed == "FALSE" || trimmed == "False" || trimmed == "0") {
+                setValue(false);
+                return;
+            }
             throw InvalidValueType(nullptr, value, "expected one of: TRUE, True, true, 1, FALSE, False, false, 0");
         }
 };

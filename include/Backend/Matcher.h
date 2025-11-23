@@ -261,9 +261,9 @@ class BaseMatcher {
         void setValue(std::shared_ptr<AbstractOption> opt, const SingleOptionMatcher& matcher, std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) { 
             checkMaxOccurrence(opt);
             if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
-                auto semantic_parse_result = p->baseValueSemantics().semanticParse(matcher.value);
-                unlocked_by_value = semantic_parse_result->unlocks;
-                storage.addValue(p, matcher.value, semantic_parse_result);
+                p->baseValueSemantics().semanticParse(matcher.value);
+                unlocked_by_value = p->baseValueSemantics().getUnlocks();
+                storage.addValue(p, matcher.value);
             }
             opts_counter_[opt]++;;
         }
@@ -303,7 +303,7 @@ class Matcher : public BaseMatcher {
                     continue;
                 }
                 if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
-                    if(p->baseValueSemantics().defaultValue() == nullptr) {
+                    if(!p->baseValueSemantics().hasDefaultValue()) {
                         if(opt->required())
                             throw RequiredOptionIsNotSet(opt);
                     } else {
@@ -318,12 +318,10 @@ class Matcher : public BaseMatcher {
 
         void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt, std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) { 
             auto abs_opt = std::dynamic_pointer_cast<AbstractOption>(opt);
-            assert(abs_opt != nullptr);
             checkMaxOccurrence(abs_opt);
-            auto semantic_parse_result = opt->baseValueSemantics().defaultValue();
-            unlocked_by_value = semantic_parse_result->unlocks;
-            assert(semantic_parse_result != nullptr);
-            storage.addValue(opt, "", semantic_parse_result);
+            opt->baseValueSemantics().setToDefault();
+            unlocked_by_value = opt->baseValueSemantics().getUnlocks();
+            storage.addValue(opt, ""); /// TODO here should be default value
             storage.setDefault(opt, true);
             opts_counter_[abs_opt]++;;
         }

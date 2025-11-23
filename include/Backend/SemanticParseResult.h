@@ -11,7 +11,7 @@ class AbstractOption;
 
 struct SemanticParseResult {
     virtual ~SemanticParseResult() {};
-    std::vector<std::shared_ptr<AbstractOption>> unlocks; // what options does the specified value unlock
+//    std::vector<std::shared_ptr<AbstractOption>> unlocks; // what options does the specified value unlock
 };
 
 template<class T>

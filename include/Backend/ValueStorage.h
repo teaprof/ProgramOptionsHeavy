@@ -14,20 +14,19 @@ class AbstractPositionalOption;
 
 class ValuesStorage {
     public:
-    void addValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value, std::shared_ptr<SemanticParseResult> parse_result) {
-        std::shared_ptr<BaseValueStorage> v;
+    void addValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value) {        
         if(values_map_.count(opt) == 0) {
             //v = std::make_shared<BaseValueStorage>();
-            v = opt->baseValueSemantics().createStorage();
-            values_map_.insert(std::make_pair(opt, v));
-        } else {
-            v = values_map_[opt];
-        }
-        if(external_pointers_.count(opt) > 0) {
+            //v = opt->baseValueSemantics().createStorage();
+            auto storage = std::make_shared<TypedValueStorage<int>>(); // TODO replace int
+            values_map_.insert(std::make_pair(opt, storage));
+        };
+        values_map_[opt]->setRawValue(raw_value);
+        /*if(external_pointers_.count(opt) > 0) {
             v->setValue(parse_result, raw_value, external_pointers_[opt]);
         } else {
             v->setValue(parse_result, raw_value, std::nullopt);
-        }
+        }*/
     }
     void setDefault(std::shared_ptr<AbstractOptionWithValue> opt, bool flag) {
         assert(values_map_.count(opt) > 0);
