@@ -12,7 +12,8 @@ class Checker : public AbstractOptionVisitor {
 // TODO checker should check 
 // - if the default value is within [min, max]
 // - if the default value satisfies regex
-
+// - if the default value is contained in Unlocks
+// - the same for implicit value
 public:    
     std::set<std::shared_ptr<AbstractOption>> encountered;
 
