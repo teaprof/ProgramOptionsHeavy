@@ -1,6 +1,5 @@
 #include <Backend/ValueSemantics.h>
 #include <Backend/Checker.h>
-#include <Backend/Extra.h>
 
 #include <gtest/gtest.h>
 
@@ -41,9 +40,9 @@ TEST(CheckerTest, TooManyPositionalOptions) {
 
 TEST(CheckerTest, OneOf) {
     auto option = std::make_shared<OneOf>(
-        std::make_shared<NamedCommand>("run"),
-        std::make_shared<NamedCommand>("gather"),
-        std::make_shared<NamedCommand>("clean")
+        std::make_shared<LiteralString>("run"),
+        std::make_shared<LiteralString>("gather"),
+        std::make_shared<LiteralString>("clean")
     );
     Checker checker;
     EXPECT_NO_THROW(option->accept(checker));
@@ -51,9 +50,9 @@ TEST(CheckerTest, OneOf) {
 
 TEST(CheckerTest, Alternatives2) {
     auto option = std::make_shared<OneOf>(
-        std::make_shared<NamedCommand>("run")->addUnlock(std::make_shared<NamedOption>("--opt1"))->addUnlock(std::make_shared<NamedOption>("--opt2")),
-        std::make_shared<NamedCommand>("gather")->addUnlock(std::make_shared<NamedOption>("--opt1")),
-        std::make_shared<NamedCommand>("clean")->addUnlock(std::make_shared<NamedOption>("--opt2"))
+        std::make_shared<LiteralString>("run")->addUnlock(std::make_shared<NamedOption>("--opt1"))->addUnlock(std::make_shared<NamedOption>("--opt2")),
+        std::make_shared<LiteralString>("gather")->addUnlock(std::make_shared<NamedOption>("--opt1")),
+        std::make_shared<LiteralString>("clean")->addUnlock(std::make_shared<NamedOption>("--opt2"))
     );
     Checker checker;
     EXPECT_NO_THROW(option->accept(checker));
@@ -64,9 +63,9 @@ TEST(CheckerTest, Alternatives3) {
         addUnlock(std::make_shared<NamedOption>("--opt1"))->
         addUnlock(    
             std::make_shared<OneOf>(
-                std::make_shared<NamedCommand>("run")->addUnlock(std::make_shared<NamedOption>("--opt1")),
-                std::make_shared<NamedCommand>("gather")->addUnlock(std::make_shared<NamedOption>("--opt2")),
-                std::make_shared<NamedCommand>("clean")->addUnlock(std::make_shared<NamedOption>("--opt1"))                
+                std::make_shared<LiteralString>("run")->addUnlock(std::make_shared<NamedOption>("--opt1")),
+                std::make_shared<LiteralString>("gather")->addUnlock(std::make_shared<NamedOption>("--opt2")),
+                std::make_shared<LiteralString>("clean")->addUnlock(std::make_shared<NamedOption>("--opt1"))                
             )
         );
     Checker checker;
@@ -78,11 +77,11 @@ TEST(CheckerTest, OneOfComplex) {
     auto helpOption = std::make_shared<NamedOption>("--help", "-h");
     auto hypercubeOptions = std::make_shared<OneOf>(
         helpOption,
-        std::make_shared<NamedCommand>("run")->
+        std::make_shared<LiteralString>("run")->
             addUnlock(std::make_shared<NamedOption>("--dim", "-d"))->
             addUnlock(std::make_shared<NamedOption>("--mIntervalsPerDim", "-m"))->
             addUnlock(helpOption),
-        std::make_shared<NamedCommand>("gather")->addUnlock(helpOption)
+        std::make_shared<LiteralString>("gather")->addUnlock(helpOption)
     );
     Checker checker;
     EXPECT_NO_THROW(hypercubeOptions->accept(checker));
@@ -93,12 +92,12 @@ TEST(CheckerTest, RepeatedOption) {
     auto helpOption = std::make_shared<NamedOption>("--help", "-h");
     auto hypercubeOptions = std::make_shared<OneOf>(
         helpOption,
-        std::make_shared<NamedCommand>("run")->
+        std::make_shared<LiteralString>("run")->
             addUnlock(std::make_shared<NamedOption>("--dim", "-d"))->
             addUnlock(std::make_shared<NamedOption>("--mIntervalsPerDim", "-m"))->
             addUnlock(helpOption)->
             addUnlock(helpOption),
-        std::make_shared<NamedCommand>("gather")->addUnlock(helpOption)
+        std::make_shared<LiteralString>("gather")->addUnlock(helpOption)
     );
     Checker checker;
     EXPECT_THROW(hypercubeOptions->accept(checker), DuplicateOption);
@@ -128,9 +127,9 @@ TEST(CheckerTest, OneOfAlternatives3) {
         addUnlock(std::make_shared<NamedOption>("--opt1"))->
         addUnlock(    
             std::make_shared<OneOf>(
-                std::make_shared<NamedCommand>("run")->addUnlock(std::make_shared<NamedOption>("--opt1")),
-                std::make_shared<NamedCommand>("gather")->addUnlock(std::make_shared<NamedOption>("--opt2")),
-                std::make_shared<NamedCommand>("clean")->addUnlock(std::make_shared<NamedOption>("--opt1"))                
+                std::make_shared<LiteralString>("run")->addUnlock(std::make_shared<NamedOption>("--opt1")),
+                std::make_shared<LiteralString>("gather")->addUnlock(std::make_shared<NamedOption>("--opt2")),
+                std::make_shared<LiteralString>("clean")->addUnlock(std::make_shared<NamedOption>("--opt1"))                
             )
         );
     Checker checker;

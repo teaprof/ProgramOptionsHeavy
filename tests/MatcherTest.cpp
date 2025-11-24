@@ -1,6 +1,5 @@
 #include <Backend/ValueSemantics.h>
 #include <Backend/Matcher.h>
-#include <Backend/Extra.h>
 #include <gtest/gtest.h>
 
 class MatcherFixtureSimple : public ::testing::Test {
@@ -35,11 +34,11 @@ class MatcherFixture : public ::testing::Test {
             common_option = std::make_shared<NamedOption>("--common", "-c");
             options = std::make_shared<OptionsGroup2>();
             options->addUnlock(common_option);            
-            auto runOptions = std::make_shared<NamedCommand>("run");
+            auto runOptions = std::make_shared<LiteralString>("run");
             runOptions->addUnlock(
                 std::make_shared<NamedOption>("--dim", "-d")
             );
-            auto gatherOptions= std::make_shared<NamedCommand>("gather");
+            auto gatherOptions= std::make_shared<LiteralString>("gather");
             gatherOptions->addUnlock(std::make_shared<NamedOption>("--gatheropt", "-g"));
             command = std::make_shared<OneOf>(runOptions, gatherOptions);
             options->addUnlock(command);
@@ -242,19 +241,19 @@ TEST(Matcher, PositionalAndNamed) {
 
 TEST(Matcher, NestedAlternatives) {
     auto alt_nested_1 = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<NamedCommand>("alt11")->addUnlock(std::make_shared<NamedOption>("--opt11"))
+        std::make_shared<LiteralString>("alt11")->addUnlock(std::make_shared<NamedOption>("--opt11"))
     )->addAlternative(
-        std::make_shared<NamedCommand>("alt12")->addUnlock(std::make_shared<NamedOption>("--opt12"))
+        std::make_shared<LiteralString>("alt12")->addUnlock(std::make_shared<NamedOption>("--opt12"))
     );
     auto alt_nested_2 = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<NamedCommand>("alt21")->addUnlock(std::make_shared<NamedOption>("--opt21"))
+        std::make_shared<LiteralString>("alt21")->addUnlock(std::make_shared<NamedOption>("--opt21"))
     )->addAlternative(
-        std::make_shared<NamedCommand>("alt22")->addUnlock(std::make_shared<NamedOption>("--opt22"))
+        std::make_shared<LiteralString>("alt22")->addUnlock(std::make_shared<NamedOption>("--opt22"))
     );
     auto opts = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<NamedCommand>("alt1")->addUnlock(alt_nested_1)
+        std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1)
     )->addAlternative(
-        std::make_shared<NamedCommand>("alt2")->addUnlock(alt_nested_2)
+        std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2)
     );
 
     Matcher parser(opts);
@@ -272,19 +271,19 @@ TEST(Matcher, NestedAlternatives) {
 
 TEST(Matcher, NestedAlternativesWithEqualNames) {
     auto alt_nested_1 = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<NamedCommand>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1"))
+        std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1"))
     )->addAlternative(
-        std::make_shared<NamedCommand>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2"))
+        std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2"))
     );
     auto alt_nested_2 = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<NamedCommand>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1"))
+        std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1"))
     )->addAlternative(
-        std::make_shared<NamedCommand>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2"))
+        std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2"))
     );
     auto opts = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<NamedCommand>("alt1")->addUnlock(alt_nested_1)
+        std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1)
     )->addAlternative(
-        std::make_shared<NamedCommand>("alt2")->addUnlock(alt_nested_2)
+        std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2)
     );
 
     Matcher parser(opts);
