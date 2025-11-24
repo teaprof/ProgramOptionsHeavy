@@ -20,7 +20,7 @@ class OptionsGroup : public OptionsFacade
     }
 
     template <class ... Args>
-    auto addPartialVisible(Args... args)
+    auto addPartial(Args... args)
     {
         auto opt = makeOption(args...);
         options->addUnlock(opt);
@@ -45,13 +45,9 @@ class OptionsGroup : public OptionsFacade
         // nothing to do
         // redefine this function in the derived class
     }
-
-    std::shared_ptr<OptionsGroup2> options;
-
     void setGroupName(std::string str)
     {
-        if(help_)
-            help_->setGroupName(options, str);
+        help_.setGroupName(options, str);
         group_name_ = std::move(str);
     }
     const std::string &groupName() const
@@ -59,16 +55,14 @@ class OptionsGroup : public OptionsFacade
         return group_name_;
     }
     void setGroupDescription(std::string str) {
-        if(help_)
-            *help_<<options<<str;
+        help_<<options<<str;
     }
     std::string description() {
-        if(help_) {
-            if(help_->help_strings_.contains(options))
-                return help_->help_strings_[options];
-        }
+        if(help_.help_strings_.count(options) > 0)
+            return help_.help_strings_[options];
         return "";
     }
+    std::shared_ptr<OptionsGroup2> options;
   private:
     std::string group_name_;
 };

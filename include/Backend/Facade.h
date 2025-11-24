@@ -21,8 +21,7 @@ class OptionsFacade {
                 res = std::make_shared<NamedOptionWithValue<T>>(long_name.value());
             }
             res->valueSemantics().setExternalStorage(storage);
-            if(help_)
-                *help_<<res<<help_message;
+            help_<<res<<help_message;
             return res;
         }
 
@@ -38,8 +37,7 @@ class OptionsFacade {
             } else {
                 res = std::make_shared<NamedOptionWithValue<T>>(long_name.value());
             }
-            if(help_)
-                *help_<<res<<help_message;
+            help_<<res<<help_message;
             return res;
         }
 
@@ -47,8 +45,7 @@ class OptionsFacade {
         std::shared_ptr<PositionalOptionWithValue<T>> makeOption(std::reference_wrapper<T> storage, std::string& help_message) {
             auto res = std::make_shared<PositionalOptionWithValue<T>>();
             res->valueSemantics().setExternalStorage(storage);
-            if(help_)
-                *help_<<res<<help_message;
+            help_<<res<<help_message;
             return res;
         }
 
@@ -59,12 +56,18 @@ class OptionsFacade {
             res->valueSemantics().setExternalStorage(external_storage);
             res->valueSemantics().setMaxOccurrence(max_occurrence);
             (void)hidden_name; // TODO
-            if(help_)
-                *help_<<res<<help_message;
+            help_<<res<<help_message;
             return res;
         }
+
+        void merge(const OptionsFacade& other) {
+            help_.merge(other.help_);
+        }
+        const Help& help() {
+            return help_;
+        }
     protected:
-        std::optional<Help> help_;
+        Help help_;
 };
 
 

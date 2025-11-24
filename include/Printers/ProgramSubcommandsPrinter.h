@@ -94,12 +94,7 @@ class ProgramSubcommandsPrinter
     }
     std::shared_ptr<Section> print(OptionsGroup &grp) const
     {
-        auto res = std::make_shared<Section>();
-        res->title = grp.groupName();
-        res->add_paragraph(grp.description());
-        std::stringstream options_list;
-        res->add_paragraph(options_list.str());
-        return res;
+        return ProgramOptionsPrinter::print(grp);
     }
     std::set<std::string> options_groups_printed_already_;
 };

@@ -59,7 +59,6 @@ class Parser : public AbstractOptionsParser
         return groups_;
     }
 
-    bool activated{false}; // becomes true when parse function succeeded
   private:
     std::vector<std::shared_ptr<OptionsGroup>> groups_;
 };

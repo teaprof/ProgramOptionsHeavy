@@ -18,7 +18,7 @@ class HelpOptions : public OptionsGroup
     {
         namespace po = boost::program_options;
         //addPartialVisible("help", po::bool_switch(&need_help), "produce this help");
-        addPartialVisible("help", std::ref(need_help), "produce this help");
+        addPartial("help", std::ref(need_help), "produce this help");
     }
     void update(const boost::program_options::variables_map &vm) override
     {
@@ -45,7 +45,7 @@ class MultithreadOptions : public OptionsGroup
                "std::threads::hardware_concurrency will be used ["
             << concurency << " on this machine]";
         //addPartialVisible("nthreads,t", po::value(&nthreads_), str.str().c_str());
-        addPartialVisible("nthreads,t", std::ref(nthreads_), str.str());
+        addPartial("nthreads,t", std::ref(nthreads_), str.str());
     }
     size_t nThreads()
     {

@@ -224,7 +224,7 @@ inline const std::optional<std::string>& NamedOption::longName() const {
 inline const std::optional<std::string>& NamedOption::shortName() const {
     return undecorated_short_name_;
 }
-inline const std::string NamedOption::displayName() const {
+inline const std::string NamedOption::displayName() const { // TODO where is it used?
     if(undecorated_long_name_.has_value())
         return std::string("--") + undecorated_long_name_.value();
     assert(undecorated_short_name_.has_value());

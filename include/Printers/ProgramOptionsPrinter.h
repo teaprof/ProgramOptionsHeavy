@@ -46,13 +46,17 @@ class ProgramOptionsPrinter
         }
         return str.str();
     }
-    std::shared_ptr<Section> print(OptionsGroup &grp) const
+    static std::shared_ptr<Section> print(OptionsGroup &grp)
     {
         auto res = std::make_shared<Section>();
         res->title = grp.groupName();
         res->add_paragraph(grp.description());
         std::stringstream options_list;
-        //options_list << grp.visible;
+        for(const auto& opt : grp.options->unlocks) {
+            SingleOptionPrinter prn(grp.help());
+            opt->accept(prn);
+            options_list<<prn.str.str()<<"\n";
+        }
         res->add_paragraph(options_list.str());
         return res;
     }

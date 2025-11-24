@@ -13,15 +13,15 @@ TEST(PROGRAMMODEOPTIONS, PARSE) {
     auto runOptions = std::make_shared<OptionsGroup>("run group");
     size_t dim;    
     //runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2), "hypercube dimension");    
-    runOptions->addPartialVisible("dim,d", std::ref(dim), "hypercube dimension");
+    runOptions->addPartial("dim,d", std::ref(dim), "hypercube dimension");
     auto gatherOptions= std::make_shared<OptionsGroup>("gather group");
     size_t gather_opt;
     //gatherOptions->addPartialVisible("gather,g", po::value<size_t>(&gather_opt)->default_value(2), "some option for gathering");
-    gatherOptions->addPartialVisible("gather,g", std::ref(gather_opt), "some option for gathering");
+    gatherOptions->addPartial("gather,g", std::ref(gather_opt), "some option for gathering");
     auto commonOptions = std::make_shared<OptionsGroup>("common group");
     size_t common_value;
     //commonOptions->addPartialVisible("common,c", po::value<size_t>(&common_value)->default_value(2), "common value");    
-    commonOptions->addPartialVisible("common,c", std::ref(common_value), "common value");    
+    commonOptions->addPartial("common,c", std::ref(common_value), "common value");    
     subcommands_parser["run"]->addGroup(runOptions);
     subcommands_parser["run"]->addGroup(commonOptions);
     subcommands_parser["gather"]->addGroup(gatherOptions);
