@@ -73,14 +73,21 @@ class ParserWithSubcommands : public AbstractOptionsParser
     {
         return selected_subcommand_->second;
     }
-    const std::string &selectedSubcommandName()
+    const std::string &selectedSubcommandName() // TODO move to ParseResults class
     {
         return selected_subcommand_->first;
     }
     bool parse(int argc, const char *argv[]) override
     {
         assert(!subcommands_.empty());
-        bool fallback_to_default = true;
+        auto top_level_options = std::make_shared<OneOf>();
+        for(auto it : subcommands_) {
+            auto command = std::make_shared<LiteralString>(it.first);
+            for(auto grp : it.second->groups())
+                command->addUnlock(grp->options);
+            top_level_options->addAlternative(command);
+        }
+/*        bool fallback_to_default = true;
         if (argc >= 2)
         {
             const char *first_arg = argv[1];
@@ -107,8 +114,15 @@ class ParserWithSubcommands : public AbstractOptionsParser
             }
         };
         selected_subcommand_->second->parse(argc, argv);
-        activated = true;
-        return true;
+        activated = true;*/
+        Matcher matcher(top_level_options);
+        std::vector<std::string> args;
+        for(int n = 1; n < argc; n++) { // skip the name of executable
+            args.push_back(argv[n]);
+        }
+        activated = true; // TODO wtf?
+        ArgGrammarParser parser(args);
+        return matcher.parse(parser);
     }
     void validate() override
     {

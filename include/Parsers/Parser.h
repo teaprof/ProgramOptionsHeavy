@@ -34,7 +34,7 @@ class Parser : public AbstractOptionsParser
     }
     bool parse(int argc, const char *argv[]) override
     {
-        auto options = std::make_shared<AbstractOption>();
+        auto options = std::make_shared<OptionsGroup2>();
         for(auto grp : groups_) {
             options->addUnlock(grp->options);
         }

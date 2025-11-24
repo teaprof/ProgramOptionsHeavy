@@ -1,8 +1,8 @@
 #ifndef __BACKEND_PARSER_H__
 #define __BACKEND_PARSER_H__
 
-#include "Exceptions.h"
-#include "Option.h"
+#include <Backend/Exceptions.h> // TODO: split this file into thematic parts
+#include <Backend/Option.h> // TODO why this file is included?
 
 #include <cassert>
 #include <map>
@@ -96,12 +96,12 @@ class ArgGrammarParser {
         size_t idx_{0};
     public:
         enum TokenTypes {
-            long_option, 
-            long_option_eq_value,
-            short_option,
-            short_option_without_value,
-            short_option_eq_value,
-            value
+            long_option, // like --option
+            long_option_eq_value, // like --option=value
+            short_option, // like y option in "-xy" (can be followed by a value)
+            short_option_without_value, // like x option in "-xy" (can't be followed by a value)
+            short_option_eq_value, // like y option in "-xy=value"
+            value // anything else which cannot be interpreted as a long option or a chain of the short options
         };        
         struct Result {
             TokenTypes token_type;

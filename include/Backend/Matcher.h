@@ -6,7 +6,7 @@
 #include "ValueSemantics.h"
 #include "ValueStorage.h"
 #include "Extra.h"
-#include "Parser.h"
+#include <Grammar/Parser.h>
 #include "Checker.h"
 
 #include <cassert>

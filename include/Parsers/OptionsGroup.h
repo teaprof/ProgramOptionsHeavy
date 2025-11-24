@@ -23,7 +23,7 @@ class OptionsGroup
             lower += std::tolower(ch);
         }
         setGroupName(lower);
-        options = std::make_shared<AbstractOption>();
+        options = std::make_shared<OptionsGroup2>();
     }
 
     template <class... Args> auto addPartialVisible(Args... args)
@@ -71,7 +71,7 @@ class OptionsGroup
         // redefine this function in the derived class
     }
 
-    std::shared_ptr<AbstractOption> options;
+    std::shared_ptr<OptionsGroup2> options;
 
     // These vars are used only for parsing arguments
     //boost::program_options::options_description partial;

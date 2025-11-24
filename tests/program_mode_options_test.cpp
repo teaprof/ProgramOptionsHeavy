@@ -38,8 +38,5 @@ TEST(PROGRAMMODEOPTIONS, PARSE) {
     ASSERT_EQ(common_value, 30);
 
     const char* argv3[] = {"prgmname", "run", "-g", "15",  "-c", "30"};
-    EXPECT_THROW ({
-            subcommands_parser.parse(6, argv3);
-        },
-    po::unknown_option);
+    EXPECT_THROW(subcommands_parser.parse(6, argv3), UnknownNamedOption);
 }

@@ -30,6 +30,7 @@ std::shared_ptr<NamedOptionWithValue<T>> makeOption(const std::string& names, st
         res = std::make_shared<NamedOptionWithValue<T>>(long_name.value());
     }
     (void)help_message;
+    res->valueSemantics().setExternalStorage(storage);
     return res;
 }
 
@@ -93,6 +94,9 @@ std::pair<std::optional<std::string>, std::optional<std::string>> splitToLongAnd
 
 std::pair<bool, std::string> isLongName(std::string name) {
     if(name[0] != '-') {
+        if(name.length() == 1) {
+            return {false, ""};
+        }
         name = std::string("--") + name;
     }
     std::regex regex(ArgLexer::long_option_pattern);
@@ -104,7 +108,7 @@ std::pair<bool, std::string> isLongName(std::string name) {
 
 std::pair<bool, std::string> isShortName(std::string name) {
     if(name[0] != '-') {
-        name = std::string("--") + name;
+        name = std::string("-") + name;
     }
     std::regex regex(ArgLexer::short_options_pattern);
     if(std::regex_match(name, regex))  {

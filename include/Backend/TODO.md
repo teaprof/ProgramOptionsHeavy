@@ -1,3 +1,13 @@
+Use cases
+
+Commands (or Alternatives):
+git push ...
+git commit ...
+
+OneOf:
+hypercube run --nPoints=100000
+hypercube run --nPointsPerCell=10
+
 Easy-start usage:
 ```
 int opt1_val;
