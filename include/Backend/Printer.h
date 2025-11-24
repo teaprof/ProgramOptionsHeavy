@@ -1,6 +1,7 @@
 #ifndef __BACKEND_PRINTER_H__
 #define __BACKEND_PRINTER_H__
 
+#include "ValueSemantics.h"
 #include "Option.h"
 
 #include <cassert>

@@ -2,6 +2,8 @@
 #define __BACKEND_VALUE_SEMANTICS__
 
 #include "Exceptions.h"
+#include <utils/strutils.h>
+
 #include <any>
 #include <optional>
 #include <string>
@@ -110,20 +112,7 @@ class TypedValueSemantics : public BaseValueSemantics {
             if(unlocks_.contains(val) == false)
                 throw InvalidOptionValue(nullptr, "", "");
         }
-    };
-
-inline const std::string trim(const std::string& src) { // TODO: move to details or use boost::spirit instead of trim
-    if(src.empty()) {
-        return src;
-    }
-    size_t start = 0;
-    while(start < src.size() && std::isspace(src[start]))
-        start++;
-    size_t end = src.length() - 1;
-    while(end > start && std::isspace(src[end]))
-        end--;
-    return src.substr(start, end - start + 1);
-}
+};
 
 template<std::integral IntType>
 class ValueSemantics<IntType> : public TypedValueSemantics<IntType> {

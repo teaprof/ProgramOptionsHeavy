@@ -1,7 +1,7 @@
 #ifndef __OPTIONS_GROUP_H__
 #define __OPTIONS_GROUP_H__
 
-#include <Backend/wrapper.h>
+#include <Backend/Facade.h>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 

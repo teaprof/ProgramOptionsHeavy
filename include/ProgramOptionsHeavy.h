@@ -1,6 +1,6 @@
 #ifndef __PROGRAM_OPTIONS_H__
 #define __PROGRAM_OPTIONS_H__
-#include <Backend/wrapper.h>
+#include <Backend/Facade.h>
 #include <Parsers/AbstractOptionsParser.h>
 #include <Parsers/BasicOptions.h>
 #include <Parsers/HelpSubcommand.h>
