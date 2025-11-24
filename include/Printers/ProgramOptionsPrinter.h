@@ -1,6 +1,7 @@
 #ifndef __PROGRAM_OPTIONS_PRINTER_H__
 #define __PROGRAM_OPTIONS_PRINTER_H__
 
+#include <Help/TextExtractors.h>
 #include <Parsers/Parser.h>
 #include <Printers/PrettyPrinter.h>
 
@@ -53,9 +54,9 @@ class ProgramOptionsPrinter
         res->add_paragraph(grp.description());
         std::stringstream options_list;
         for(const auto& opt : grp.options->unlocks) {
-            SingleOptionPrinter prn(grp.help());
+            OptionTextExtractor prn(grp.help());
             opt->accept(prn);
-            options_list<<prn.str.str()<<"\n";
+            options_list<<prn.str()<<"\n";
         }
         res->add_paragraph(options_list.str());
         return res;

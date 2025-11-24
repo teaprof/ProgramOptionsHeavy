@@ -3,7 +3,7 @@
 
 #include <Backend/ValueSemantics.h>
 #include <Backend/Option.h>
-#include <Backend/Help.h>
+#include <Help/HelpStrings.h>
 #include <utils/strutils.h>
 
 class OptionsFacade {
@@ -63,11 +63,11 @@ class OptionsFacade {
         void merge(const OptionsFacade& other) {
             help_.merge(other.help_);
         }
-        const Help& help() {
+        const HelpStrings& help() {
             return help_;
         }
     protected:
-        Help help_;
+        HelpStrings help_;
 };
 
 
