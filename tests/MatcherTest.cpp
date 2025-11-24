@@ -1,5 +1,6 @@
 #include <Backend/ValueSemantics.h>
 #include <Backend/Matcher.h>
+#include <Backend/Printer.h>
 #include <gtest/gtest.h>
 
 class MatcherFixtureSimple : public ::testing::Test {
@@ -42,6 +43,9 @@ class MatcherFixture : public ::testing::Test {
             gatherOptions->addUnlock(std::make_shared<NamedOption>("--gatheropt", "-g"));
             command = std::make_shared<OneOf>(runOptions, gatherOptions);
             options->addUnlock(command);
+
+            Printer prn;
+            options->accept(prn);
         }
 
         void TearDown() override {

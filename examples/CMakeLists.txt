@@ -8,3 +8,5 @@ target_link_libraries(example2 Boost::program_options)
 #target_link_libraries(completer Boost::program_options)
 
 add_executable(SpiritParser SpiritParser.cpp)
+
+add_executable(printer printer.cpp)

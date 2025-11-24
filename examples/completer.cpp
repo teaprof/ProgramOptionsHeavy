@@ -2,7 +2,7 @@
 // 1. cd to the directory where executable for this file is placed
 // 2. Just run: complete -F $(pwd)/completer completer
 
-#include "completer.h"
+#include <Completer/completer.h>
 
 using program_options_heavy::ParserWithSubcommands;
 using program_options_heavy::OptionsGroup;
@@ -14,7 +14,6 @@ int main() {
     auto commands_parser = std::make_shared<ParserWithSubcommands>("completer");
     auto runOptions = std::make_shared<OptionsGroup>("run group");
     size_t dim;
-    ValueSemantics<int>()
     runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(), "hypercube dimension");
     runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(), "hypercube dimension");
     auto gatherOptions= std::make_shared<OptionsGroup>("gather group");

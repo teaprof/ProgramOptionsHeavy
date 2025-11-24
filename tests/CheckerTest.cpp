@@ -1,5 +1,6 @@
 #include <Backend/ValueSemantics.h>
 #include <Backend/Checker.h>
+#include <Backend/Printer.h>
 
 #include <gtest/gtest.h>
 
