@@ -2,7 +2,6 @@
 #include <gtest/gtest.h>
 
 TEST(ValueSematics, TrimTest) {
-    using dest_type = TypedSemanticParseResult<int>;
     ValueSemantics<int> semantics;
     semantics.setMinMax(-10, 10);
     semantics.semanticParse("  10  ");
@@ -21,7 +20,6 @@ TEST(ValueSematics, TrimTest) {
 
 
 TEST(ValueSematics, Int) {
-    using dest_type = TypedSemanticParseResult<int>;
     ValueSemantics<int> semantics;
     semantics.semanticParse("10");
     ASSERT_EQ(semantics.value(), 10);
@@ -49,7 +47,6 @@ TEST(ValueSematics, Int) {
 }
 
 TEST(ValueSematics, UnsignedInt) {
-    using dest_type = TypedSemanticParseResult<unsigned int>;
     ValueSemantics<unsigned int> semantics;
     semantics.semanticParse("10");
     ASSERT_EQ(semantics.value(), 10);
@@ -57,7 +54,6 @@ TEST(ValueSematics, UnsignedInt) {
 }
 
 TEST(ValueSematics, Float) {
-    using dest_type = TypedSemanticParseResult<float>;
     ValueSemantics<float> semantics;
     semantics.semanticParse("1.2");
     ASSERT_NEAR(semantics.value(), 1.2, 1e-5);
@@ -67,7 +63,6 @@ TEST(ValueSematics, Float) {
 }
 
 TEST(ValueSematics, String) {
-    using dest_type = TypedSemanticParseResult<std::string>;
     ValueSemantics<std::string> semantics;
     semantics.semanticParse(" abdacadabra ");
     ASSERT_EQ(semantics.value(), " abdacadabra ");
@@ -78,7 +73,6 @@ TEST(ValueSematics, String) {
 }
 
 TEST(ValueSematics, Bool) {
-    using dest_type = TypedSemanticParseResult<bool>;
     ValueSemantics<bool> semantics;
     semantics.semanticParse(" TRUE");
     ASSERT_TRUE(semantics.value());
@@ -99,7 +93,6 @@ TEST(ValueSematics, Bool) {
 }
 
 TEST(ValueSematics, UnlockByValue) {
-    using dest_type = TypedSemanticParseResult<int>;
     ValueSemantics<int> semantics;
     semantics.unlocks(0);
     semantics.unlocks(1).push_back(nullptr);
@@ -112,7 +105,6 @@ TEST(ValueSematics, UnlockByValue) {
 
 
 TEST(ValueSematics, InvalidValue) {
-    using dest_type = TypedSemanticParseResult<int>;
     ValueSemantics<int> semantics;
     semantics.unlocks(0);
     semantics.unlocks(1).push_back(nullptr);
