@@ -8,30 +8,87 @@
 #include <set>
 #include <queue>
 
-class Checker : public AbstractOptionVisitor {
+class AbstractWalkee : public AbstractOptionVisitor {
+    public:
+        virtual void pushState() = 0;
+        virtual void popState() = 0;
+        virtual void topState() = 0;
+};
+
+class Walker : public AbstractOptionVisitor {
+public:    
+    Walker(AbstractWalkee& walkee) : walkee_ {walkee} {}
+    void visit(std::shared_ptr<AbstractOption> opt) override {
+        process(opt);
+    }
+    void visit(std::shared_ptr<LiteralString> opt) override {
+        process(opt);
+    }
+    void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
+        process(opt);
+    }
+    void visit(std::shared_ptr<NamedOption> opt) override {
+        process(opt);
+    }
+    void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
+        process(opt);
+    }
+    void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
+        process(opt);
+    }
+    void visit(std::shared_ptr<OptionsGroup2> opt) override {
+        process(opt);
+    }
+    void visit(std::shared_ptr<OneOf> opt) override {
+        process(opt);
+        walkee_.pushState();
+        for(auto alt : opt->alternatives) {
+            alt->accept(*this);
+            walkee_.topState();
+        }
+        walkee_.popState();
+    }
+private:    
+    std::queue<std::shared_ptr<AbstractOption>> remaining_options;
+    AbstractWalkee& walkee_;
+
+    void process(std::shared_ptr<AbstractOption> opt) {
+        opt->accept(walkee_);
+        for(auto it : opt->unlocks)        
+            remaining_options.push(it);
+        next();
+    }
+    void next() {
+        std::shared_ptr<AbstractOption> head = nullptr;
+        while(head == nullptr && !remaining_options.empty()) {
+            head = remaining_options.front();
+            remaining_options.pop();
+        }
+        if(head != nullptr)
+            head->accept(*this);
+    }
+};
+
+class CheckerWalkee : public AbstractWalkee {
 // TODO checker should check 
 // - if the default value is within [min, max]
 // - if the default value satisfies regex
 // - if the default value is contained in Unlocks
 // - the same for implicit value
 public:    
-    std::set<std::shared_ptr<AbstractOption>> encountered;
 
     void visit(std::shared_ptr<AbstractOption> opt) override {
         addVisited(opt);
-        for(auto it : opt->unlocks)        
-            remaining_options.push(it);
-        next();
     }
     void visit(std::shared_ptr<LiteralString> opt) override {
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
-        if(has_positional_option_with_multiple_occurrence) {
+        if(state_.has_positional_option_with_multiple_occurrence) {
             throw MultipleOccurenceOnlyForLastPosopt(opt);
         }
         if(opt->maxOccurrence() != 1) {
-            has_positional_option_with_multiple_occurrence = true;
+            state_.has_positional_option_with_multiple_occurrence = true;
         }
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
@@ -49,39 +106,34 @@ public:
         visit(std::static_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<OneOf> opt) override {
-        visit(std::static_pointer_cast<AbstractOption>(opt));
-        auto encountered_safe = encountered;        
-        for(auto alt : opt->alternatives) {
-            if(auto p = std::dynamic_pointer_cast<OptionsGroup2>(alt)) {
-                throw IncorrectAlternative(alt);
-            }
-            alt->accept(*this);
-            encountered = encountered_safe;
-        }        
     }
-    void next() {
-        std::shared_ptr<AbstractOption> head = nullptr;
-        while(head == nullptr && !remaining_options.empty()) {
-            head = remaining_options.front();
-            remaining_options.pop();
-        }
-        if(head != nullptr)
-            head->accept(*this);
+    void pushState() override {
+        stack_.push(state_);
     }
-private:    
-    std::queue<std::shared_ptr<AbstractOption>> remaining_options;    
-    bool has_positional_option_with_multiple_occurrence{false};
+    void popState() override {
+        stack_.pop();
+    }
+    void topState() override {
+        state_ = stack_.top();
+    }
+private:
+    struct State {
+        std::set<std::shared_ptr<AbstractOption>> encountered;
+        bool has_positional_option_with_multiple_occurrence{false};
+    };
+    State state_;
+    std::stack<State> stack_;
 
     void addVisited(std::shared_ptr<AbstractOption> opt) {
-        if(encountered.contains(opt)) {   
+        if(state_.encountered.contains(opt)) {   
             /// returned to option opt         
             throw DuplicateOption(opt);
         }
-        encountered.insert(opt);
+        state_.encountered.insert(opt);
     }
 
     void checkCompatibility(std::shared_ptr<NamedOption> opt) {
-        for(auto unlock: encountered) 
+        for(auto unlock: state_.encountered) 
             if(checkCompatibility(opt, unlock) == false) {
                 std::stringstream str;
                 throw DuplicateOption(opt);
@@ -101,6 +153,19 @@ private:
         }
         return true;
     }
+
+};
+
+class Checker : public Walker {
+// TODO checker should check 
+// - if the default value is within [min, max]
+// - if the default value satisfies regex
+// - if the default value is contained in Unlocks
+// - the same for implicit value
+public:
+    Checker() : Walker(walkee_) {}
+private:
+    CheckerWalkee walkee_;
 
 };
 #endif
