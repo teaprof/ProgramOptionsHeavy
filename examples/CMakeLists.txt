@@ -1,8 +1,8 @@
-add_executable(example1 example1.cpp)
-target_link_libraries(example1 Boost::program_options)
+add_executable(help_printer1 help_printer1.cpp)
+target_link_libraries(help_printer1 Boost::program_options)
 
-add_executable(example2 example2.cpp)
-target_link_libraries(example2 Boost::program_options)
+add_executable(help_printer2 help_printer2.cpp)
+target_link_libraries(help_printer2 Boost::program_options)
 
 #add_executable(completer completer.cpp)
 #target_link_libraries(completer Boost::program_options)

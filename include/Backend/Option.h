@@ -114,12 +114,6 @@ class AbstractNamedOptionWithValue : public NamedOption, public AbstractOptionWi
 template<class T>
 class OptionWithValue  {
     public:
-        /*const BaseValueSemantics& baseValueSemantics() const override {
-            return valueSemantics();
-        }
-        BaseValueSemantics& baseValueSemantics() override {
-            return valueSemantics();
-        }*/
         ValueSemantics<T>& valueSemantics() {
             return value_semantics_;
         }
@@ -131,7 +125,7 @@ class OptionWithValue  {
 };
 
 
-template<class T> /// TODO actually this class can be non-template (type-agnostic)
+template<class T>
 class NamedOptionWithValue : public AbstractNamedOptionWithValue, public OptionWithValue<T> {
     public:
         NamedOptionWithValue() {}
@@ -167,13 +161,6 @@ class OptionsGroup2 : public AbstractOption {
     public:
         void accept(AbstractOptionVisitor& visitor) override;        
 };
-
-/*class NamedCommand : public PositionalOption<std::string> {
-    public:          
-        NamedCommand(const std::string& command_name) {
-            this->valueSemantics().unlocks(command_name);
-        }
-};*/
 
 class OneOf : public AbstractOption {
     public:

@@ -10,62 +10,37 @@
 namespace program_options_heavy
 {
 
-class OptionsGroup
+class OptionsGroup : public OptionsFacade
 {
   public:
-    static constexpr uint16_t text_width = 140;
-
-    OptionsGroup(std::string group_name) //: visible(text_width)
+    OptionsGroup(std::string group_name)
     {
-        std::string lower;
-        for (auto ch : group_name)
-        {
-            lower += std::tolower(ch);
-        }
-        setGroupName(lower);
+        setGroupName(tolower(group_name));
         options = std::make_shared<OptionsGroup2>();
     }
 
-    template <class... Args> auto addPartialVisible(Args... args)
+    template <class ... Args>
+    auto addPartialVisible(Args... args)
     {
-        // this option will be used in parsing and will be printed in the help
-        // message
-        /*auto option = boost::make_shared<boost::program_options::option_description>(args...);
-        partial.add(option);
-        visible.add(option);*/
         auto opt = makeOption(args...);
         options->addUnlock(opt);
 
         return opt;
     }
-    void addPositionalHidden(std::string name, int count, const boost::program_options::value_semantic *s)
+    template <class T>
+    auto addPositional(std::string name, int count, std::reference_wrapper<T> external_storage)
     {
-        // this option will be used in parsing, but will not be printed in the help
-        // message
-        //positional.add(name.c_str(), count);
-        //partial.add_options()(name.c_str(), s);
-    }
-    auto addPositionalVisible(std::string name, int count, const boost::program_options::value_semantic *s,
-                              std::string description)
-    {
-        // this option will be used in parsing and will be printed in the help
-        // message
-        //auto option =
-        //    boost::make_shared<boost::program_options::option_description>(name.c_str(), s, description.c_str());
-        //positional.add(name.c_str(), count);
-        //partial.add(option);
-        //visible.add(option);
-        //return option;
+        auto opt = makePositionalOption(name, count, external_storage);
+        options->addUnlock(opt);
 
-        return nullptr;
+        return opt;
     }
-
-    virtual void validate()
+    virtual void validate() // TODO: remove it?
     {
         // nothing to do
         // redefine this function in the derived class
     }
-    virtual void update(const boost::program_options::variables_map &vm)
+    virtual void update(const boost::program_options::variables_map &vm) // TODO: remove it?
     {
         // nothing to do
         // redefine this function in the derived class
@@ -73,35 +48,29 @@ class OptionsGroup
 
     std::shared_ptr<OptionsGroup2> options;
 
-    // These vars are used only for parsing arguments
-    //boost::program_options::options_description partial;
-    //boost::program_options::positional_options_description positional;
-
-    // These vars are used only for printing help message
-    //boost::program_options::options_description visible;
-    //boost::program_options::options_description hidden;
-
-    /*std::stringstream detailedList() const
-    {
-        std::stringstream res;
-        res << visible;
-        return res;
-    }*/
-
     void setGroupName(std::string str)
     {
+        if(help_)
+            help_->setGroupName(options, str);
         group_name_ = std::move(str);
     }
     const std::string &groupName() const
     {
         return group_name_;
     }
-    std::stringstream description;
-
+    void setGroupDescription(std::string str) {
+        if(help_)
+            *help_<<options<<str;
+    }
+    std::string description() {
+        if(help_) {
+            if(help_->help_strings_.contains(options))
+                return help_->help_strings_[options];
+        }
+        return "";
+    }
   private:
     std::string group_name_;
-    // bool not_specified_{true}; // true if none of the positional or partial
-    // options are specified
 };
 
 } /* namespace program_options_heavy */

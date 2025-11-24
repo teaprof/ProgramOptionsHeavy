@@ -50,7 +50,7 @@ class ProgramOptionsPrinter
     {
         auto res = std::make_shared<Section>();
         res->title = grp.groupName();
-        res->add_paragraph(grp.description.str());
+        res->add_paragraph(grp.description());
         std::stringstream options_list;
         //options_list << grp.visible;
         res->add_paragraph(options_list.str());

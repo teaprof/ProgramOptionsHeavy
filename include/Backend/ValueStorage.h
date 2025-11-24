@@ -43,6 +43,7 @@ class ValueStorage {
         return values_.size(); // equals to raw_values_.size()
     }
     // TODO: add setExternalStorage for std::vector<T> support
+    // TODO: add hidden names for positional options
     private:
     std::vector<std::any> values_;
     std::vector<std::string> raw_values_;

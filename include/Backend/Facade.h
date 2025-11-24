@@ -9,52 +9,68 @@
 class OptionsFacade {
     public:
         template<class T>
-        void addNamed(const std::string& names, std::reference_wrapper<T> val, const std::string& help) {
-            //opt<<help;
+        std::shared_ptr<NamedOptionWithValue<T>> makeOption(const std::string& names, std::reference_wrapper<T> storage, const std::string& help_message) {
+            auto [long_name, short_name] = splitToLongAndShortNames(names);
+            std::shared_ptr<NamedOptionWithValue<T>> res;
+            if(!long_name.has_value()) {
+                throw std::logic_error("long option name is unspecified");
+            }
+            if(short_name.has_value()) {
+                res = std::make_shared<NamedOptionWithValue<T>>(long_name.value(), short_name.value());
+            } else {
+                res = std::make_shared<NamedOptionWithValue<T>>(long_name.value());
+            }
+            res->valueSemantics().setExternalStorage(storage);
+            if(help_)
+                *help_<<res<<help_message;
+            return res;
         }
-    private:
-        Help help_;
+
+        template<class T>
+        std::shared_ptr<NamedOptionWithValue<T>> makeOption(const std::string& names, std::reference_wrapper<std::optional<T>> storage, const std::string& help_message) {
+            auto [long_name, short_name] = splitToLongAndShortNames(names);
+            std::shared_ptr<NamedOptionWithValue<T>> res;
+            if(!long_name.has_value()) {
+                throw std::logic_error("long option name is unspecified");
+            }
+            if(short_name.has_value()) {
+                res = std::make_shared<NamedOptionWithValue<T>>(long_name.value(), short_name.value());
+            } else {
+                res = std::make_shared<NamedOptionWithValue<T>>(long_name.value());
+            }
+            if(help_)
+                *help_<<res<<help_message;
+            return res;
+        }
+
+        template<class T>
+        std::shared_ptr<PositionalOptionWithValue<T>> makeOption(std::reference_wrapper<T> storage, std::string& help_message) {
+            auto res = std::make_shared<PositionalOptionWithValue<T>>();
+            res->valueSemantics().setExternalStorage(storage);
+            if(help_)
+                *help_<<res<<help_message;
+            return res;
+        }
+
+
+        template<class T>
+        std::shared_ptr<PositionalOptionWithValue<T>> makePositionalOption(const std::string& hidden_name, size_t max_occurrence, std::reference_wrapper<T> external_storage, const std::string& help_message) {
+            auto res = std::make_shared<PositionalOptionWithValue<T>>();
+            res->valueSemantics().setExternalStorage(external_storage);
+            res->valueSemantics().setMaxOccurrence(max_occurrence);
+            (void)hidden_name; // TODO
+            if(help_)
+                *help_<<res<<help_message;
+            return res;
+        }
+    protected:
+        std::optional<Help> help_;
 };
 
-template<class T>
-std::shared_ptr<NamedOptionWithValue<T>> makeOption(const std::string& names, std::reference_wrapper<T> storage, const std::string& help_message) {
-    auto [long_name, short_name] = splitToLongAndShortNames(names);
-    std::shared_ptr<NamedOptionWithValue<T>> res;
-    if(!long_name.has_value()) {
-        throw std::logic_error("long option name is unspecified");
-    }
-    if(short_name.has_value()) {
-        res = std::make_shared<NamedOptionWithValue<T>>(long_name.value(), short_name.value());
-    } else {
-        res = std::make_shared<NamedOptionWithValue<T>>(long_name.value());
-    }
-    (void)help_message;
-    res->valueSemantics().setExternalStorage(storage);
-    return res;
-}
 
-template<class T>
-std::shared_ptr<NamedOptionWithValue<T>> makeOption(const std::string& names, std::reference_wrapper<std::optional<T>> storage, const std::string& help_message) {
-    auto [long_name, short_name] = splitToLongAndShortNames(names);
-    std::shared_ptr<NamedOptionWithValue<T>> res;
-    if(!long_name.has_value()) {
-        throw std::logic_error("long option name is unspecified");
-    }
-    if(short_name.has_value()) {
-        res = std::make_shared<NamedOptionWithValue<T>>(long_name.value(), short_name.value());
-    } else {
-        res = std::make_shared<NamedOptionWithValue<T>>(long_name.value());
-    }
-    (void)help_message;
-    return res;
-}
-
-
-template<class T>
-std::shared_ptr<PositionalOptionWithValue<T>> makeOption(std::reference_wrapper<T> storage, std::string& help_message) {
-    std::shared_ptr<PositionalOptionWithValue<T>> res;
-    (void)help_message;
-    return res;
-}
+//TODO:
+// 1. HeavyParser - all featured parser
+// 2. SimpleParser - limited parser (alternatives can't have children)
+// 3. ParserWithSubcommands (alternatives are allowed only at command line start)
 
 #endif

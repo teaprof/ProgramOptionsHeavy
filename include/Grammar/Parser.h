@@ -2,7 +2,7 @@
 #define __BACKEND_PARSER_H__
 
 #include <Backend/Exceptions.h> // TODO: split this file into thematic parts
-#include <Backend/Option.h> // TODO why this file is included?
+#include <Backend/Option.h> // TODO this file is included only to pass AbstractOption variable to the exception constructor
 
 #include <cassert>
 #include <map>

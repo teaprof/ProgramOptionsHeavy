@@ -71,7 +71,7 @@ inline std::pair<bool, std::string> isShortName(std::string name) {
     return {false, ""};
 }
 
-inline const std::string trim(const std::string& src) {
+inline std::string trim(const std::string& src) {
     if(src.empty()) {
         return src;
     }
@@ -82,6 +82,15 @@ inline const std::string trim(const std::string& src) {
     while(end > start && std::isspace(src[end]))
         end--;
     return src.substr(start, end - start + 1);
+}
+
+inline std::string tolower(const std::string& src) {
+    std::string lower;
+    for (auto ch : src)
+    {
+        lower += std::tolower(ch);
+    }
+    return lower;
 }
 
 #endif

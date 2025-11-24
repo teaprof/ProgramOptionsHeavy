@@ -16,9 +16,7 @@ class BaseValueStorage;
 
 class BaseValueSemantics { // TODO rename to ValueParser and all variables of this type
     public:
-        // TODO replace shared_ptr with something faster located on the stack
         virtual std::any semanticParse(const std::string& value) = 0;  // TODO rename to parseAndSetValue
-        //virtual std::shared_ptr<BaseValueStorage> createStorage() = 0;
         // TODO add setImplicitValue
 
         virtual bool hasDefaultValue() = 0;
@@ -26,7 +24,7 @@ class BaseValueSemantics { // TODO rename to ValueParser and all variables of th
         virtual std::any setToDefault() = 0;
         virtual std::any setToImplicit() = 0;
         
-        /// @brief throw or not an exception if parsed value is not in Unlocks
+        /// @brief set flag whether throw or not an exception if parsed value is not in Unlocks
         void setOnlyAllowedValues(bool flag) {
             only_allowed_values_ = flag;
         }        

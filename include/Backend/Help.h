@@ -27,11 +27,14 @@ class Help {
         HelpBuilder operator<<(std::shared_ptr<AbstractOption> opt) {
             return HelpBuilder(help_strings_[opt]);
         }
-        void setGroupName(std::shared_ptr<OptionsGroup2> opt, const std::string& str);
+        void setGroupName(std::shared_ptr<OptionsGroup2> opt, const std::string& str) {
+            group_names_[opt] = str;
+        }
+      
         std::string brief_program_description;
         std::string detailed_program_description;
-    private:
         std::map<std::shared_ptr<AbstractOption>, std::string> help_strings_;
+        std::map<std::shared_ptr<OptionsGroup2>, std::string> group_names_;
 };
 
 
