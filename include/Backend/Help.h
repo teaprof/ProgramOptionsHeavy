@@ -25,6 +25,7 @@ class Help {
                 std::string& dest_;
         };
     public:
+        // TODO: add possibility to replace option names with preformatted string
         HelpBuilder operator<<(std::shared_ptr<AbstractOption> opt) {
             return HelpBuilder(help_strings_[opt]);
         }
@@ -60,25 +61,25 @@ class SingleOptionPrinter : public AbstractOptionVisitor {
             // assert(false);
         }
         void visit(std::shared_ptr<AbstractPositionalOption> opt) {
-            str<<"some positional option"<<helpString(opt);                    
+            str<<"some positional option\n"<<helpString(opt); // TODO implement this
         }
         void visit(std::shared_ptr<NamedOption> opt) {
-            str<<displayName(opt)<<" "<<helpString(opt);
+            str<<displayName(opt)<<"\n"<<helpString(opt);
         }
         void visit(std::shared_ptr<LiteralString> opt) {
-            str<<opt->str()<<" literal: "<<helpString(opt);
+            str<<opt->str()<<" (literal)\n"<<helpString(opt);
         }
         void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) {
-            str<<displayName(opt)<<" "<<helpString(opt);
+            str<<displayName(opt)<<"\n"<<helpString(opt);
         }
         void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) {
-            str<<"some positional option"<<helpString(opt);                    
+            str<<"some positional option = value\n"<<helpString(opt); // TODO implement this
         }
         void visit(std::shared_ptr<OptionsGroup2> opt) {
-            str<<groupName(opt)<<" "<<helpString(opt);
+            str<<groupName(opt)<<"\n"<<helpString(opt);
         }
         void visit(std::shared_ptr<OneOf> opt) {
-            str<<"one of"<<" "<<helpString(opt);
+            str<<"one of"<<"\n"<<helpString(opt); // TODO implement this
         }
         std::stringstream str;
     private:
@@ -109,7 +110,7 @@ class SingleOptionPrinter : public AbstractOptionVisitor {
                     return help_->get().group_names_.at(opt);
                 }
             }
-            return "[group]";
+            return "[group]"; // TODO group1 group2 ....
         }
 };
 
