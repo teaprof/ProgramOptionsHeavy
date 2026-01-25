@@ -28,7 +28,7 @@ opt1.setRequired(true);
 setType(opt1, opt1_val).setRange(-10, 10);
 ```
 
-Heavy manual usage:
+Heavy usage with more granular control:
 ```
 int opt1val;
 std::string strval;
@@ -55,10 +55,13 @@ opt1->tie(v, opt2val);
     + \<TYPE\> of the value
     + default value
     + is required
+    - all arguments after '--' should be treated as positional
     - multiple_values vs multiple_occurrences
+    - multiple_occurences: '--' stop symbol or custom stop symbol, multiple values are not allowed with "=": "--opt=1 2 3" is treated as "--opt=1", but "2" and "3" are the next positional arguments
     - implicit value (requires reconsidering of the parser and lexer)
     - what is allow_long_disguise (using single "-" for long options)?
     - like TCLAP: hideFromHelp(), visibleFromHelp()
+    - revisit Exceptions
 
 1. Parser:
     - unknown options could be collected instead of throwing UnknownOption (like program_options::basic_option::unregistered)

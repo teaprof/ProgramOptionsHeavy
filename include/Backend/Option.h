@@ -83,7 +83,21 @@ class AbstractOptionWithValue  {
     public:
         virtual ~AbstractOptionWithValue() {}
         virtual const BaseValueSemantics& baseValueSemantics() const = 0;
-        virtual BaseValueSemantics& baseValueSemantics() = 0;
+        virtual BaseValueSemantics& baseValueSemantics() = 0;        
+
+        // todo: not used
+        enum class NArgs {
+            exact,
+            upto,
+            infinite
+        };
+        void setNArgs(NArgs type, size_t count = 1) {
+            nargs_type_ = type;
+            nargs_count_ = count;
+        }
+
+        NArgs nargs_type_{NArgs::exact};
+        size_t nargs_count_{1};
 };
 
 class AbstractPositionalOption : public AbstractOption {

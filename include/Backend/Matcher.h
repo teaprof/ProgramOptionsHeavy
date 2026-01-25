@@ -171,6 +171,8 @@ class BaseMatcher {
                         already_joined.insert(it);
                     }
                     if(optionEncountered(it) == it->maxOccurrence()) {
+                        // if the number of occurences of this option is exausted
+                        // then remove this option from the list of remaining options
                         std::erase(remaining_options, it);
                         used_options.push_back(it);
                     }
@@ -230,6 +232,7 @@ class BaseMatcher {
             }
         }
     protected:
+        /// how many times the specified option has been encountered in the already parsed context
         size_t optionEncountered(std::shared_ptr<AbstractOption> opt) {
             size_t counter = 0;
             if(opts_counter_.count(opt) > 0) {
@@ -261,7 +264,7 @@ class BaseMatcher {
             checkMaxOccurrence(opt);
             if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
                 std::any val = p->baseValueSemantics().semanticParse(matcher.value);
-                unlocked_by_value = p->baseValueSemantics().getUnlocks();
+                //unlocked_by_value = p->baseValueSemantics().getUnlocks();
                 storage.addValue(p, matcher.value, val);
             }
             opts_counter_[opt]++;;
