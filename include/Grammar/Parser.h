@@ -110,9 +110,7 @@ class ArgGrammarParser {
             std::string value;
             size_t index;
         };
-        Result current_result;        
-        std::queue<Result> results;     
-
+        Result current_result;
 
         template<class ... Type>
         ArgGrammarParser(Type ... arguments) : args_{arguments...} {
@@ -180,7 +178,8 @@ class ArgGrammarParser {
             return current_result;
         }
 
-        std::string getRawOptionString() {
+        /// the raw option name is used in error messages to address the option by the name that was actually passed (short or long)
+        std::string getRawOptionName() {
             switch(current_result.token_type) {
                 case TokenTypes::short_option_without_value:
                 case TokenTypes::short_option_eq_value:
@@ -228,6 +227,8 @@ class ArgGrammarParser {
         size_t size() {
             return args_.size();
         }
+    private:
+        std::queue<Result> results; // todo: remove
 };
 
 

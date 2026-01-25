@@ -200,7 +200,7 @@ class BaseMatcher {
                     // TODO it could be LiteralString
                     if(matcher.checked_positional_options.size() == 0) {
                         // no positional option have been expected
-                        throw TooManyPositionalOptions(args.getRawOptionString());
+                        throw TooManyPositionalOptions(args.getRawOptionName());
                     }
                     if(matcher.checked_positional_options.size() == 1) {
                         // positional option was possible, but it doesn't match
@@ -208,12 +208,12 @@ class BaseMatcher {
                         if(auto p = std::dynamic_pointer_cast<LiteralString>(opt)) {                            
                             throw IncorrectLiteralString(p, args.current_result.value);
                         }                        
-                        throw UnexpectedValueForPositionalOption(args.getRawOptionString());
+                        throw UnexpectedValueForPositionalOption(args.getRawOptionName());
                     }
                     // If OneOf was encountered more than one positional option can be checked
-                    throw UnexpectedValueForPositionalOption(args.getRawOptionString());
+                    throw UnexpectedValueForPositionalOption(args.getRawOptionName());
                 } else {
-                    throw UnknownNamedOption(args.getRawOptionString());
+                    throw UnknownNamedOption(args.getRawOptionName());
                 }
             }
             return true;

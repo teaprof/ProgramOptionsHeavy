@@ -58,6 +58,8 @@ opt1->tie(v, opt2val);
     - all arguments after '--' should be treated as positional
     - multiple_values vs multiple_occurrences
     - multiple_occurences: '--' stop symbol or custom stop symbol, multiple values are not allowed with "=": "--opt=1 2 3" is treated as "--opt=1", but "2" and "3" are the next positional arguments
+    - add support of comma: "--opt=1, 2, 3"
+    - add support of brackets: "--opt=[1, 2, 3]"
     - implicit value (requires reconsidering of the parser and lexer)
     - what is allow_long_disguise (using single "-" for long options)?
     - like TCLAP: hideFromHelp(), visibleFromHelp()
