@@ -115,6 +115,10 @@ class IncorrectLiteralString : public ExpectedValue {
         IncorrectLiteralString(std::shared_ptr<LiteralString> expected, std::string received) : ExpectedValue(expected), literal_string_{expected} {}
         std::shared_ptr<LiteralString> literal_string_;
 };
+class TooFewValuesForOption : public BaseOptionError {
+    public:
+        TooFewValuesForOption() : BaseOptionError(nullptr) {} // too few values for options, expected at least N or exact N
+};
 /*
 TODO:
 From boost::program_options

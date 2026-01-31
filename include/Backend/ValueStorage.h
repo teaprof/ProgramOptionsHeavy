@@ -14,45 +14,66 @@ class AbstractPositionalOption;
 
 class ValueStorage {
     public:
+    void startNewOccurrence() {
+        values_.push_back({});
+        raw_values_.push_back({});
+    }
+    void addValueToCurrentOccurence(const std::string& raw_value, const std::any& value) {
+        assert(values_.size() > 0);
+        values_.back().push_back(value);
+        raw_values_.back().push_back(raw_value);
+    }
     void add(const std::string& raw_value, const std::any& value) {
-        values_.push_back(value);
-        raw_values_.push_back(raw_value);
+        startNewOccurrence();
+        addValueToCurrentOccurence(raw_value, value);
     }
     template<class T>
     const T& valueAs() const {
         assert(values_.size() > 0);
-        return std::any_cast<const T&>(values_.back());
+        return std::any_cast<const T&>(values_[0].back());
     }
     template<class T>
     const T& valueAs(size_t idx) const {
         assert(idx < values_.size());
-        return std::any_cast<const T&>(values_[idx]);
+        return std::any_cast<const T&>(values_[0][idx]);
     }
     size_t valuesCount() const {
         return values_.size();
     }
     const std::string& rawValues(size_t idx) const {
         assert(idx < raw_values_.size());
-        return raw_values_[idx];
+        return raw_values_[0][idx];
     }
     const std::string& rawValue() const {
         assert(raw_values_.size() > 0);
-        return raw_values_.back();
+        return raw_values_[0].back();
     }
-    size_t size() {
-        return values_.size(); // equals to raw_values_.size()
+    size_t lastOccurenceSize() {
+        assert(values_.size() > 0);
+        return values_.back().size(); // equals to raw_values_.back().size()
     }
     // TODO: add setExternalStorage for std::vector<T> support
     // TODO: add hidden names for positional options
     private:
-    std::vector<std::any> values_;
-    std::vector<std::string> raw_values_;
+    //values_[i][j] is the j-th value in the i-th occurrence of the option
+    //e.g. for "-x 1 2 3 -a -b -x 4" we have values_.size() = 2, values_[0][1] = 2, values[1][0] = 4
+    std::vector<std::vector<std::any>> values_;
+    // indicies have the same meaning as for values_
+    std::vector<std::vector<std::string>> raw_values_;
 };
 
-class ValuesStorage {
+
+/// key is an option name, value is object of type Value storage
+class KeyValueStorage {
     public:
     void addValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value, const std::any value) {
         value_storage_[opt].add(raw_value, value);
+        if(external_pointers_.count(opt) > 0) {
+            opt->baseValueSemantics().store(value, external_pointers_[opt]);
+        };
+    }
+    void addValueToCurrentOccurence(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value, const std::any value) {
+        value_storage_[opt].addValueToCurrentOccurence(raw_value, value);
         if(external_pointers_.count(opt) > 0) {
             opt->baseValueSemantics().store(value, external_pointers_[opt]);
         };

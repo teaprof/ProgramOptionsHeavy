@@ -45,7 +45,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                     /* nothing to do */;
             }
             match = true;
-            value = grammar_parser_.getValue(opt);
+            value = grammar_parser_.getValue(opt); // todo: try to read as many values as possible
             unlocks = opt->unlocks;
         }
         void visit(std::shared_ptr<LiteralString> opt) override {
@@ -105,12 +105,12 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                     /* nothing to do*/;
             }            
             if(match) {
-                value = grammar_parser_.getValue(opt);
+                value = grammar_parser_.getValue(opt); // todo: try to read as many values as possible
                 unlocks = opt->unlocks;
             };
         }
         void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-            assert(false);
+            assert(false); // todo: not implemented?
         }
         void visit(std::shared_ptr<OptionsGroup2> opt) override {
             assert(false);
@@ -139,7 +139,7 @@ class BaseMatcher {
         std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
         std::shared_ptr<AbstractOption> options_;
     public:
-        ValuesStorage storage;
+        KeyValueStorage storage;
 
         BaseMatcher(std::shared_ptr<AbstractOption> options) : options_{options} {
             Checker checker;
@@ -155,6 +155,45 @@ class BaseMatcher {
             joinOptionsTo({options_}, remaining_options);
         }
 
+        bool eatNextValue(ArgGrammarParser& args, SingleOptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
+            //check if opt can accept one more value
+            bool can_accept = false;
+            bool should_accept = false;
+            switch(opt->nargs_type_) {
+                case AbstractNamedOptionWithValue::NArgs::exact: {
+                    size_t actual_count = storage[opt].lastOccurenceSize();
+                    size_t required_count = opt->nargs_count_;
+                    can_accept = (actual_count < required_count);
+                    should_accept = can_accept;
+                }
+                case AbstractNamedOptionWithValue::NArgs::upto: {
+                    size_t actual_count = storage[opt].lastOccurenceSize();
+                    size_t max_count = opt->nargs_count_;
+                    can_accept = (actual_count < max_count);
+                    should_accept = false;
+                }
+                case AbstractNamedOptionWithValue::NArgs::infinite: {
+                    can_accept = true;
+                    should_accept = false;
+                }
+            }
+            if(can_accept == false) {
+                return false;
+            }
+            args.getNextOption();
+            bool arg_is_value = args.current_result.token_type == ArgGrammarParser::value;
+            if(!arg_is_value) {
+                args.ungetOption();
+                if(should_accept) {
+                    throw TooFewValuesForOption(); // todo: print how many options should be (expected N or at least N)
+                }
+                return false;
+            }
+            std::vector<std::shared_ptr<AbstractOption>> unlocked_by_values;
+            addValueToCurrentOccurrence(opt, matcher, unlocked_by_values);
+            // todo: unused unlocked_by_values
+        }
+
         bool eatNextToken(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
             args.getNextOption();                
             bool option_matched = false;
@@ -164,7 +203,7 @@ class BaseMatcher {
                 it->accept(matcher);
                 if(matcher.match) {
                     std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value;
-                    setValue(it, matcher, unlocked_by_value);
+                    addValueToNewOccurrence(it, matcher, unlocked_by_value);
                     joinOptionsTo(unlocked_by_value, remaining_options);
                     if(!already_joined.contains(it)) {
                         joinOptionsTo(matcher.unlocks, remaining_options); // TODO: what should we do if this option was unpacked (multiple occurrence)
@@ -260,22 +299,25 @@ class BaseMatcher {
             }
 
         }
-        void setValue(std::shared_ptr<AbstractOption> opt, const SingleOptionMatcher& matcher, std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) { 
+        void addValueToNewOccurrence(std::shared_ptr<AbstractOption> opt, const SingleOptionMatcher& matcher, std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) { 
             checkMaxOccurrence(opt);
             if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
                 std::any val = p->baseValueSemantics().semanticParse(matcher.value);
                 //unlocked_by_value = p->baseValueSemantics().getUnlocks();
+                // todo: unused unlocked_by_value
                 storage.addValue(p, matcher.value, val);
             }
-            opts_counter_[opt]++;;
+            opts_counter_[opt]++;
+        }
+        void addValueToCurrentOccurrence(std::shared_ptr<AbstractOptionWithValue> opt, const SingleOptionMatcher& matcher, std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) {
+            std::any val = opt->baseValueSemantics().semanticParse(matcher.value);
+            storage.addValue(opt, matcher.value, val);
         }
 };
 
 class Matcher : public BaseMatcher {
     public:
-
         Matcher(std::shared_ptr<AbstractOption> options) : BaseMatcher{options} {}
-
         
         bool parse(ArgGrammarParser args) {
             BaseMatcher::parse(args);
@@ -290,7 +332,7 @@ class Matcher : public BaseMatcher {
             {
                 if(p->required() && opts_counter_.count(p) == 0) {
                     if(auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p)) {
-                        throw TooFewPositionalOptions(); /// TODO how many pos options are expected
+                        throw TooFewPositionalOptions(); /// TODO print how many pos options are expected
                     } else {
                         throw RequiredOptionIsNotSet(q);
                     }

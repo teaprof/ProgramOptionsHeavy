@@ -12,7 +12,7 @@
 #include <type_traits>
 #include <utility>
 
-class BaseValueStorage;
+//class BaseValueStorage;
 
 class BaseValueSemantics { // TODO rename to ValueParser and all variables of this type
     public:
