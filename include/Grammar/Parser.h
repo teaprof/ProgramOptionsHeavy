@@ -30,15 +30,17 @@ class ArgLexer {
         */
        /// todo: add "--" support (which signalizes that after it all arguments are treated as positional options)
     public:
-        static constexpr char long_option_pattern[] = "^--([A-Za-z0-9_\\-]+)"; // like --long_name
-        static constexpr char long_option_eq_value_pattern[] = "^--([A-Za-z0-9_\\-]+)=(.*)"; // like --long_name=value
-        static constexpr char short_options_pattern[] = "^-([A-Za-z0-9]+)"; // like -xyz
-        static constexpr char short_options_eq_value_pattern[] = "^-([A-Za-z0-9]+)=(.*)"; //like -xyz=value
+        static constexpr char long_option_pattern[] = "^--([A-Za-z0-9_\\-]+)$"; // like --long_name
+        static constexpr char long_option_eq_value_pattern[] = "^--([A-Za-z0-9_\\-]+)=(.*)$"; // like --long_name=value
+        static constexpr char short_options_pattern[] = "^-([A-Za-z0-9]+)$"; // like -xyz
+        static constexpr char short_options_eq_value_pattern[] = "^-([A-Za-z0-9]+)=(.*)$"; //like -xyz=value
+        static constexpr char double_dash_pattern[] = "^--$"; //like -xyz=value
         enum TokenType {
             long_option, // --long_option
             long_option_eq_value, // --long_option=value
             short_options, // -xyz
             short_options_eq_value, // -xyz=value
+            double_dash, // literally '--'
             value // value (for example, positional option)
         };
         struct Result {
@@ -55,6 +57,7 @@ class ArgLexer {
             std::regex short_options_ex(short_options_pattern);
             std::regex long_option_eq_value_ex(long_option_eq_value_pattern);
             std::regex short_options_eq_value_ex(short_options_eq_value_pattern);
+            std::regex double_dash_ex(double_dash_pattern);
             Result res;
             if(std::regex_match(arg, match, long_option_ex)) {                
                 assert(match.size() == 2);
@@ -77,6 +80,9 @@ class ArgLexer {
                 res.short_option_names = match[1];
                 res.value = undecorateValue(match[2]);
                 res.type = short_options_eq_value;
+            } else 
+            if(std::regex_match(arg, match, double_dash_ex)) {
+                res.type = double_dash;
             } else {
                 res.value = undecorateValue(arg);
                 res.type = value;
@@ -101,6 +107,7 @@ class ArgGrammarParser {
             short_option, // like y option in "-xy" (can be followed by a value)
             short_option_without_value, // like x option in "-xy" (can't be followed by a value)
             short_option_eq_value, // like y option in "-xy=value"
+            double_dash, // literally '--', used to indicate that all trailing options should be treated in special manner
             value // anything else which cannot be interpreted as a long option or a chain of the short options
         };        
         struct Result {
@@ -146,36 +153,44 @@ class ArgGrammarParser {
                 auto lex_result = ArgLexer::lex(args_[idx_++]);
                 switch(lex_result.type) {
                     case ArgLexer::long_option:
-                        results.push(Result{TokenTypes::long_option, lex_result.long_option_name, "", "", cur_idx});
+                        results.push_back(Result{TokenTypes::long_option, lex_result.long_option_name, "", "", cur_idx});
                         break;
                     case ArgLexer::long_option_eq_value:
-                        results.push(Result{TokenTypes::long_option_eq_value, lex_result.long_option_name, "", lex_result.value, cur_idx});
+                        results.push_back(Result{TokenTypes::long_option_eq_value, lex_result.long_option_name, "", lex_result.value, cur_idx});
                         break;
                     case ArgLexer::short_options: {
                         for(size_t n = 0; n + 1 < lex_result.short_option_names.size(); n++) {
                             std::string str{lex_result.short_option_names[n]};
-                            results.push(Result{TokenTypes::short_option_without_value, "", str, ""});
+                            results.push_back(Result{TokenTypes::short_option_without_value, "", str, ""});
                         }
                         std::string str{lex_result.short_option_names.back()};
-                        results.push(Result{TokenTypes::short_option, "", str, "", cur_idx});
+                        results.push_back(Result{TokenTypes::short_option, "", str, "", cur_idx});
                         break;
                         }
                     case ArgLexer::short_options_eq_value: {
                         for(size_t n = 0; n + 1 < lex_result.short_option_names.size(); n++) {
                             std::string str{lex_result.short_option_names[n]};
-                            results.push(Result{TokenTypes::short_option_without_value, "", str, "", cur_idx});
+                            results.push_back(Result{TokenTypes::short_option_without_value, "", str, "", cur_idx});
                         }
                         std::string str{lex_result.short_option_names.back()};
-                        results.push(Result{TokenTypes::short_option_eq_value, "", str, lex_result.value, cur_idx});
+                        results.push_back(Result{TokenTypes::short_option_eq_value, "", str, lex_result.value, cur_idx});
                         break;
                         }
+                    case ArgLexer::double_dash: {
+                        results.push_back(Result{TokenTypes::double_dash, "", "", "", cur_idx});
+                        break;
+                    }
                     case ArgLexer::value:
-                        results.push(Result{TokenTypes::value, "", "", lex_result.value, cur_idx});
+                        results.push_back(Result{TokenTypes::value, "", "", lex_result.value, cur_idx});
                 }
             }
             current_result = std::move(results.front());
-            results.pop();
+            results.pop_front();
             return current_result;
+        }
+
+        void ungetOption() {
+            results.push_front(current_result);
         }
 
         /// the raw option name is used in error messages to address the option by the name that was actually passed (short or long)
@@ -189,6 +204,9 @@ class ArgGrammarParser {
                 case TokenTypes::long_option:
                 case TokenTypes::long_option_eq_value:
                     return current_result.short_option_name;
+
+                case TokenTypes::double_dash:
+                    return "--";
                 
                 case TokenTypes::value:
                     return current_result.value;
@@ -213,6 +231,9 @@ class ArgGrammarParser {
                     //return args_[idx++]; // force next arg as value
                     throw ExpectedValue(opt);
                 }
+                case TokenTypes::double_dash: {
+                    throw ExpectedValue(opt);
+                }
                 case TokenTypes::value:
                 case TokenTypes::short_option_eq_value:
                 case TokenTypes::long_option_eq_value:
@@ -228,7 +249,7 @@ class ArgGrammarParser {
             return args_.size();
         }
     private:
-        std::queue<Result> results; // todo: remove
+        std::deque<Result> results; // todo: remove
 };
 
 
