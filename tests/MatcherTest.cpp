@@ -337,7 +337,7 @@ TEST(Matcher, MultipleValuesOfPositionalOption) {
     EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
     ASSERT_EQ(parser.storage[opt].occurrenceSize(1), 1);
     EXPECT_EQ(parser.storage[opt].rawValues(1, 0), "40");
-    EXPECT_EQ(parser.storage[opt].rawValues(0), "4  0");
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "40");
     EXPECT_EQ(d, 40);
     ASSERT_THROW(parser.parse("20 30 40 50 60"), TooManyPositionalOptions);
 }

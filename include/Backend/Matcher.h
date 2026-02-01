@@ -318,7 +318,7 @@ class BaseMatcher {
             checkMaxOccurrence(opt);
             if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
                 std::any val = p->baseValueSemantics().semanticParse(matcher.value);
-                //unlocked_by_value = p->baseValueSemantics().getUnlocks();
+                unlocked_by_value = p->baseValueSemantics().getUnlocks();
                 // todo: unused unlocked_by_value
                 storage.addValue(p, matcher.value, val);
             }

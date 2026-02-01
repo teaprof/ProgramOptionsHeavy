@@ -64,6 +64,7 @@ opt1->tie(v, opt2val);
     - what is allow_long_disguise (using single "-" for long options)?
     - like TCLAP: hideFromHelp(), visibleFromHelp()
     - revisit Exceptions
+    - double dash can be used to indicate the end of the values list: "--input file1.txt file2.txt -- outputfile.txt"
 
 1. Parser:
     - unknown options could be collected instead of throwing UnknownOption (like program_options::basic_option::unregistered)
