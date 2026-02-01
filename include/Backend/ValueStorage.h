@@ -30,27 +30,43 @@ class ValueStorage {
     template<class T>
     const T& valueAs() const {
         assert(values_.size() > 0);
-        return std::any_cast<const T&>(values_[0].back());
+        assert(values_.back().size() > 0);
+        return std::any_cast<const T&>(values_.back().back());
     }
     template<class T>
     const T& valueAs(size_t idx) const {
-        assert(idx < values_.size());
-        return std::any_cast<const T&>(values_[0][idx]);
+        assert(values_.size() > 0);
+        assert(idx < values_.back().size());
+        return std::any_cast<const T&>(values_.back()[idx]);
     }
-    size_t valuesCount() const {
-        return values_.size();
+    template<class T>
+    const T& valueAs(size_t occurrence, size_t idx) const {
+        assert(idx < values_.size());
+        return std::any_cast<const T&>(values_[occurrence][idx]);
     }
     const std::string& rawValues(size_t idx) const {
-        assert(idx < raw_values_.size());
-        return raw_values_[0][idx];
+        assert(raw_values_.size() > 0);
+        assert(idx < raw_values_[0].size());
+        return raw_values_.back()[idx];
+    }
+    const std::string& rawValues(size_t occurrence, size_t idx) const {
+        assert(occurrence < raw_values_.size());
+        assert(idx < raw_values_[occurrence].size());
+        return raw_values_[occurrence][idx];
     }
     const std::string& rawValue() const {
         assert(raw_values_.size() > 0);
-        return raw_values_[0].back();
-    }
-    size_t lastOccurenceSize() {
+        return raw_values_.back().back();
+    }    
+    size_t lastOccurrenceSize() {
         assert(values_.size() > 0);
         return values_.back().size(); // equals to raw_values_.back().size()
+    }
+    size_t occurrenceCount() {
+        return values_.size();
+    }
+    size_t occurrenceSize(size_t occurrence) {
+        return values_[occurrence].size();
     }
     // TODO: add setExternalStorage for std::vector<T> support
     // TODO: add hidden names for positional options

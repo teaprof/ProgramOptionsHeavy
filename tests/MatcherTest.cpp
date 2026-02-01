@@ -86,19 +86,19 @@ TEST_F(MatcherFixtureSimple, Test1) {
     EXPECT_TRUE(parser.parse("-1 filename"));
     EXPECT_TRUE(parser.parse("filename -1"));
     opt3->setRequired(false);
-    ASSERT_EQ(v, 0);
+    EXPECT_EQ(v, 0);
     EXPECT_TRUE(parser.parse("--opt1"));
-    ASSERT_EQ(v, 0);
+    EXPECT_EQ(v, 0);
     EXPECT_THROW(parser.parse("--opt1 --opt2"), ExpectedValue);
-    ASSERT_EQ(v, 0); /// TODO here should be default value
+    EXPECT_EQ(v, 0); /// TODO here should be default value
     EXPECT_TRUE(parser.parse("--opt1 --opt2=10"));
-    ASSERT_EQ(v, 10);
+    EXPECT_EQ(v, 10);
     EXPECT_THROW(parser.parse("--opt1 --opt2 11"), ValueIsOutOfRange);
-    ASSERT_EQ(v, 10);
+    EXPECT_EQ(v, 10);
     EXPECT_THROW(parser.parse("--opt1 --opt2 22"), ValueIsOutOfRange);
-    ASSERT_EQ(v, 10);
+    EXPECT_EQ(v, 10);
     EXPECT_THROW(parser.parse("--opt1 --opt1"), MaxOptionOccurenceIsExceeded);
-    ASSERT_EQ(v, 10);
+    EXPECT_EQ(v, 10);
 }
 
 TEST_F(MatcherFixture, Test1) {
@@ -146,9 +146,9 @@ TEST(Matcher, DefaultValue) {
     opt->valueSemantics().setExternalStorage(d);
     parser.storage.setExternalStorage(opt, &d);
     parser.parse({});
-    ASSERT_EQ(d, 10);
+    EXPECT_EQ(d, 10);
     EXPECT_TRUE(parser.parse({"--opt1 20"}));
-    ASSERT_EQ(d, 20);
+    EXPECT_EQ(d, 20);
 }
 
 TEST(Matcher, MultipleOccurrenceOfNamedOption) {
@@ -161,16 +161,22 @@ TEST(Matcher, MultipleOccurrenceOfNamedOption) {
     opt->valueSemantics().setExternalStorage(d);
     parser.storage.setExternalStorage(opt, &d);
     parser.parse({});
-    ASSERT_EQ(d, 10);
+    EXPECT_EQ(d, 10);
     EXPECT_TRUE(parser.parse("--opt1 20"));
-    EXPECT_EQ(parser.storage[opt].size(), 1);
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
     EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
-    ASSERT_EQ(d, 20);
+    EXPECT_EQ(d, 20);
     EXPECT_TRUE(parser.parse("--opt1 20 --opt1 30"));
-    EXPECT_TRUE(parser.storage[opt].size() == 2);
-    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
-    EXPECT_EQ(parser.storage[opt].rawValues(1), "30");
-    ASSERT_EQ(d, 30);
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 2);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(1, 0), "30");
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "30");
+    EXPECT_EQ(d, 30);
     ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1 40"), MaxOptionOccurenceIsExceeded);
 }
 
@@ -188,26 +194,152 @@ TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
     EXPECT_NO_THROW(parser.parse({}));
     opt->valueSemantics().setDefaultValue(10);
     ASSERT_FALSE(parser.storage.contains(opt));
+    EXPECT_NO_THROW(parser.parse({}));    
+    EXPECT_EQ(d, 10);
+    EXPECT_TRUE(parser.parse("20"));
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");    
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
+    ASSERT_EQ(parser.storage[opt].valueAs<int>(0), 20);
+    EXPECT_EQ(d, 20);
+    EXPECT_TRUE(parser.parse("20 30"));
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(1, 0), "30");
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "30");
+    EXPECT_EQ(d, 30);
+    ASSERT_THROW(parser.parse("20 30 40"), TooManyPositionalOptions);
+}
+
+TEST(Matcher, MultipleValuesOfNamedOptionExact) {
+    auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    opt->valueSemantics().setDefaultValue(10);
+    opt->setMaxOccurreneCount(1);
+    opt->setNArgs(AbstractNamedOptionWithValue::NArgs::exact, 2);
+
+    Matcher parser(opt);
+    int d{0};
+    opt->valueSemantics().setExternalStorage(d);
+    parser.storage.setExternalStorage(opt, &d);
+    parser.parse({});
+    EXPECT_EQ(d, 10);
+    EXPECT_TRUE(parser.parse("--opt1 20 30"));
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 2);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
+    EXPECT_EQ(d, 30);    
+    ASSERT_THROW(parser.parse("--opt1 20 30 --opt1 40 40 --opt1 20 20"), MaxOptionOccurenceIsExceeded);
+    ASSERT_THROW(parser.parse("--opt1 20"), TooFewValuesForOption);
+    ASSERT_THROW(parser.parse("--opt1"), ExpectedValue); /// todo: ExpectedValue vs TooFewValuesForOption
+}
+
+TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
+    auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    opt->valueSemantics().setDefaultValue(10);
+    opt->setMaxOccurreneCount(1);
+    opt->setNArgs(AbstractNamedOptionWithValue::NArgs::upto, 2);
+
+    Matcher parser(opt);
+    int d{0};
+    opt->valueSemantics().setExternalStorage(d);
+    parser.storage.setExternalStorage(opt, &d);
+    parser.parse({});
+    EXPECT_EQ(d, 10);
+    ASSERT_TRUE(parser.parse("--opt1 20 30"));
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 2);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
+    EXPECT_EQ(d, 30);
+    ASSERT_TRUE(parser.parse("--opt1 31"));
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "31");
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "31");
+    EXPECT_EQ(d, 31);
+    ASSERT_THROW(parser.parse("--opt1 20 --opt1 30"), MaxOptionOccurenceIsExceeded);
+    // parse command finished with exception but parser storage should be initialized with successfully parsed values
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
+
+    ASSERT_THROW(parser.parse("--opt1 20 30 40"), TooManyPositionalOptions);
+}
+
+TEST(Matcher, MultipleValuesOfNamedOptionInfinite) {
+    auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    opt->valueSemantics().setDefaultValue(10);
+    opt->setMaxOccurreneCount(1);
+    opt->setNArgs(AbstractNamedOptionWithValue::NArgs::infinite);
+
+    Matcher parser(opt);
+    int d{0};
+    opt->valueSemantics().setExternalStorage(d);
+    parser.storage.setExternalStorage(opt, &d);
+    parser.parse({});
+    EXPECT_EQ(d, 10);
+    ASSERT_TRUE(parser.parse("--opt1 20 30"));
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 2);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
+    EXPECT_EQ(d, 30);
+}
+
+TEST(Matcher, MultipleValuesOfPositionalOption) {
+    auto opt = std::make_shared<PositionalOptionWithValue<int>>();
+    opt->setMaxOccurreneCount(2);
+    opt->setNArgs(AbstractNamedOptionWithValue::NArgs::upto, 2);
+
+    Matcher parser(opt);
+    int d{0};
+    opt->valueSemantics().setExternalStorage(d);
+    parser.storage.setExternalStorage(opt, &d);
+    opt->setRequired(true);
+    EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
+    opt->setRequired(false);
     EXPECT_NO_THROW(parser.parse({}));
     opt->valueSemantics().setDefaultValue(10);
-    ASSERT_EQ(d, 10);
+    ASSERT_FALSE(parser.storage.contains(opt));
+    EXPECT_NO_THROW(parser.parse({}));
+    EXPECT_EQ(d, 10);
     EXPECT_TRUE(parser.parse("20"));
-    EXPECT_EQ(parser.storage[opt].size(), 1);
-    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
     ASSERT_TRUE(parser.storage.contains(opt));
-    ASSERT_EQ(parser.storage[opt].size(), 1);
-    ASSERT_EQ(parser.storage[opt].valueAs<int>(0), 20);
-    ASSERT_EQ(d, 20);
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt].occurrenceSize(0), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
+    EXPECT_EQ(parser.storage[opt].valueAs<int>(0), 20);
+    EXPECT_EQ(d, 20);
     EXPECT_TRUE(parser.parse("20 30"));
-    EXPECT_TRUE(parser.storage[opt].size() == 2);
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 2);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
     EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
     EXPECT_EQ(parser.storage[opt].rawValues(1), "30");
+    EXPECT_EQ(d, 30);
+    EXPECT_TRUE(parser.parse("20 30 40"));
     ASSERT_TRUE(parser.storage.contains(opt));
-    ASSERT_EQ(parser.storage[opt].size(), 2);
-    ASSERT_EQ(parser.storage[opt].valueAs<int>(0), 20);
-    ASSERT_EQ(parser.storage[opt].valueAs<int>(1), 30);
-    ASSERT_EQ(d, 30);
-    ASSERT_THROW(parser.parse("20 30 40"), TooManyPositionalOptions);
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 2);
+    ASSERT_EQ(parser.storage[opt].occurrenceSize(0), 2);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
+    ASSERT_EQ(parser.storage[opt].occurrenceSize(1), 1);
+    EXPECT_EQ(parser.storage[opt].rawValues(1, 0), "40");
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "4  0");
+    EXPECT_EQ(d, 40);
+    ASSERT_THROW(parser.parse("20 30 40 50 60"), TooManyPositionalOptions);
 }
 
 TEST(Matcher, TwoPositionalOptions) {

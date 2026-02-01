@@ -214,7 +214,7 @@ class ArgGrammarParser {
             return ""; // to suppress warning "no return value"
         }
 
-        std::string getValue(std::shared_ptr<AbstractOption> opt) {
+        std::string getValue(std::shared_ptr<AbstractOption> opt) { /// todo: opt is only used to print an error message
             switch(current_result.token_type) {
                 case TokenTypes::short_option_without_value: {
                     throw ExpectedValue(opt);

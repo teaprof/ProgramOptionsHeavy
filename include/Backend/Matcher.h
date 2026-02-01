@@ -161,20 +161,23 @@ class BaseMatcher {
             bool should_accept = false;
             switch(opt->nargs_type_) {
                 case AbstractNamedOptionWithValue::NArgs::exact: {
-                    size_t actual_count = storage[opt].lastOccurenceSize();
+                    size_t actual_count = storage[opt].lastOccurrenceSize();
                     size_t required_count = opt->nargs_count_;
                     can_accept = (actual_count < required_count);
                     should_accept = can_accept;
+                    break;
                 }
                 case AbstractNamedOptionWithValue::NArgs::upto: {
-                    size_t actual_count = storage[opt].lastOccurenceSize();
+                    size_t actual_count = storage[opt].lastOccurrenceSize();
                     size_t max_count = opt->nargs_count_;
                     can_accept = (actual_count < max_count);
                     should_accept = false;
+                    break;
                 }
                 case AbstractNamedOptionWithValue::NArgs::infinite: {
                     can_accept = true;
                     should_accept = false;
+                    break;
                 }
             }
             if(can_accept == false) {
@@ -189,16 +192,18 @@ class BaseMatcher {
                 }
                 return false;
             }
-            std::vector<std::shared_ptr<AbstractOption>> unlocked_by_values;
-            addValueToCurrentOccurrence(opt, matcher, unlocked_by_values);
+            std::vector<std::shared_ptr<AbstractOption>> unlocked_by_values;        
+            addValueToCurrentOccurrence(opt, args.current_result.value, unlocked_by_values);
             // todo: unused unlocked_by_values
+            return true;
         }
 
-        bool eatNextToken(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
+        std::shared_ptr<AbstractOption> eatNextToken(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
             args.getNextOption();                
             bool option_matched = false;
             bool arg_is_value = args.current_result.token_type == ArgGrammarParser::value; 
             matcher.checked_positional_options.clear();
+            std::shared_ptr<AbstractOption> res = nullptr;
             for(auto it : remaining_options) {
                 it->accept(matcher);
                 if(matcher.match) {
@@ -216,6 +221,7 @@ class BaseMatcher {
                         used_options.push_back(it);
                     }
                     option_matched = true;
+                    res = it;
                     break;
                 };
             }
@@ -255,19 +261,28 @@ class BaseMatcher {
                     throw UnknownNamedOption(args.getRawOptionName());
                 }
             }
-            return true;
+            return res;
         }
 
         void parseNext(ArgGrammarParser& args) {
             SingleOptionMatcher matcher(args);
-            eatNextToken(args, matcher);
+            auto opt = eatNextToken(args, matcher);
+            if(opt) {
+                if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
+                    while(!args.eof() && eatNextValue(args, matcher, p)) {};
+                    if(args.eof()) {
+                        checkIfOptionIsCompleted(p);
+                    }
+                }
+            };
         }
 
         void parse(ArgGrammarParser args) {
             clear();
             SingleOptionMatcher matcher(args);
             while(!args.eof()) {
-                eatNextToken(args, matcher);
+                //eatNextToken(args, matcher);
+                parseNext(args);
             }
         }
     protected:
@@ -309,9 +324,18 @@ class BaseMatcher {
             }
             opts_counter_[opt]++;
         }
-        void addValueToCurrentOccurrence(std::shared_ptr<AbstractOptionWithValue> opt, const SingleOptionMatcher& matcher, std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) {
-            std::any val = opt->baseValueSemantics().semanticParse(matcher.value);
-            storage.addValue(opt, matcher.value, val);
+        void addValueToCurrentOccurrence(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value, std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) {
+            std::any val = opt->baseValueSemantics().semanticParse(value);
+            storage.addValueToCurrentOccurence(opt, value, val);
+        }
+        void checkIfOptionIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {
+            if(opt->nargs_type_ == AbstractOptionWithValue::NArgs::exact) {
+                size_t actual = storage[opt].lastOccurrenceSize();
+                size_t expected = opt->nargs_count_;
+                if(actual < expected) {
+                    throw TooFewValuesForOption(); // todo print message
+                }
+            }
         }
 };
 
