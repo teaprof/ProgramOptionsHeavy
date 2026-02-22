@@ -50,7 +50,7 @@ class ArgLexer {
             std::string value;
         };
 
-        static Result lex(const std::string& arg) {
+        static Result lex(const std::string& arg, bool match_only_positional) {
             std::string current_arg = arg;
             std::smatch match;
             std::regex long_option_ex(long_option_pattern);
@@ -59,29 +59,29 @@ class ArgLexer {
             std::regex short_options_eq_value_ex(short_options_eq_value_pattern);
             std::regex double_dash_ex(double_dash_pattern);
             Result res;
-            if(std::regex_match(arg, match, long_option_ex)) {                
+            if(!match_only_positional && std::regex_match(arg, match, long_option_ex)) {                
                 assert(match.size() == 2);
                 res.long_option_name = match[1];
                 res.type = long_option;
             } else 
-            if(std::regex_match(arg, match, long_option_eq_value_ex)) {
+            if(!match_only_positional && std::regex_match(arg, match, long_option_eq_value_ex)) {
                 assert(match.size() == 3);
                 res.long_option_name = match[1];
                 res.value = undecorateValue(match[2]);
                 res.type = long_option_eq_value;
             } else 
-            if(std::regex_match(arg, match, short_options_ex)) {
+            if(!match_only_positional && std::regex_match(arg, match, short_options_ex)) {
                 assert(match.size() == 2);
                 res.short_option_names = match[1];
                 res.type = short_options;
             } else 
-            if(std::regex_match(arg, match, short_options_eq_value_ex)) {
+            if(!match_only_positional && std::regex_match(arg, match, short_options_eq_value_ex)) {
                 assert(match.size() == 3);
                 res.short_option_names = match[1];
                 res.value = undecorateValue(match[2]);
                 res.type = short_options_eq_value;
             } else 
-            if(std::regex_match(arg, match, double_dash_ex)) {
+            if(std::regex_match(arg, match, double_dash_ex)) { // TODO: does we need to check match_only_positional flag here?
                 res.type = double_dash;
             } else {
                 res.value = undecorateValue(arg);
@@ -101,6 +101,7 @@ class ArgGrammarParser {
         std::vector<std::string> args_;
         size_t idx_{0};
     public:
+        bool match_only_positional{false}; // when double dash "--" is encountered among the argument list, all following options are treated as positional
         enum TokenTypes {
             long_option, // like --option
             long_option_eq_value, // like --option=value
@@ -150,7 +151,7 @@ class ArgGrammarParser {
             if(results.empty()) {
                 assert(idx_ < args_.size());
                 size_t cur_idx = idx_;
-                auto lex_result = ArgLexer::lex(args_[idx_++]);
+                auto lex_result = ArgLexer::lex(args_[idx_++], match_only_positional);
                 switch(lex_result.type) {
                     case ArgLexer::long_option:
                         results.push_back(Result{TokenTypes::long_option, lex_result.long_option_name, "", "", cur_idx});
@@ -224,7 +225,7 @@ class ArgGrammarParser {
                     if(eof()) {
                         throw ExpectedValue(opt);
                     }
-                    ArgLexer::Result lex_result = ArgLexer::lex(args_[idx_++]);
+                    ArgLexer::Result lex_result = ArgLexer::lex(args_[idx_++], match_only_positional);
                     if(lex_result.type == ArgLexer::value) {
                         return lex_result.value;
                     }

@@ -377,6 +377,23 @@ TEST(Matcher, TwoPositionalOptionsWithDoubleDash) {
 }
 
 
+TEST(Matcher, DoubleDashTerminatesNamedOptions) {
+    auto opt1 = std::make_shared<NamedOptionWithValue<int>>("--arg1");
+    auto opt2 = std::make_shared<NamedOptionWithValue<int>>("--arg2");
+    auto opt3 = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto opt = std::make_shared<OptionsGroup2>()->addUnlock(opt1)->addUnlock(opt2)->addUnlock(opt3);
+
+    Matcher parser(opt); // todo: rename parser to matcher here and all other places
+    EXPECT_NO_THROW(parser.parse("--arg1 10 -- --arg2"));
+    ASSERT_EQ(parser.storage[opt1].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt1].occurrenceSize(0), 1);
+    ASSERT_EQ(parser.storage[opt1].rawValues(0, 0), "10");
+    ASSERT_FALSE(parser.storage.contains(opt2));
+    ASSERT_EQ(parser.storage[opt3].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt3].occurrenceSize(0), 1);
+    ASSERT_EQ(parser.storage[opt3].rawValues(0, 0), "--arg2"); 
+}
+
 TEST(Matcher, PositionalAndNamed) {
     auto posopt = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto namedopt = std::make_shared<NamedOptionWithValue<int>>("--opt1");

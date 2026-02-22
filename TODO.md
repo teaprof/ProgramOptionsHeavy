@@ -55,8 +55,7 @@ opt1->tie(v, opt2val);
     + \<TYPE\> of the value
     + default value
     + is required
-    - all arguments after '--' should be treated as positional
-    - multiple_values vs multiple_occurrences
+    + multiple_values vs multiple_occurrences
     - multiple_occurences: '--' stop symbol or custom stop symbol, multiple values are not allowed with "=": "--opt=1 2 3" is treated as "--opt=1", but "2" and "3" are the next positional arguments
     - add support of comma: "--opt=1, 2, 3"
     - add support of brackets: "--opt=[1, 2, 3]"
@@ -64,8 +63,8 @@ opt1->tie(v, opt2val);
     - what is allow_long_disguise (using single "-" for long options)?
     - like TCLAP: hideFromHelp(), visibleFromHelp()
     - revisit Exceptions
-    - double dash can be used to indicate the end of the values list: "--input file1.txt file2.txt -- outputfile.txt"
-    - all options after the double dash are treated as positional <- START DOING THIS
+    + double dash can be used to indicate the end of the values list: "--input file1.txt file2.txt -- outputfile.txt"
+    + all options after the double dash are treated as positional
     - check https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
 
 1. Parser:

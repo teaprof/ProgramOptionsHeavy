@@ -133,6 +133,10 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 }
             }
         }
+
+        void setPositionalOnlyFlag(bool value) {
+            grammar_parser_.match_only_positional = value;
+        }
 };
 
 class BaseMatcher {
@@ -207,19 +211,7 @@ class BaseMatcher {
         std::shared_ptr<AbstractOption> eatNextToken(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
             args.getNextOption();
             if(args.current_result.token_type == ArgGrammarParser::TokenTypes::double_dash) {
-                std::vector<size_t> indexes_to_remove;
-                for(size_t idx = 0; idx < remaining_options.size(); idx++) {
-                    auto& it = remaining_options[idx];
-                    if(std::dynamic_pointer_cast<NamedOption>(it)) {
-                        indexes_to_remove.push_back(idx);
-                        if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(it)) {
-                            checkIfOptionIsCompleted(p);
-                        }
-                    }
-                }
-                for(auto idx = indexes_to_remove.rbegin(); idx != indexes_to_remove.rend(); idx++) {
-                    remaining_options.erase(remaining_options.begin() + *idx);
-                }
+                matcher.setPositionalOnlyFlag(true);
                 return nullptr;
             }
             bool option_matched = false;            
@@ -355,8 +347,9 @@ class BaseMatcher {
             std::any val = opt->baseValueSemantics().semanticParse(value);
             storage.addValueToCurrentOccurence(opt, value, val);
         }
-        void checkIfOptionIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {
+        void checkIfOptionIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) { // TODO: rename to something like checkIfValueListIsCompleted
             if(opt->nargs_type_ == AbstractOptionWithValue::NArgs::exact) {
+                assert(storage.contains(opt));
                 size_t actual = storage[opt].lastOccurrenceSize();
                 size_t expected = opt->nargs_count_;
                 if(actual < expected) {
