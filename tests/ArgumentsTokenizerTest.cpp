@@ -1,7 +1,7 @@
 #include <Backend/Matcher.h>
 #include <gtest/gtest.h>
 
-TEST(ArgumentsLexer, SimpleTests) {
+TEST(ArgumentsLexer, TestBlock1) {
     auto res = ArgLexer::lex("--dim");
     EXPECT_EQ(res.type, ArgLexer::long_option);
     EXPECT_EQ(res.long_option_name, "dim");
@@ -14,12 +14,17 @@ TEST(ArgumentsLexer, SimpleTests) {
     res = ArgLexer::lex("--dim+1");
     EXPECT_EQ(res.type, ArgLexer::value);
     EXPECT_EQ(res.value, "--dim+1");
-    res = ArgLexer::lex("--dim -a");
+    res = ArgLexer::lex("--dim -a"); // this treater as a single string, white space doesn't matter
     EXPECT_EQ(res.type, ArgLexer::value);
     EXPECT_EQ(res.value, "--dim -a");
-}
+    res = ArgLexer::lex("--");
+    EXPECT_EQ(res.type, ArgLexer::double_dash);
+    res = ArgLexer::lex("---a");
+    EXPECT_EQ(res.type, ArgLexer::value);
+    EXPECT_EQ(res.value, "---a");
+}    
 
-TEST(ArgumentsLexer, ComplexTests) {
+TEST(ArgumentsLexer, TestBlock2) {
     auto res = ArgLexer::lex("--dim");
     EXPECT_EQ(res.type, ArgLexer::long_option);
     EXPECT_EQ(res.long_option_name, "dim");

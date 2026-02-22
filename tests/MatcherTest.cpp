@@ -356,6 +356,27 @@ TEST(Matcher, TwoPositionalOptions) {
     EXPECT_THROW(parser.parse("file1 10 20 30"), TooManyPositionalOptions);
 }
 
+TEST(Matcher, TwoPositionalOptionsWithDoubleDash) {
+    auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
+    opt1->setNArgs(AbstractNamedOptionWithValue::NArgs::upto, 10);
+    opt2->setNArgs(AbstractNamedOptionWithValue::NArgs::upto, 2);
+    auto opt = std::make_shared<OptionsGroup2>()->addUnlock(opt1)->addUnlock(opt2);
+
+    Matcher parser(opt); // todo: rename parser to matcher here and all other places
+    EXPECT_NO_THROW(parser.parse("file1 file2 file3 -- 10"));
+    ASSERT_EQ(parser.storage[opt1].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt1].occurrenceSize(0), 3);
+    ASSERT_EQ(parser.storage[opt1].rawValues(0, 0), "file1");
+    ASSERT_EQ(parser.storage[opt1].rawValues(0, 1), "file2");
+    ASSERT_EQ(parser.storage[opt1].rawValues(0, 2), "file3");
+
+    ASSERT_EQ(parser.storage[opt2].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt2].occurrenceSize(0), 1);
+    ASSERT_EQ(parser.storage[opt2].rawValues(0, 0), "10");    
+}
+
+
 TEST(Matcher, PositionalAndNamed) {
     auto posopt = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto namedopt = std::make_shared<NamedOptionWithValue<int>>("--opt1");

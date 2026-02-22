@@ -30,8 +30,8 @@ class ArgLexer {
         */
        /// todo: add "--" support (which signalizes that after it all arguments are treated as positional options)
     public:
-        static constexpr char long_option_pattern[] = "^--([A-Za-z0-9_\\-]+)$"; // like --long_name
-        static constexpr char long_option_eq_value_pattern[] = "^--([A-Za-z0-9_\\-]+)=(.*)$"; // like --long_name=value
+        static constexpr char long_option_pattern[] = "^--([A-Za-z0-9_][A-Za-z0-9_\\-]*)$"; // like --long_name
+        static constexpr char long_option_eq_value_pattern[] = "^--([A-Za-z0-9_][A-Za-z0-9_\\-]*)=(.*)$"; // like --long_name=value
         static constexpr char short_options_pattern[] = "^-([A-Za-z0-9]+)$"; // like -xyz
         static constexpr char short_options_eq_value_pattern[] = "^-([A-Za-z0-9]+)=(.*)$"; //like -xyz=value
         static constexpr char double_dash_pattern[] = "^--$"; //like -xyz=value

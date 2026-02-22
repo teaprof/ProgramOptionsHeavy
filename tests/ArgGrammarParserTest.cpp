@@ -87,11 +87,26 @@ TEST(ArgGrammarParser, Value) {
     EXPECT_TRUE(parser1.eof());
 
 
-    ArgGrammarParser parser2(std::vector<std::string>{"abra cadabra"});
+    ArgGrammarParser parser2(std::vector<std::string>{"abra cadabra"}); //the whole string is treated as a single argument, space doesn't matter
     EXPECT_FALSE(parser2.eof());
     parser2.getNextOption();
     EXPECT_EQ(parser2.current_result.token_type, ArgGrammarParser::value);
     EXPECT_EQ(parser2.current_result.value, "abra cadabra");
     EXPECT_EQ(parser2.getValue(nullptr), "abra cadabra");
     EXPECT_TRUE(parser2.eof());
+}
+
+TEST(ArgGrammarParser, DoubleDash) {    
+    ArgGrammarParser parser1("--");
+    EXPECT_FALSE(parser1.eof());
+    parser1.getNextOption();
+    EXPECT_EQ(parser1.current_result.token_type, ArgGrammarParser::double_dash);
+    EXPECT_THROW(parser1.getValue(nullptr), ExpectedValue);
+    EXPECT_TRUE(parser1.eof());
+
+
+    ArgGrammarParser parser2(std::vector<std::string>{"-- cadabra"});
+    EXPECT_FALSE(parser2.eof());
+    parser2.getNextOption();
+    EXPECT_EQ(parser2.current_result.token_type, ArgGrammarParser::value);
 }

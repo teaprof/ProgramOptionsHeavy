@@ -40,6 +40,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 case ArgGrammarParser::TokenTypes::short_option:
                 case ArgGrammarParser::TokenTypes::short_option_without_value:
                 case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                case ArgGrammarParser::TokenTypes::double_dash:
                     return;
                 case ArgGrammarParser::TokenTypes::value:
                     /* nothing to do */;
@@ -58,6 +59,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 case ArgGrammarParser::TokenTypes::short_option:
                 case ArgGrammarParser::TokenTypes::short_option_without_value:
                 case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                case ArgGrammarParser::TokenTypes::double_dash:
                 break;
                 case ArgGrammarParser::TokenTypes::value:
                     match = opt->str() == grammar_parser_.current_result.value;
@@ -81,6 +83,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 case ArgGrammarParser::TokenTypes::short_option_eq_value:
                     match = opt->shortName().has_value() && opt->shortName().value() == grammar_parser_.current_result.short_option_name;
                     break;
+                case ArgGrammarParser::TokenTypes::double_dash:
                 case ArgGrammarParser::TokenTypes::value:
                     break;
             }            
@@ -101,6 +104,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 case ArgGrammarParser::TokenTypes::short_option_eq_value:
                     match = opt->shortName().has_value() && opt->shortName().value() == grammar_parser_.current_result.short_option_name;
                     break;
+                case ArgGrammarParser::TokenTypes::double_dash:
                 case ArgGrammarParser::TokenTypes::value:
                     /* nothing to do*/;
             }            
@@ -142,8 +146,8 @@ class BaseMatcher {
         KeyValueStorage storage;
 
         BaseMatcher(std::shared_ptr<AbstractOption> options) : options_{options} {
-            Checker checker;
-            options->accept(checker);
+            //Checker checker;
+            //options->accept(checker);
         }
 
         void clear() {
@@ -185,8 +189,10 @@ class BaseMatcher {
             }
             args.getNextOption();
             bool arg_is_value = args.current_result.token_type == ArgGrammarParser::value;
+            bool arg_is_double_dash = args.current_result.token_type == ArgGrammarParser::double_dash;
             if(!arg_is_value) {
-                args.ungetOption();
+                if(!arg_is_double_dash)                
+                    args.ungetOption();
                 if(should_accept) {
                     throw TooFewValuesForOption(); // todo: print how many options should be (expected N or at least N)
                 }
@@ -199,9 +205,24 @@ class BaseMatcher {
         }
 
         std::shared_ptr<AbstractOption> eatNextToken(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
-            args.getNextOption();                
-            bool option_matched = false;
-            bool arg_is_value = args.current_result.token_type == ArgGrammarParser::value; 
+            args.getNextOption();
+            if(args.current_result.token_type == ArgGrammarParser::TokenTypes::double_dash) {
+                std::vector<size_t> indexes_to_remove;
+                for(size_t idx = 0; idx < remaining_options.size(); idx++) {
+                    auto& it = remaining_options[idx];
+                    if(std::dynamic_pointer_cast<NamedOption>(it)) {
+                        indexes_to_remove.push_back(idx);
+                        if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(it)) {
+                            checkIfOptionIsCompleted(p);
+                        }
+                    }
+                }
+                for(auto idx = indexes_to_remove.rbegin(); idx != indexes_to_remove.rend(); idx++) {
+                    remaining_options.erase(remaining_options.begin() + *idx);
+                }
+                return nullptr;
+            }
+            bool option_matched = false;            
             matcher.checked_positional_options.clear();
             std::shared_ptr<AbstractOption> res = nullptr;
             for(auto it : remaining_options) {
@@ -227,6 +248,12 @@ class BaseMatcher {
             }
             // Process parsing error
             if(!option_matched) {
+                /// TODO: assert(arg_is_double_dash == false)
+                /*bool arg_is_double_dash = args.current_result.token_type == ArgGrammarParser::double_dash; 
+                if(arg_is_double_dash) {
+                    // double dash should be simply ignored
+                    return nullptr;
+                }*/
                 // maybe this options is correct but occurred more than allowed number of times
                 for(auto it : used_options) {
                     // skip positional options
@@ -277,7 +304,7 @@ class BaseMatcher {
             };
         }
 
-        void parse(ArgGrammarParser args) {
+        void parse(ArgGrammarParser args) { // TODO:  rename (Parser is another class)
             clear();
             SingleOptionMatcher matcher(args);
             while(!args.eof()) {

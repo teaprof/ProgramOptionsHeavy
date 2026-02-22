@@ -65,6 +65,8 @@ opt1->tie(v, opt2val);
     - like TCLAP: hideFromHelp(), visibleFromHelp()
     - revisit Exceptions
     - double dash can be used to indicate the end of the values list: "--input file1.txt file2.txt -- outputfile.txt"
+    - all options after the double dash are treated as positional <- START DOING THIS
+    - check https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
 
 1. Parser:
     - unknown options could be collected instead of throwing UnknownOption (like program_options::basic_option::unregistered)
