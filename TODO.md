@@ -67,6 +67,15 @@ opt1->tie(v, opt2val);
     + all options after the double dash are treated as positional
     - check https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
 
+
+Solve equation:
+    n1 + n2 + ... + nk = actual_number_of_args
+Solution:
+    First, find min(n1+n2+..+nk) and max(n1+n2+..+nk). 
+    If not min <= act_number_of_args <= max, than no solution exists
+    If act_number_of_args == min or == max than solution is found (it corresponds to arg_min or arg_max).
+    Otherwise, solution exists if only one i exists such that min n_i < max_ni.         
+
 1. Parser:
     - unknown options could be collected instead of throwing UnknownOption (like program_options::basic_option::unregistered)
     - support of implicit value (only if no positional options are specified)
