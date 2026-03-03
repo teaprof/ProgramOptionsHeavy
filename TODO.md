@@ -1,3 +1,22 @@
+ALTERNATIVES:
+    1. The alternative should have unique options
+    2. If such option is encountered the alternative is selected. Options for other altenatives become unavailable.
+    3. Check should check names collisions to ensure that p. 1 holds
+    4. Check should check cross product if two or more alternative options are used
+
+CROSS PRODUCT:
+
+def processAlternatives(self, OneOf):
+    for it in unlocks:
+        check and add it
+    push
+    for options_variant in OneOf.alternatives:
+        for it in options_variant:
+            check and add it
+            yield this
+            restoreTop
+    pop
+
 Use cases
 
 Commands (or Alternatives):
@@ -95,7 +114,12 @@ Value should store the following flags:
 2. Examples of different way to initialize
 
 3. Checker:
-    + check duplicates among long and short names
+    + check duplicates among long and short names (check names collision);
+    - run all branches for all BaseValueSemantics::getUnlocks(value) and AbstractOptions::unlocks Alternatives ;
+    - check duplicates using pointer comparison;
+    - check positional arguments: the system of equation should be solvable
+    - check cycles
+
 
 
 2. Help constructor

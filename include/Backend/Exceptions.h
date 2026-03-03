@@ -101,7 +101,7 @@ class OnlyOneChoiseIsAllowed : public BaseOptionError {
         OnlyOneChoiseIsAllowed(std::shared_ptr<OneOf> opt) : BaseOptionError(opt) {}
 };
 
-class MultipleOccurenceOnlyForLastPosopt : public std::logic_error {
+class MultipleOccurenceOnlyForLastPosopt : public std::logic_error { /// TODO: may be unused
     public:
         MultipleOccurenceOnlyForLastPosopt(std::shared_ptr<AbstractPositionalOption> opt) : std::logic_error("123") {}
 };
@@ -118,6 +118,17 @@ class IncorrectLiteralString : public ExpectedValue {
 class TooFewValuesForOption : public BaseOptionError {
     public:
         TooFewValuesForOption() : BaseOptionError(nullptr) {} // too few values for options, expected at least N or exact N
+};
+
+class CheckerException : public BaseOptionError {
+    public:
+        CheckerException() : BaseOptionError(nullptr) {}
+};
+
+class DuplicateOptionPtrDetected: public CheckerException {
+
+    public:
+        DuplicateOptionPtrDetected() {}
 };
 /*
 TODO:

@@ -30,6 +30,7 @@ TEST(CheckerTest, SimplePositionalOptions) {
 }
 
 TEST(CheckerTest, TooManyPositionalOptions) {
+    /// TODO replace this single test with tests for positional options compatibility
     auto options = std::make_shared<OptionsGroup2>();
     auto posopt = std::make_shared<PositionalOptionWithValue<int>>();
     posopt->setMaxOccurreneCount(2);
@@ -185,6 +186,23 @@ TEST(CheckerTest, NestedAlternativesWithConflict) {
     opts->alternatives.push_back(
         std::make_shared<LiteralString>("alt")->addUnlock(opts_nested)->addUnlock(std::make_shared<NamedOption>("--dim"))
     );
+
+    Checker checker;
+    EXPECT_THROW(opts->accept(checker), DuplicateOption);
+}
+
+TEST(CheckerTest, CartesianProductConflict) {
+    auto opts_nested_1 = std::make_shared<OneOf>();
+    opts_nested_1->alternatives.push_back(
+        std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--dim"))
+    );
+    auto opts_nested_2 = std::make_shared<OneOf>();
+    opts_nested_2->alternatives.push_back(
+        std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--dim"))
+    );
+    auto opts = std::make_shared<AbstractOption>();
+    opts->unlocks.push_back(opts_nested_1);
+    opts->unlocks.push_back(opts_nested_2);
 
     Checker checker;
     EXPECT_THROW(opts->accept(checker), DuplicateOption);

@@ -171,7 +171,7 @@ class PositionalOptionWithValue : public AbstractPositionalOptionWithValue, publ
 };
 
 class OptionsGroup2 : public AbstractOption {
-    /// TODO what does required_ mean in this case?
+    /// TODO what does `required_` mean in this case?
     public:
         void accept(AbstractOptionVisitor& visitor) override;        
 };
