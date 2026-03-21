@@ -29,21 +29,23 @@ class Combinator {
         }
         if(auto p = std::dynamic_pointer_cast<OneOf>(top->unlocks[n])) {
             assert(p->alternatives.size() > 0); //TODO: raise exception
-            init(p, 0);
+            initOneOf(p, 0);
             init(top, n+1);
         } else {
             current_combination_.push_back(top->unlocks[n]);
             current_path_.push_back(0); // this value has not matter
+            init(top->unlocks[n], 0);
             init(top, n + 1);
         } 
     }
-    void init(std::shared_ptr<OneOf> one_of, size_t alt_number) {
+    void initOneOf(std::shared_ptr<OneOf> one_of, size_t alt_number) {
         assert(alt_number < one_of->alternatives.size());
         auto top_ = one_of->alternatives[alt_number];
         current_combination_.push_back(one_of);
         current_path_.push_back(alt_number);
+        init(one_of, 0);
         if(auto p = std::dynamic_pointer_cast<OneOf>(top_)) {
-            init(p, 0);
+            initOneOf(p, 0);
         } else {
             current_combination_.push_back(top_);
             current_path_.push_back(0);
@@ -53,54 +55,77 @@ class Combinator {
     void init() {
         init(mtop_, 0);
     }
-    size_t pass(std::shared_ptr<AbstractOption> top, size_t n, size_t pos, bool &updated) {
+    size_t pass(std::shared_ptr<AbstractOption> top, size_t n, size_t pos) {
         if(n == top->unlocks.size()) {
-            updated = false;
             return pos;
         }
         if(auto p = std::dynamic_pointer_cast<OneOf>(top->unlocks[n])) {
             assert(p->alternatives.size() > 0); //TODO: raise exception
             size_t old_pos{pos};
-            pos = pass2(p, current_path_[n], pos, updated);
-            pos = pass(top, n+1, pos, updated);
-            if(!updated) {
-                if(increment2(p, old_pos)) {
-                    init(top, n+1);
-                    updated = true;
-                    return current_combination_.size();
-                }
-            }
+            pos = passOneOf(p, pos);
+            pos = pass(top, n+1, pos);
             return pos;
         } else {
             assert(current_combination_[pos] == top->unlocks[n]);
             assert(current_path_[pos] == 0);
-            return pass(top, n + 1, pos + 1, updated);
+            return pass(top, n + 1, pos + 1);
         } 
     }
-    bool increment2(std::shared_ptr<OneOf> one_of, size_t pos) {
+
+    bool increment(std::shared_ptr<AbstractOption> top, size_t n, size_t pos) {
+        if(n == top->unlocks.size()) {
+            return false;
+        }
+        assert(current_combination_[pos] == top->unlocks[n]);
+        if(auto p = std::dynamic_pointer_cast<OneOf>(top->unlocks[n])) {
+            assert(p->alternatives.size() > 0); //TODO: raise exception
+            size_t old_pos{pos};
+            pos = passOneOf(p, pos);
+            if(increment(top, n+1, pos)) {
+                return true;
+            }
+            if(incrementOneOf(p, old_pos)) {
+                init(top, n+1);
+                return true;
+            }
+            return false;
+        } else {
+            assert(current_combination_[pos] == top->unlocks[n]);
+            assert(current_path_[pos] == 0);
+            return increment(top, n + 1, pos + 1);
+        } 
+    }
+    bool incrementOneOf(std::shared_ptr<OneOf> one_of, size_t pos) {
+        /// TODO: First, the one_of's children should be processed
+        assert(current_combination_[pos] == one_of);
         size_t alt_num = current_path_[pos] + 1;
         if(alt_num == one_of->alternatives.size()) {
             return false;
         };
         current_combination_.erase(current_combination_.begin() + pos, current_combination_.end());
         current_path_.erase(current_path_.begin() + pos, current_path_.end());
-        init(one_of, alt_num);
+        /// todo: try to increment one_of->alternatives[alt_num]->unlocks
+        initOneOf(one_of, alt_num);
         return true;
     }
-    size_t pass2(std::shared_ptr<OneOf> one_of, size_t alt_number, size_t pos, bool &updated) {
+    size_t passOneOf(std::shared_ptr<OneOf> one_of, size_t pos) {
+        size_t alt_number = current_path_[pos];
         assert(alt_number < one_of->alternatives.size());
         assert(current_combination_[pos] == one_of);
         auto top = one_of->alternatives[alt_number];
-        return pass(top, 0, pos+1, updated);
+        if(auto p = std::dynamic_pointer_cast<OneOf>(top)) {
+            return passOneOf(p, pos+1);
+        } else {
+            assert(top == current_combination_[pos+1]);
+            return pass(top, 0, pos+2);
+        }
     }
     bool increment() {
         if(current_path_.size() == 0) {
             return false;
         }
         //return increment(current_path_.size() - 1);
-        bool updated;
-        pass(mtop_, 0, 0, updated);
-        return updated;
+        return increment(mtop_, 0, 0);
     }
     private:
     bool update_all_combs_;
