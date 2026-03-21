@@ -16,87 +16,97 @@ class AbstractWalkee : public AbstractOptionVisitor {
         virtual void restoreTopState() = 0;
 };
 
-class WalkerA {
+class Combinator {
     public:
-        WalkerA() {
+    std::vector<std::shared_ptr<AbstractOption>> current_combination_;
+    std::vector<size_t> current_path_;
 
-        }                 
-        class Combinator {
-            public:
-            struct Leaf {
-                Leaf(std::shared_ptr<AbstractOption> v) : val{v} {}
-                std::shared_ptr<AbstractOption> val;
-                std::vector<std::shared_ptr<Leaf>> children;
-            };
-
-            Combinator(std::shared_ptr<AbstractOption> opt): top_{opt}, cur_{top_} {
-                processNextUnlock(0);
-            }
-            std::shared_ptr<Leaf> processNextUnlock(std::shared_ptr<Leaf> top, size_t n) {
-                std::shared_ptr<Leaf> res{nullptr};
-                if(n == top->val->unlocks.size()) {
-                    return;
+    Combinator(std::shared_ptr<AbstractOption> opt): mtop_{opt} {
+    }
+    void init(std::shared_ptr<AbstractOption> top, size_t n) {
+        if(n == top->unlocks.size()) {
+            return;
+        }
+        if(auto p = std::dynamic_pointer_cast<OneOf>(top->unlocks[n])) {
+            assert(p->alternatives.size() > 0); //TODO: raise exception
+            init(p, 0);
+            init(top, n+1);
+        } else {
+            current_combination_.push_back(top->unlocks[n]);
+            current_path_.push_back(0); // this value has not matter
+            init(top, n + 1);
+        } 
+    }
+    void init(std::shared_ptr<OneOf> one_of, size_t alt_number) {
+        assert(alt_number < one_of->alternatives.size());
+        auto top_ = one_of->alternatives[alt_number];
+        current_combination_.push_back(one_of);
+        current_path_.push_back(alt_number);
+        if(auto p = std::dynamic_pointer_cast<OneOf>(top_)) {
+            init(p, 0);
+        } else {
+            current_combination_.push_back(top_);
+            current_path_.push_back(0);
+            init(top_, 0);
+        }
+    }
+    void init() {
+        init(mtop_, 0);
+    }
+    size_t pass(std::shared_ptr<AbstractOption> top, size_t n, size_t pos, bool &updated) {
+        if(n == top->unlocks.size()) {
+            updated = false;
+            return pos;
+        }
+        if(auto p = std::dynamic_pointer_cast<OneOf>(top->unlocks[n])) {
+            assert(p->alternatives.size() > 0); //TODO: raise exception
+            size_t old_pos{pos};
+            pos = pass2(p, current_path_[n], pos, updated);
+            pos = pass(top, n+1, pos, updated);
+            if(!updated) {
+                if(increment2(p, old_pos)) {
+                    init(top, n+1);
+                    updated = true;
+                    return current_combination_.size();
                 }
-                if(auto p = std::dynamic_pointer_cast<OneOf>(top->val)) {
-                    for(auto& q : p->alternatives) {
-                        auto child = std::make_shared<Leaf>(q);
-                        processNextUnlock(child, 0);                        
-                    }
-                } else {
-                    //current_sequence_.push_back(opt_->unlocks[n]);
-                    auto child = std::make_shared<Leaf>(opt_->unlocks[n]);
-                    parent->children.push_back(child);
-                    processNextUnlock(child, n++);
-                    //current_sequence_.pop_back();
-                } 
             }
-            std::vector<std::vector<std::shared_ptr<AbstractOption>>>& allCombination() {
-                return all_combinations_;
-            }
-            private:
-            bool update_all_combs_;
-            std::shared_ptr<Leaf> top_;
-            std::shared_ptr<Leaf> cur_;
+            return pos;
+        } else {
+            assert(current_combination_[pos] == top->unlocks[n]);
+            assert(current_path_[pos] == 0);
+            return pass(top, n + 1, pos + 1, updated);
+        } 
+    }
+    bool increment2(std::shared_ptr<OneOf> one_of, size_t pos) {
+        size_t alt_num = current_path_[pos] + 1;
+        if(alt_num == one_of->alternatives.size()) {
+            return false;
         };
-
-        class Iterator {
-            public:
-            Iterator(std::shared_ptr<AbstractOption> opt): opt_(opt), combinator_(opt) {}
-            void operator++() {
-                cur_idx++;                
-            }
-            Iterator& begin() {
-                std::vector<std::shared_ptr<AbstractOption>> current_sequence_;
-                Combinator comb(opt_, current_sequence_);
-                comb.fill();
-                all_combinations_ = std::move(comb.all_combinations);
-                cur_idx = 0;                
-                return *this;                
-            }
-            Iterator end() {
-                return Iterator(nullptr, current_sequence_);
-            }
-            bool operator!=(const Iterator& other) {
-                assert(other.opt_ == nullptr); // this implementation works only in thic case
-                return opt_ == other.opt_;
-            }
-            std::vector<std::shared_ptr<AbstractOption>>& operator*() {
-                return all[cur_idx];
-            }
-            private:
-            Combinator combinator_;
-            size_t cur_idx{0};
-            std::shared_ptr<AbstractOption> opt_;            
-        };
-        
-        Iterator begin() {
-
+        current_combination_.erase(current_combination_.begin() + pos, current_combination_.end());
+        current_path_.erase(current_path_.begin() + pos, current_path_.end());
+        init(one_of, alt_num);
+        return true;
+    }
+    size_t pass2(std::shared_ptr<OneOf> one_of, size_t alt_number, size_t pos, bool &updated) {
+        assert(alt_number < one_of->alternatives.size());
+        assert(current_combination_[pos] == one_of);
+        auto top = one_of->alternatives[alt_number];
+        return pass(top, 0, pos+1, updated);
+    }
+    bool increment() {
+        if(current_path_.size() == 0) {
+            return false;
         }
-        Iterator end() {
-
-        }
-        
-}
+        //return increment(current_path_.size() - 1);
+        bool updated;
+        pass(mtop_, 0, 0, updated);
+        return updated;
+    }
+    private:
+    bool update_all_combs_;
+    std::shared_ptr<AbstractOption> mtop_;
+    std::stack<std::shared_ptr<AbstractOption>> stack_;
+};
 
 class Walker : public AbstractOptionVisitor {
 public:    

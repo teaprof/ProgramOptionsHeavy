@@ -207,3 +207,76 @@ TEST(CheckerTest, CartesianProductConflict) {
     Checker checker;
     EXPECT_THROW(opts->accept(checker), DuplicateOption);
 }
+
+TEST(CheckerCombinatorTest, Simple) {
+    auto option = std::make_shared<NamedOption>("--opt", "-o");
+    auto options = std::make_shared<AbstractOption>()->addUnlock(option);
+    Combinator combinator(options);
+    combinator.init();
+    do {
+        for(const auto& it : combinator.current_path_)  {
+            std::cout<<it<<" ";
+        }
+        std::cout<<"\n";
+    } while(combinator.increment());
+}
+
+
+TEST(CheckerCombinatorTest, Simple2) {
+    auto option = std::make_shared<NamedOption>("--opt", "-o");
+    auto options = std::make_shared<AbstractOption>()->addUnlock(option)->addUnlock(option);
+    Combinator combinator(options);
+    combinator.init();
+    do {
+        for(const auto& it : combinator.current_path_)  {
+            std::cout<<it<<" ";
+        }
+        std::cout<<"\n";
+    } while(combinator.increment());
+}
+
+
+TEST(CheckerCombinatorTest, SingleOneOf) {
+    auto option = std::make_shared<NamedOption>("--opt", "-o");
+    auto one_of = std::make_shared<OneOf>()->addAlternative(option)->addAlternative(option);
+    auto options = std::make_shared<AbstractOption>()->addUnlock(option)->addUnlock(one_of)->addUnlock(option);
+    Combinator combinator(options);
+    combinator.init();
+    do {
+        for(const auto& it : combinator.current_path_)  {
+            std::cout<<it<<" ";
+        }
+        std::cout<<"\n";
+    } while(combinator.increment());
+}
+
+TEST(CheckerCombinatorTest, TwiceOneOf) {
+    auto option = std::make_shared<NamedOption>("--opt", "-o");
+    auto option2 = std::make_shared<NamedOption>("--opt2", "-p");
+    auto one_of = std::make_shared<OneOf>()->addAlternative(option)->addAlternative(option2);
+    auto options = std::make_shared<AbstractOption>()->addUnlock(option)->addUnlock(one_of)->addUnlock(option)->addUnlock(one_of);
+    Combinator combinator(options);
+    combinator.init();
+    do {
+        for(const auto& it : combinator.current_path_)  {
+            std::cout<<it<<" ";
+        }
+        std::cout<<"\n";
+    } while(combinator.increment());
+}
+
+TEST(CheckerCombinatorTest, NestedOneOf) {
+    auto option = std::make_shared<NamedOption>("--opt", "-o");
+    auto option2 = std::make_shared<NamedOption>("--opt2", "-p");
+    auto one_of_nested = std::make_shared<OneOf>()->addAlternative(option)->addAlternative(option2);
+    auto one_of = std::make_shared<OneOf>()->addAlternative(one_of_nested)->addAlternative(option);
+    auto options = std::make_shared<AbstractOption>()->addUnlock(option)->addUnlock(one_of)->addUnlock(option);
+    Combinator combinator(options);
+    combinator.init();
+    do {
+        for(const auto& it : combinator.current_path_)  {
+            std::cout<<it<<" ";
+        }
+        std::cout<<"\n";
+    } while(combinator.increment());
+}
