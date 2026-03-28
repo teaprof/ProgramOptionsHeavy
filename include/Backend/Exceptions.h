@@ -76,10 +76,6 @@ class MaxOptionOccurenceIsExceeded  : public BaseOptionError {
         MaxOptionOccurenceIsExceeded(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
 };
 
-class DuplicateOption : public std::logic_error {
-    public:
-        DuplicateOption(std::shared_ptr<AbstractOption> opt) : std::logic_error("option should be specified only once") {}
-};
 
 class TooFewPositionalOptions : public BaseOptionError {
     public:
@@ -120,16 +116,6 @@ class TooFewValuesForOption : public BaseOptionError {
         TooFewValuesForOption() : BaseOptionError(nullptr) {} // too few values for options, expected at least N or exact N
 };
 
-class CheckerException : public BaseOptionError {
-    public:
-        CheckerException() : BaseOptionError(nullptr) {}
-};
-
-class DuplicateOptionPtrDetected: public CheckerException {
-
-    public:
-        DuplicateOptionPtrDetected() {}
-};
 /*
 TODO:
 From boost::program_options

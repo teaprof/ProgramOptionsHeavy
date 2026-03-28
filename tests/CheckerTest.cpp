@@ -1,5 +1,5 @@
 #include <Backend/ValueSemantics.h>
-#include <Backend/Checker.h>
+#include <Checker/Checker.h>
 #include <Backend/Printer.h>
 
 #include <gtest/gtest.h>
@@ -7,17 +7,25 @@
 TEST(CheckerTest, Simple1) {
     auto options = std::make_shared<NamedOption>("--opt", "-o");
     Checker checker;
-    EXPECT_NO_THROW(options->accept(checker));
+    EXPECT_NO_THROW(checker(options));
 }
 
 TEST(CheckerTest, Simple2) {
     auto options = std::make_shared<NamedOption>("--opt1", "-o");
     options->addUnlock(std::make_shared<NamedOption>("--opt2"));
     Checker checker;
-    EXPECT_NO_THROW(options->accept(checker));
+    EXPECT_NO_THROW(checker(options));
 
     options->addUnlock(std::make_shared<NamedOption>("--opt2"));
-    EXPECT_THROW(options->accept(checker), DuplicateOption);
+    EXPECT_THROW(checker(options), DuplicateOptionName);
+}
+
+TEST(CheckerTest, DuplicateOptionPtrDetected) {
+    auto option = std::make_shared<NamedOption>("--opt1", "-o");
+    auto options = std::make_shared<NamedOption>("--opt2", "-p");
+    options->addUnlock(option)->addUnlock(option);
+    Checker checker;
+    EXPECT_THROW(checker(options), DuplicateOptionPtrDetected);
 }
 
 TEST(CheckerTest, SimplePositionalOptions) {
@@ -26,7 +34,7 @@ TEST(CheckerTest, SimplePositionalOptions) {
     options->addUnlock(std::make_shared<PositionalOptionWithValue<int>>());
     options->addUnlock(std::make_shared<PositionalOptionWithValue<int>>());
     Checker checker;
-    EXPECT_NO_THROW(options->accept(checker));
+    EXPECT_NO_THROW(checker(options));
 }
 
 TEST(CheckerTest, TooManyPositionalOptions) {
@@ -37,7 +45,7 @@ TEST(CheckerTest, TooManyPositionalOptions) {
     options->addUnlock(posopt);
     options->addUnlock(std::make_shared<PositionalOptionWithValue<int>>());
     Checker checker;
-    EXPECT_THROW(options->accept(checker), MultipleOccurenceOnlyForLastPosopt);
+    EXPECT_THROW(checker(options), MultipleOccurenceOnlyForLastPosopt);
 }
 
 TEST(CheckerTest, OneOf) {
@@ -47,7 +55,7 @@ TEST(CheckerTest, OneOf) {
         std::make_shared<LiteralString>("clean")
     );
     Checker checker;
-    EXPECT_NO_THROW(option->accept(checker));
+    EXPECT_NO_THROW(checker(option));
 }
 
 TEST(CheckerTest, Alternatives2) {
@@ -57,7 +65,7 @@ TEST(CheckerTest, Alternatives2) {
         std::make_shared<LiteralString>("clean")->addUnlock(std::make_shared<NamedOption>("--opt2"))
     );
     Checker checker;
-    EXPECT_NO_THROW(option->accept(checker));
+    EXPECT_NO_THROW(checker(option));
 }
 
 TEST(CheckerTest, Alternatives3) {    
@@ -71,7 +79,7 @@ TEST(CheckerTest, Alternatives3) {
             )
         );
     Checker checker;
-    EXPECT_THROW(option->accept(checker), DuplicateOption);
+    EXPECT_THROW(checker(option), DuplicateOptionName);
 }
 
 
@@ -86,23 +94,23 @@ TEST(CheckerTest, OneOfComplex) {
         std::make_shared<LiteralString>("gather")->addUnlock(helpOption)
     );
     Checker checker;
-    EXPECT_NO_THROW(hypercubeOptions->accept(checker));
+    EXPECT_NO_THROW(checker(hypercubeOptions));
 }
 
 
-TEST(CheckerTest, RepeatedOption) {
-    auto helpOption = std::make_shared<NamedOption>("--help", "-h");
+TEST(CheckerTest, ComplexDuplicateOptionName) {
+    auto helpOption1 = std::make_shared<NamedOption>("--help", "-h");
+    auto helpOption2 = std::make_shared<NamedOption>("--help", "-h");
     auto hypercubeOptions = std::make_shared<OneOf>(
-        helpOption,
         std::make_shared<LiteralString>("run")->
             addUnlock(std::make_shared<NamedOption>("--dim", "-d"))->
             addUnlock(std::make_shared<NamedOption>("--mIntervalsPerDim", "-m"))->
-            addUnlock(helpOption)->
-            addUnlock(helpOption),
-        std::make_shared<LiteralString>("gather")->addUnlock(helpOption)
+            addUnlock(helpOption1)->
+            addUnlock(helpOption2),
+        std::make_shared<LiteralString>("gather")->addUnlock(helpOption1)
     );
     Checker checker;
-    EXPECT_THROW(hypercubeOptions->accept(checker), DuplicateOption);
+    EXPECT_THROW(checker(hypercubeOptions), DuplicateOptionName);
 }
 
 TEST(CheckerTest, PositionalWithAllowedOptions) {
@@ -111,7 +119,7 @@ TEST(CheckerTest, PositionalWithAllowedOptions) {
     options->valueSemantics().unlocks("gather");
     options->valueSemantics().unlocks("clean");
     Checker checker;
-    EXPECT_NO_THROW(options->accept(checker));
+    EXPECT_NO_THROW(checker(options));
 }
 
 TEST(CheckerTest, PositionalWithAllowedOptions2) {
@@ -121,7 +129,7 @@ TEST(CheckerTest, PositionalWithAllowedOptions2) {
     options->valueSemantics().unlocks("gather").push_back(std::make_shared<NamedOption>("--opt1"));
     options->valueSemantics().unlocks("clean").push_back(std::make_shared<NamedOption>("--opt2"));
     Checker checker;
-    EXPECT_NO_THROW(options->accept(checker));
+    EXPECT_NO_THROW(checker(options));
 }
 
 TEST(CheckerTest, OneOfAlternatives3) {    
@@ -131,11 +139,11 @@ TEST(CheckerTest, OneOfAlternatives3) {
             std::make_shared<OneOf>(
                 std::make_shared<LiteralString>("run")->addUnlock(std::make_shared<NamedOption>("--opt1")),
                 std::make_shared<LiteralString>("gather")->addUnlock(std::make_shared<NamedOption>("--opt2")),
-                std::make_shared<LiteralString>("clean")->addUnlock(std::make_shared<NamedOption>("--opt1"))                
+                std::make_shared<LiteralString>("clean")->addUnlock(std::make_shared<NamedOption>("--opt1"))
             )
         );
     Checker checker;
-    EXPECT_THROW(option->accept(checker), DuplicateOption);
+    EXPECT_THROW(checker(option), DuplicateOptionName);
 }
 
 
@@ -150,7 +158,7 @@ TEST(CheckerTest, Complex) {
     options->valueSemantics().unlocks("clean").push_back(helpOption);
 
     Checker checker;
-    EXPECT_NO_THROW(options->accept(checker));
+    EXPECT_NO_THROW(checker(options));
 }
 
 TEST(CheckerTest, Cycle) {
@@ -159,7 +167,7 @@ TEST(CheckerTest, Cycle) {
     option1->addUnlock(option2);
     option2->addUnlock(option1);
     Checker checker;
-    EXPECT_THROW(option1->accept(checker), DuplicateOption);
+    EXPECT_THROW(checker(option1), RecursionDetected);
 }
 
 TEST(CheckerTest, NestedAlternatives) {
@@ -174,7 +182,7 @@ TEST(CheckerTest, NestedAlternatives) {
     opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
 
     Checker checker;
-    opts->accept(checker);
+    EXPECT_NO_THROW(checker(opts));
 }
 
 TEST(CheckerTest, NestedAlternativesWithConflict) {
@@ -188,7 +196,7 @@ TEST(CheckerTest, NestedAlternativesWithConflict) {
     );
 
     Checker checker;
-    EXPECT_THROW(opts->accept(checker), DuplicateOption);
+    EXPECT_THROW(checker(opts), DuplicateOptionName);
 }
 
 TEST(CheckerTest, CartesianProductConflict) {
@@ -205,20 +213,17 @@ TEST(CheckerTest, CartesianProductConflict) {
     opts->unlocks.push_back(opts_nested_2);
 
     Checker checker;
-    EXPECT_THROW(opts->accept(checker), DuplicateOption);
+    EXPECT_THROW(checker(opts), DuplicateOptionName);
 }
 
 TEST(CheckerCombinatorTest, Simple) {
     auto option = std::make_shared<NamedOption>("--opt", "-o");
     auto options = std::make_shared<AbstractOption>()->addUnlock(option);
     Combinator combinator(options);
-    combinator.init();
-    do {
-        for(const auto& it : combinator.current_path_)  {
-            std::cout<<it<<" ";
-        }
-        std::cout<<"\n";
-    } while(combinator.increment());
+    ASSERT_EQ(combinator.branches.size(), 1);
+    ASSERT_EQ(combinator.branches[0].size(), 2);
+    ASSERT_EQ(combinator.branches[0][0], options);
+    ASSERT_EQ(combinator.branches[0][1], option);
 }
 
 
@@ -226,13 +231,11 @@ TEST(CheckerCombinatorTest, Simple2) {
     auto option = std::make_shared<NamedOption>("--opt", "-o");
     auto options = std::make_shared<AbstractOption>()->addUnlock(option)->addUnlock(option);
     Combinator combinator(options);
-    combinator.init();
-    do {
-        for(const auto& it : combinator.current_path_)  {
-            std::cout<<it<<" ";
-        }
-        std::cout<<"\n";
-    } while(combinator.increment());
+    ASSERT_EQ(combinator.branches.size(), 1);
+    ASSERT_EQ(combinator.branches[0].size(), 3);
+    ASSERT_EQ(combinator.branches[0][0], options);
+    ASSERT_EQ(combinator.branches[0][1], option);
+    ASSERT_EQ(combinator.branches[0][2], option);
 }
 
 
@@ -241,13 +244,19 @@ TEST(CheckerCombinatorTest, SingleOneOf) {
     auto one_of = std::make_shared<OneOf>()->addAlternative(option)->addAlternative(option);
     auto options = std::make_shared<AbstractOption>()->addUnlock(option)->addUnlock(one_of)->addUnlock(option);
     Combinator combinator(options);
-    combinator.init();
-    do {
-        for(const auto& it : combinator.current_path_)  {
-            std::cout<<it<<" ";
-        }
-        std::cout<<"\n";
-    } while(combinator.increment());
+    ASSERT_EQ(combinator.branches.size(), 2);
+    ASSERT_EQ(combinator.branches[0].size(), 5);
+    ASSERT_EQ(combinator.branches[0][0], options);
+    ASSERT_EQ(combinator.branches[0][1], option);
+    ASSERT_EQ(combinator.branches[0][2], one_of);
+    ASSERT_EQ(combinator.branches[0][3], option);
+    ASSERT_EQ(combinator.branches[0][4], option);
+    ASSERT_EQ(combinator.branches[1].size(), 5);
+    ASSERT_EQ(combinator.branches[1][0], options);
+    ASSERT_EQ(combinator.branches[1][1], option);
+    ASSERT_EQ(combinator.branches[1][2], one_of);
+    ASSERT_EQ(combinator.branches[1][3], option);
+    ASSERT_EQ(combinator.branches[1][4], option);
 }
 
 TEST(CheckerCombinatorTest, TwiceOneOf) {
@@ -256,13 +265,39 @@ TEST(CheckerCombinatorTest, TwiceOneOf) {
     auto one_of = std::make_shared<OneOf>()->addAlternative(option)->addAlternative(option2);
     auto options = std::make_shared<AbstractOption>()->addUnlock(option)->addUnlock(one_of)->addUnlock(option)->addUnlock(one_of);
     Combinator combinator(options);
-    combinator.init();
-    do {
-        for(const auto& it : combinator.current_path_)  {
-            std::cout<<it<<" ";
-        }
-        std::cout<<"\n";
-    } while(combinator.increment());
+    ASSERT_EQ(combinator.branches.size(), 4);
+    ASSERT_EQ(combinator.branches[0].size(), 7);
+    ASSERT_EQ(combinator.branches[0][0], options);
+    ASSERT_EQ(combinator.branches[0][1], option);
+    ASSERT_EQ(combinator.branches[0][2], one_of);
+    ASSERT_EQ(combinator.branches[0][3], option);
+    ASSERT_EQ(combinator.branches[0][4], option);
+    ASSERT_EQ(combinator.branches[0][5], one_of);
+    ASSERT_EQ(combinator.branches[0][6], option);
+    ASSERT_EQ(combinator.branches[1].size(), 7);
+    ASSERT_EQ(combinator.branches[1][0], options);
+    ASSERT_EQ(combinator.branches[1][1], option);
+    ASSERT_EQ(combinator.branches[1][2], one_of);
+    ASSERT_EQ(combinator.branches[1][3], option);
+    ASSERT_EQ(combinator.branches[1][4], option);
+    ASSERT_EQ(combinator.branches[1][5], one_of);
+    ASSERT_EQ(combinator.branches[1][6], option2);
+    ASSERT_EQ(combinator.branches[2].size(), 7);
+    ASSERT_EQ(combinator.branches[2][0], options);
+    ASSERT_EQ(combinator.branches[2][1], option);
+    ASSERT_EQ(combinator.branches[2][2], one_of);
+    ASSERT_EQ(combinator.branches[2][3], option2);
+    ASSERT_EQ(combinator.branches[2][4], option);
+    ASSERT_EQ(combinator.branches[2][5], one_of);
+    ASSERT_EQ(combinator.branches[2][6], option);
+    ASSERT_EQ(combinator.branches[3].size(), 7);
+    ASSERT_EQ(combinator.branches[3][0], options);
+    ASSERT_EQ(combinator.branches[3][1], option);
+    ASSERT_EQ(combinator.branches[3][2], one_of);
+    ASSERT_EQ(combinator.branches[3][3], option2);
+    ASSERT_EQ(combinator.branches[3][4], option);
+    ASSERT_EQ(combinator.branches[3][5], one_of);
+    ASSERT_EQ(combinator.branches[3][6], option2);
 }
 
 TEST(CheckerCombinatorTest, NestedOneOf) {
@@ -272,11 +307,26 @@ TEST(CheckerCombinatorTest, NestedOneOf) {
     auto one_of = std::make_shared<OneOf>()->addAlternative(one_of_nested)->addAlternative(option);
     auto options = std::make_shared<AbstractOption>()->addUnlock(option)->addUnlock(one_of)->addUnlock(option);
     Combinator combinator(options);
-    combinator.init();
-    do {
-        for(const auto& it : combinator.current_path_)  {
-            std::cout<<it<<" ";
-        }
-        std::cout<<"\n";
-    } while(combinator.increment());
+    ASSERT_EQ(combinator.branches.size(), 3);
+    ASSERT_EQ(combinator.branches[0].size(), 6);
+    ASSERT_EQ(combinator.branches[0][0], options);
+    ASSERT_EQ(combinator.branches[0][1], option);
+    ASSERT_EQ(combinator.branches[0][2], one_of);
+    ASSERT_EQ(combinator.branches[0][3], one_of_nested);
+    ASSERT_EQ(combinator.branches[0][4], option);
+    ASSERT_EQ(combinator.branches[0][5], option);
+    ASSERT_EQ(combinator.branches[1].size(), 6);
+    ASSERT_EQ(combinator.branches[1][0], options);
+    ASSERT_EQ(combinator.branches[1][1], option);
+    ASSERT_EQ(combinator.branches[1][2], one_of);
+    ASSERT_EQ(combinator.branches[1][3], one_of_nested);
+    ASSERT_EQ(combinator.branches[1][4], option2);
+    ASSERT_EQ(combinator.branches[1][5], option);
+    ASSERT_EQ(combinator.branches[2].size(), 5);
+    ASSERT_EQ(combinator.branches[2][0], options);
+    ASSERT_EQ(combinator.branches[2][1], option);
+    ASSERT_EQ(combinator.branches[2][2], one_of);
+    ASSERT_EQ(combinator.branches[2][3], option);
+    ASSERT_EQ(combinator.branches[2][4], option);
+
 }
