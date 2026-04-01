@@ -47,7 +47,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             }
             match = true;
             value = grammar_parser_.getValue(opt); // todo: try to read as many values as possible
-            unlocks = opt->unlocks;
+            unlocks = opt->unlocks(); // todo: avoid copying of the vector
         }
         void visit(std::shared_ptr<LiteralString> opt) override {
             unlocks.clear();
@@ -67,7 +67,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
 
             }            
             if(match) {
-                unlocks = opt->unlocks;
+                unlocks = opt->unlocks(); // todo: avoid copying of a vector
             };
         }
         void visit(std::shared_ptr<NamedOption> opt) override {
@@ -88,7 +88,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                     break;
             }            
             if(match) {
-                unlocks = opt->unlocks;
+                unlocks = opt->unlocks(); // todo: avoid copying of a vector
             };
         }
         void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
@@ -110,7 +110,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             }            
             if(match) {
                 value = grammar_parser_.getValue(opt); // todo: try to read as many values as possible
-                unlocks = opt->unlocks;
+                unlocks = opt->unlocks(); // todo: avoid copying of a vector
             };
         }
         void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
@@ -119,7 +119,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
         void visit(std::shared_ptr<OptionsGroup2> opt) override {
             assert(false);
             match = true;
-            unlocks = opt->unlocks;
+            unlocks = opt->unlocks(); // todo: avoid copying of a vector
         }
         void visit(std::shared_ptr<OneOf> opt) override {
             match = false;
@@ -128,7 +128,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 auto alt = opt->alternatives[n];
                 alt->accept(*this);
                 if(match) {
-                    unlocks = opt->alternatives[n]->unlocks;
+                    unlocks = opt->alternatives[n]->unlocks(); // todo: avoid copying of a vector
                     return;
                 }
             }
@@ -163,26 +163,26 @@ class BaseMatcher {
             joinOptionsTo({options_}, remaining_options);
         }
 
-        bool eatNextValue(ArgGrammarParser& args, SingleOptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
+        bool eatNextValueIfCan(ArgGrammarParser& args, SingleOptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
             //check if opt can accept one more value
             bool can_accept = false;
             bool should_accept = false;
-            switch(opt->nargs_type_) {
-                case AbstractNamedOptionWithValue::NArgs::exact: {
+            switch(opt->nValuesRole()) {
+                case AbstractNamedOptionWithValue::NValuesRole::exact: {                    
                     size_t actual_count = storage[opt].lastOccurrenceSize();
-                    size_t required_count = opt->nargs_count_;
+                    size_t required_count = opt->nValues();
                     can_accept = (actual_count < required_count);
                     should_accept = can_accept;
                     break;
                 }
-                case AbstractNamedOptionWithValue::NArgs::upto: {
+                case AbstractNamedOptionWithValue::NValuesRole::upto: {
                     size_t actual_count = storage[opt].lastOccurrenceSize();
-                    size_t max_count = opt->nargs_count_;
+                    size_t max_count = opt->nValues();
                     can_accept = (actual_count < max_count);
                     should_accept = false;
                     break;
                 }
-                case AbstractNamedOptionWithValue::NArgs::infinite: {
+                case AbstractNamedOptionWithValue::NValuesRole::infinite: {
                     can_accept = true;
                     should_accept = false;
                     break;
@@ -288,7 +288,7 @@ class BaseMatcher {
             auto opt = eatNextToken(args, matcher);
             if(opt) {
                 if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
-                    while(!args.eof() && eatNextValue(args, matcher, p)) {};
+                    while(!args.eof() && eatNextValueIfCan(args, matcher, p)) {};
                     if(args.eof()) {
                         checkIfOptionIsCompleted(p);
                     }
@@ -317,7 +317,7 @@ class BaseMatcher {
             std::vector<std::shared_ptr<AbstractOption>>& dst_options) {
             for(auto it : src_options) {
                 if(auto p = std::dynamic_pointer_cast<OptionsGroup2>(it)) {
-                    joinOptionsTo(p->unlocks, dst_options);
+                    joinOptionsTo(p->unlocks(), dst_options);  // todo: avoid copying of a vector
                 } else {
                     dst_options.push_back(it);
                 }                
@@ -348,13 +348,20 @@ class BaseMatcher {
             storage.addValueToCurrentOccurence(opt, value, val);
         }
         void checkIfOptionIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) { // TODO: rename to something like checkIfValueListIsCompleted
-            if(opt->nargs_type_ == AbstractOptionWithValue::NArgs::exact) {
+            if(opt->nValuesRole() == AbstractOptionWithValue::NValuesRole::exact) {
                 assert(storage.contains(opt));
                 size_t actual = storage[opt].lastOccurrenceSize();
-                size_t expected = opt->nargs_count_;
+                size_t expected = opt->nValues();
                 if(actual < expected) {
                     throw TooFewValuesForOption(); // todo print message
                 }
+            }
+            if(opt->valueRequired()) {
+                size_t actual = storage[opt].lastOccurrenceSize();
+                if(actual == 0) {
+                    throw ExpectedValue(nullptr);
+                }
+
             }
         }
 };

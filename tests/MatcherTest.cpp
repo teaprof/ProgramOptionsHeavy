@@ -218,7 +218,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionExact) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
-    opt->setNArgs(AbstractNamedOptionWithValue::NArgs::exact, 2);
+    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::exact, 2);
 
     Matcher parser(opt);
     int d{0};
@@ -242,7 +242,8 @@ TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
-    opt->setNArgs(AbstractNamedOptionWithValue::NArgs::upto, 2);
+    opt->setValueRequired(true);
+    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::upto, 2);
 
     Matcher parser(opt);
     int d{0};
@@ -272,13 +273,26 @@ TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
     EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
 
     ASSERT_THROW(parser.parse("--opt1 20 30 40"), TooManyPositionalOptions);
+
+    ASSERT_THROW(parser.parse("--opt1"), ExpectedValue);
+    opt->setValueRequired(false);
+    ASSERT_TRUE(parser.parse("--opt1"));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 0);
+    ASSERT_TRUE(parser.parse("--opt1 20 30"));
+    ASSERT_TRUE(parser.storage.contains(opt));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 2);
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
+    EXPECT_EQ(d, 30);
 }
 
 TEST(Matcher, MultipleValuesOfNamedOptionInfinite) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
-    opt->setNArgs(AbstractNamedOptionWithValue::NArgs::infinite);
+    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::infinite);
 
     Matcher parser(opt);
     int d{0};
@@ -298,7 +312,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionInfinite) {
 TEST(Matcher, MultipleValuesOfPositionalOption) {
     auto opt = std::make_shared<PositionalOptionWithValue<int>>();
     opt->setMaxOccurreneCount(2);
-    opt->setNArgs(AbstractNamedOptionWithValue::NArgs::upto, 2);
+    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::upto, 2);
 
     Matcher parser(opt);
     int d{0};
@@ -359,8 +373,8 @@ TEST(Matcher, TwoPositionalOptions) {
 TEST(Matcher, TwoPositionalOptionsWithDoubleDash) {
     auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
-    opt1->setNArgs(AbstractNamedOptionWithValue::NArgs::upto, 10);
-    opt2->setNArgs(AbstractNamedOptionWithValue::NArgs::upto, 2);
+    opt1->setNValues(AbstractNamedOptionWithValue::NValuesRole::upto, 10);
+    opt2->setNValues(AbstractNamedOptionWithValue::NValuesRole::upto, 2);
     auto opt = std::make_shared<OptionsGroup2>()->addUnlock(opt1)->addUnlock(opt2);
 
     Matcher parser(opt); // todo: rename parser to matcher here and all other places

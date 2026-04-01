@@ -39,7 +39,7 @@ TEST(CheckerTest, SimplePositionalOptions) {
 
 TEST(CheckerTest, TooManyPositionalOptions) {
     /// TODO replace this single test with tests for positional options compatibility
-    auto options = std::make_shared<OptionsGroup2>();
+    auto options = std::make_shared<AbstractOption>();
     auto posopt = std::make_shared<PositionalOptionWithValue<int>>();
     posopt->setMaxOccurreneCount(2);
     options->addUnlock(posopt);
@@ -209,8 +209,8 @@ TEST(CheckerTest, CartesianProductConflict) {
         std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--dim"))
     );
     auto opts = std::make_shared<AbstractOption>();
-    opts->unlocks.push_back(opts_nested_1);
-    opts->unlocks.push_back(opts_nested_2);
+    opts->addUnlock(opts_nested_1);
+    opts->addUnlock(opts_nested_2);
 
     Checker checker;
     EXPECT_THROW(checker(opts), DuplicateOptionName);

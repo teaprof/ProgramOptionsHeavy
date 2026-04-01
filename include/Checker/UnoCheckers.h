@@ -17,7 +17,7 @@ class DefaultValueChecker { /// TODO rename
         }
 };
 
-class Unochecker : public AbstractOptionVisitor {
+class Unochecker : public AbstractOptionVisitor {    
     void visit(std::shared_ptr<AbstractOption> opt) {
         //nothing to do
     }
@@ -31,6 +31,8 @@ class Unochecker : public AbstractOptionVisitor {
         //nothing to do
     }
     void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) {
+        /// TODO: if nValuesRole == exact, valueRequired() should be true
+        /// TODO: if nValuesRole == exact, nValues() should be greater than 0
         DefaultValueChecker::checkDefaultValue(opt);
     }
     void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) {

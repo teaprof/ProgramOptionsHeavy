@@ -53,7 +53,7 @@ class ProgramOptionsPrinter
         res->title = grp.groupName();
         res->add_paragraph(grp.description());
         std::stringstream options_list;
-        for(const auto& opt : grp.options->unlocks) {
+        for(const auto& opt : grp.options->unlocks()) {
             OptionTextExtractor prn(grp.help());
             opt->accept(prn);
             options_list<<prn.str()<<"\n";

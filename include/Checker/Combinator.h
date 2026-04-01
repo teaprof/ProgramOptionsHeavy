@@ -50,7 +50,7 @@ class Combinator2 : public AbstractOptionVisitor {
         virtual ~Combinator2() {};
         virtual void visit(std::shared_ptr<AbstractOption> opt) {
             pushBack(opt);
-            for(auto &it : opt->unlocks) {
+            for(auto &it : opt->unlocks()) {
                 it->accept(*this);
             }
         }

@@ -7,11 +7,11 @@
 #include <regex>
 #include <iostream>
 
-class CompleterVisitor : public AbstractOptionVisitor {
+class NameCompleter : public AbstractOptionVisitor {
         std::vector<std::string>& results_;
         std::optional<std::regex> regex_;
     public:
-        CompleterVisitor(std::vector<std::string>& results, const std::string& regexstr = "") : results_{results} {
+        NameCompleter(std::vector<std::string>& results, const std::string& regexstr = "") : results_{results} {
             if(regexstr.size() > 0)
                 regex_ = std::regex(regexstr);
         }
@@ -59,7 +59,7 @@ class CompleterVisitor : public AbstractOptionVisitor {
             /* not implemented yet */
         }
         void visit(std::shared_ptr<OptionsGroup2> opt) override {
-            for(auto& p : opt->unlocks) {
+            for(auto& p : opt->unlocks()) {
                 p->accept(*this);
             }
         }
@@ -68,7 +68,6 @@ class CompleterVisitor : public AbstractOptionVisitor {
                 p->accept(*this);
             }
         }
-
 };
 
 class Completer : public BaseMatcher {
@@ -87,6 +86,8 @@ class Completer : public BaseMatcher {
             // exename run -d -> EXPECTED_VALUE -> TAKE PREV OPTION
             // exename run -- -> POSITIONAL ARG STARTING WITH -- -> REMAINING LONG OPTIONS
             // exename run - -> REMAINING LONG AND SHORT OPTIONS
+
+            //TODO: print all possible values if the option has finite number of values 
 
             //Parse all arguments except the last, but the last argument can be still consumed if the previous one requires the value
             try {
@@ -133,7 +134,7 @@ class Completer : public BaseMatcher {
                 assert(false);                
             }
 
-            CompleterVisitor visitor(results, regexstr);
+            NameCompleter visitor(results, regexstr);
             for(auto &opt : this->remaining_options) {
                 opt->accept(visitor);
             }

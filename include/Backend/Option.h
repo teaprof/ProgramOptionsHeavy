@@ -17,9 +17,7 @@ class AbstractNamedOptionWithValue;
 class AbstractPositionalOption;
 class AbstractPositionalOptionWithValue;
 class OneOf;
-//class NamedCommand;
-//class OneOf;
-class OptionsGroup2;
+class OptionsGroup2; // TODO rename
 
 class BaseValueSemantics;
 template<class T> class ValueSemantics;
@@ -36,21 +34,19 @@ class AbstractOptionVisitor {
         virtual void visit(std::shared_ptr<AbstractPositionalOptionWithValue>) = 0;
         virtual void visit(std::shared_ptr<OptionsGroup2>) = 0;
         virtual void visit(std::shared_ptr<OneOf>) = 0;
-        //virtual void visit(std::shared_ptr<NamedCommand>) = 0;        
 };
 
 class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
-    /// \todo: make constructor to be private
-    /*struct Private {
-        explicit Private() = default;
-    };*/
     public:
-        AbstractOption() : required_{false} {}
-        AbstractOption(bool required) : required_{required} {}
-        std::vector<std::shared_ptr<AbstractOption>> unlocks;
+        // these objects should not be build directly, use std::make_shared to create an instance
+        AbstractOption();
+        AbstractOption(bool required);
+
+        const std::vector<std::shared_ptr<AbstractOption>> unlocks() const;
+        size_t unlocksCount() const;
         std::shared_ptr<AbstractOption> addUnlock(std::shared_ptr<AbstractOption> opt);
 
-        bool required();
+        bool required() const;
         void setRequired(bool val);
 
         void setMaxOccurreneCount(size_t max_count = std::numeric_limits<size_t>::max());
@@ -60,6 +56,7 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
     private:
         bool required_{false};
         size_t max_occurence_{1};
+        std::vector<std::shared_ptr<AbstractOption>> unlocks_;
 };
 
 class NamedOption : public AbstractOption {
@@ -68,6 +65,8 @@ class NamedOption : public AbstractOption {
         NamedOption(const std::string& undecorated_long_name);
         NamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name);        
 
+        // at least longName() or shortName() should have value
+        // leading dashes are removed
         const std::optional<std::string>& longName() const;
         const std::optional<std::string>& shortName() const;
         const std::string displayName() const;
@@ -85,19 +84,28 @@ class AbstractOptionWithValue  {
         virtual const BaseValueSemantics& baseValueSemantics() const = 0;
         virtual BaseValueSemantics& baseValueSemantics() = 0;        
 
-        // todo: not used
-        enum class NArgs {
+        // The number of values that the option can accept could be
+        // - exactly N values;
+        // - up to N values;
+        // - infinite number of values (nValues doesn't matter in this case)
+        enum class NValuesRole {
             exact,
-            upto,
-            infinite
+            upto, // todo: 0..upto or 1..upto
+            infinite, // todo: 0..inf or 1..inf
         };
-        void setNArgs(NArgs type, size_t count = 1) {
-            nargs_type_ = type;
-            nargs_count_ = count;
+        bool valueRequired() { return value_required_; }
+        bool setValueRequired(bool value_required) { return value_required_ = value_required; }
+        void setNValues(NValuesRole role, size_t count = 1) {
+            nvalues_role_ = role;
+            nvalues_ = count;
         }
+        NValuesRole nValuesRole() const { return nvalues_role_; }
+        size_t nValues() const {return nvalues_;}
 
-        NArgs nargs_type_{NArgs::exact};
-        size_t nargs_count_{1};
+    private:
+        NValuesRole nvalues_role_{NValuesRole::exact};
+        size_t nvalues_{1};
+        bool value_required_{false};
 };
 
 class AbstractPositionalOption : public AbstractOption {
@@ -153,9 +161,10 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue, public OptionW
             return OptionWithValue<T>::valueSemantics();
         }
     };
-
+    
 class AbstractPositionalOptionWithValue : public AbstractPositionalOption, public AbstractOptionWithValue {
     public:
+    //TODO: How multiple occurences can be distingueshed from multiple values in one occurence?
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
@@ -187,12 +196,26 @@ class OneOf : public AbstractOption {
         void accept(AbstractOptionVisitor& visitor) override;
 };
 
+inline AbstractOption::AbstractOption() : required_{false} {
+    // nothing to do
+}
+inline AbstractOption::AbstractOption(bool required) : required_{required} {
+    // nothing to do
+}
+
+inline const std::vector<std::shared_ptr<AbstractOption>> AbstractOption::unlocks() const { 
+    return unlocks_;
+}
+inline size_t AbstractOption::unlocksCount() const {
+    return unlocks_.size();
+}
+
 inline std::shared_ptr<AbstractOption> AbstractOption::addUnlock(std::shared_ptr<AbstractOption> opt) {
-    unlocks.push_back(opt);
+    unlocks_.push_back(opt);
     return shared_from_this();
 }
 
-inline bool AbstractOption::required() {
+inline bool AbstractOption::required() const {
     return required_;
 }
 

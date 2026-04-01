@@ -19,12 +19,12 @@ inline std::vector<std::string> getCompletionVariants(const std::string &program
 }
 
 
-class Completer {
+class CompleterOld {
     /// TODOLIST:
     /// 1. Process the values passed for options
     /// 2. Take into account that any option can have different names
     public:
-        Completer(std::shared_ptr<ParserWithSubcommands>& parser) : parser_{parser} {
+        CompleterOld(std::shared_ptr<ParserWithSubcommands>& parser) : parser_{parser} {
             all_variants_ = getAllVariants();
             for(const auto& it : all_variants_)
                 all_command_names.push_back(it.first);
