@@ -17,6 +17,16 @@
 #include <queue>
 #include <set>
 
+///TODO: ambiguous behavior: what should we do in the following cases:
+/// program -d=1 2 filename
+//  there are two possible cases: 
+// 1. d = [1, 2],   pos = filename
+// 2. d = [1],      pos = [2, filename]
+// Some solutions:
+// 1. Eat as many values as possible. If value can't be converted to Int the value list is finished
+// 2. Use `--` (double dash) to indicate the end of the value list
+
+
 class SingleOptionMatcher : public AbstractOptionVisitor {
     private:
         ArgGrammarParser& grammar_parser_;
@@ -28,6 +38,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
         std::vector<std::shared_ptr<AbstractOption>> checked_positional_options;
 
         void visit(std::shared_ptr<AbstractOption> opt) override {
+            // should not never visit abstract object
             assert(false);
         }
         void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
@@ -114,7 +125,8 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             };
         }
         void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-            assert(false); // todo: not implemented?
+            // should not never visit abstract object
+            assert(false);
         }
         void visit(std::shared_ptr<OptionsGroup2> opt) override {
             assert(false);

@@ -41,11 +41,6 @@ class TypedValueSemantics : public BaseValueSemantics {
     public:
         TypedValueSemantics() {}
         TypedValueSemantics(T& ref) : external_ref_{ref} {}
-        /*std::shared_ptr<SemanticParseResult> defaultValue() override {
-            if(!default_value_.has_value())
-                return nullptr;
-            return constructResult(default_value_.value());
-        }*/
         void setExternalStorage(T& ref) {
             external_ref_ = ref;        
         }
@@ -81,7 +76,7 @@ class TypedValueSemantics : public BaseValueSemantics {
             setValue(*implicit_value_);
             return *implicit_value_;
         }
-        /// std::enable_if T is not floating point
+        /// TODO: std::enable_if T is not floating point
         std::vector<std::shared_ptr<AbstractOption>>& unlocks(const T& value) {
             return unlocks_[value];
         }
