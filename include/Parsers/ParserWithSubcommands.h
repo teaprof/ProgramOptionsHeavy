@@ -1,5 +1,5 @@
-#ifndef __SUBCOMMANDS_PARSER_H__
-#define __SUBCOMMANDS_PARSER_H__
+#ifndef PARSERS_PARSERWITHSUBCOMMANDS_H
+#define PARSERS_PARSERWITHSUBCOMMANDS_H
 
 #include <Parsers/AbstractOptionsParser.h>
 #include <Parsers/OptionsGroup.h>
@@ -13,8 +13,8 @@ class ProgramSubcommandsPrinter;
 class ParserWithSubcommands : public AbstractOptionsParser
 {
   public:
-    using value_t = std::shared_ptr<Parser>;
-    using subcommands_t = std::map<std::string, value_t>;
+    using ValueT = std::shared_ptr<Parser>;
+    using SubcommandsT = std::map<std::string, ValueT>;
 
     ParserWithSubcommands(const std::string &exename = "") : AbstractOptionsParser(exename)
     {
@@ -22,10 +22,10 @@ class ParserWithSubcommands : public AbstractOptionsParser
     ParserWithSubcommands(int argc, const char *argv[]) : AbstractOptionsParser(argc, argv)
     {
     }
-    subcommands_t getSubcommands() {
+    SubcommandsT getSubcommands() {
         return subcommands_;
     }
-    std::shared_ptr<Parser> push_back(const std::string &subcommand_name,
+    std::shared_ptr<Parser> pushBack(const std::string &subcommand_name,
                                                     std::shared_ptr<Parser> val)
     {
         auto res = subcommands_.emplace(subcommand_name, val);
@@ -130,7 +130,7 @@ class ParserWithSubcommands : public AbstractOptionsParser
     void update(const boost::program_options::variables_map &vm) override
     {
     }
-    std::vector<subcommands_t::iterator> &subcommandsOrder()
+    std::vector<SubcommandsT::iterator> &subcommandsOrder()
     {
         return subcommands_order_;
     }
@@ -141,9 +141,9 @@ class ParserWithSubcommands : public AbstractOptionsParser
 
     bool activated{false}; // becomes true when parse function succeeded
   private:
-    subcommands_t subcommands_;
-    std::vector<subcommands_t::iterator> subcommands_order_; // order of subcommands_ for printing purpose
-    subcommands_t::iterator selected_subcommand_;
+    SubcommandsT subcommands_;
+    std::vector<SubcommandsT::iterator> subcommands_order_; // order of subcommands_ for printing purpose
+    SubcommandsT::iterator selected_subcommand_;
     std::string default_subcommand_name_{"default"};
     bool hide_default_subcommand_name_{false};
     bool is_default_subcommand_enabled_{false};
@@ -152,4 +152,4 @@ class ParserWithSubcommands : public AbstractOptionsParser
 
 } /* namespace program_options_heavy */
 
-#endif // __SUBCOMMANDS_PARSER_H__
+#endif // PARSERS_PARSERWITHSUBCOMMANDS_H

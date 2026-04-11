@@ -5,21 +5,21 @@
 
 class MatcherFixtureSimple : public ::testing::Test {
     protected:
-        std::shared_ptr<AbstractOption> options;
-        std::shared_ptr<NamedOption> opt1;
-        std::shared_ptr<NamedOptionWithValue<int>> opt2;
-        std::shared_ptr<PositionalOptionWithValue<std::string>> opt3;
+        std::shared_ptr<AbstractOption> options_;
+        std::shared_ptr<NamedOption> opt1_;
+        std::shared_ptr<NamedOptionWithValue<int>> opt2_;
+        std::shared_ptr<PositionalOptionWithValue<std::string>> opt3_;
         void SetUp() override {
-            options = std::make_shared<OptionsGroup2>();
-            opt1 = std::make_shared<NamedOption>("--opt1", "-1");
-            opt2 = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
-            opt3 = std::make_shared<PositionalOptionWithValue<std::string>>();
-            options->addUnlock(opt1);
-            options->addUnlock(opt2);
-            options->addUnlock(opt3);
+            options_ = std::make_shared<OptionsGroup2>();
+            opt1_ = std::make_shared<NamedOption>("--opt1", "-1");
+            opt2_ = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
+            opt3_ = std::make_shared<PositionalOptionWithValue<std::string>>();
+            options_->addUnlock(opt1_);
+            options_->addUnlock(opt2_);
+            options_->addUnlock(opt3_);
 
-            opt1->setRequired(true);
-            opt2->valueSemantics().setMinMax(-10, 10);
+            opt1_->setRequired(true);
+            opt2_->valueSemantics().setMinMax(-10, 10);
         }
 
         void TearDown() override {
@@ -28,24 +28,24 @@ class MatcherFixtureSimple : public ::testing::Test {
 
 class MatcherFixture : public ::testing::Test {
     protected:
-        std::shared_ptr<AbstractOption> options;
-        std::shared_ptr<NamedOption> common_option;
-        std::shared_ptr<OneOf> command;
+        std::shared_ptr<AbstractOption> options_;
+        std::shared_ptr<NamedOption> common_option_;
+        std::shared_ptr<OneOf> command_;
         void SetUp() override {
-            common_option = std::make_shared<NamedOption>("--common", "-c");
-            options = std::make_shared<OptionsGroup2>();
-            options->addUnlock(common_option);            
-            auto runOptions = std::make_shared<LiteralString>("run");
-            runOptions->addUnlock(
+            common_option_ = std::make_shared<NamedOption>("--common", "-c");
+            options_ = std::make_shared<OptionsGroup2>();
+            options_->addUnlock(common_option_);            
+            auto run_options = std::make_shared<LiteralString>("run");
+            run_options->addUnlock(
                 std::make_shared<NamedOption>("--dim", "-d")
             );
-            auto gatherOptions= std::make_shared<LiteralString>("gather");
-            gatherOptions->addUnlock(std::make_shared<NamedOption>("--gatheropt", "-g"));
-            command = std::make_shared<OneOf>(runOptions, gatherOptions);
-            options->addUnlock(command);
+            auto gather_options= std::make_shared<LiteralString>("gather");
+            gather_options->addUnlock(std::make_shared<NamedOption>("--gatheropt", "-g"));
+            command_ = std::make_shared<OneOf>(run_options, gather_options);
+            options_->addUnlock(command_);
 
             Printer prn;
-            options->accept(prn);
+            options_->accept(prn);
         }
 
         void TearDown() override {
@@ -55,20 +55,20 @@ class MatcherFixture : public ::testing::Test {
 
 class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
     protected:
-        std::shared_ptr<AbstractOption> options;
-        std::shared_ptr<NamedOption> common_option;
-        std::shared_ptr<PositionalOptionWithValue<std::string>> command;
+        std::shared_ptr<AbstractOption> options_;
+        std::shared_ptr<NamedOption> common_option_;
+        std::shared_ptr<PositionalOptionWithValue<std::string>> command_;
 
         void SetUp() override {
-            options = std::make_shared<OptionsGroup2>();
+            options_ = std::make_shared<OptionsGroup2>();
 
-            common_option = std::make_shared<NamedOption>("--common", "-c");
-            options->addUnlock(common_option);            
+            common_option_ = std::make_shared<NamedOption>("--common", "-c");
+            options_->addUnlock(common_option_);            
 
-            command = std::make_shared<PositionalOptionWithValue<std::string>>();
-            command->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--dim", "-d"));
-            command->valueSemantics().unlocks("gather").push_back(std::make_shared<NamedOption>("--gatheropt", "-g"));
-            options->addUnlock(command);
+            command_ = std::make_shared<PositionalOptionWithValue<std::string>>();
+            command_->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--dim", "-d"));
+            command_->valueSemantics().unlocks("gather").push_back(std::make_shared<NamedOption>("--gatheropt", "-g"));
+            options_->addUnlock(command_);
         }
 
         void TearDown() override {
@@ -77,15 +77,15 @@ class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
 
 
 TEST_F(MatcherFixtureSimple, Test1) {
-    Matcher parser(options);
+    Matcher parser(options_);
     int v{0};
-    opt2->valueSemantics().setExternalStorage(v);
-    parser.storage.setExternalStorage<int>(opt2, &v);
+    opt2_->valueSemantics().setExternalStorage(v);
+    parser.storage.setExternalStorage<int>(opt2_, &v);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
-    opt3->setRequired(true);
+    opt3_->setRequired(true);
     EXPECT_TRUE(parser.parse("-1 filename"));
     EXPECT_TRUE(parser.parse("filename -1"));
-    opt3->setRequired(false);
+    opt3_->setRequired(false);
     EXPECT_EQ(v, 0);
     EXPECT_TRUE(parser.parse("--opt1"));
     EXPECT_EQ(v, 0);
@@ -102,13 +102,13 @@ TEST_F(MatcherFixtureSimple, Test1) {
 }
 
 TEST_F(MatcherFixture, Test1) {
-    Matcher parser(options);
+    Matcher parser(options_);
     EXPECT_TRUE(parser.parse({}));
 }
 
 TEST_F(MatcherFixture, Test2) {
-    Matcher parser(options);
-    command->setRequired(true);
+    Matcher parser(options_);
+    command_->setRequired(true);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"run"}));
     EXPECT_TRUE(parser.parse({"gather", "-g"}));
@@ -118,8 +118,8 @@ TEST_F(MatcherFixture, Test2) {
 }
 
 TEST_F(MatcherFixtureWithUnlocksByValue, Test2) {
-    Matcher parser(options);
-    command->setRequired(true);
+    Matcher parser(options_);
+    command_->setRequired(true);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"run"}));
     EXPECT_TRUE(parser.parse({"gather", "-g"}));
@@ -218,7 +218,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionExact) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
-    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::exact, 2);
+    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::EXACT, 2);
 
     Matcher parser(opt);
     int d{0};
@@ -243,7 +243,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
     opt->setValueRequired(true);
-    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::upto, 2);
+    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
 
     Matcher parser(opt);
     int d{0};
@@ -292,7 +292,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionInfinite) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
-    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::infinite);
+    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::INFINITE);
 
     Matcher parser(opt);
     int d{0};
@@ -312,7 +312,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionInfinite) {
 TEST(Matcher, MultipleValuesOfPositionalOption) {
     auto opt = std::make_shared<PositionalOptionWithValue<int>>();
     opt->setMaxOccurreneCount(2);
-    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::upto, 2);
+    opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
 
     Matcher parser(opt);
     int d{0};
@@ -373,8 +373,8 @@ TEST(Matcher, TwoPositionalOptions) {
 TEST(Matcher, TwoPositionalOptionsWithDoubleDash) {
     auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
-    opt1->setNValues(AbstractNamedOptionWithValue::NValuesRole::upto, 10);
-    opt2->setNValues(AbstractNamedOptionWithValue::NValuesRole::upto, 2);
+    opt1->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 10);
+    opt2->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
     auto opt = std::make_shared<OptionsGroup2>()->addUnlock(opt1)->addUnlock(opt2);
 
     Matcher parser(opt); // todo: rename parser to matcher here and all other places

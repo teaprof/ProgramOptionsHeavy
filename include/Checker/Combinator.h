@@ -1,5 +1,5 @@
-#ifndef __COMBINATOR_H__
-#define __COMBINATOR_H__
+#ifndef CHECKER_COMBINATOR_H
+#define CHECKER_COMBINATOR_H
 #include <Backend/Option.h>
 #include <vector>
 #include <memory>
@@ -125,4 +125,4 @@ class Combinator {
             return Iterator{branches.size(), *this};
         }
 };
-#endif // __COMBINATOR_H__
+#endif // CHECKER_COMBINATOR_H

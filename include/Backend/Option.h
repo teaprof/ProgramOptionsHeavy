@@ -1,5 +1,5 @@
-#ifndef __BACKEND_OPTION_H__
-#define __BACKEND_OPTION_H__
+#ifndef BACKEND_OPTION_H
+#define BACKEND_OPTION_H
 
 #include <memory>
 #include <vector>
@@ -89,9 +89,9 @@ class AbstractOptionWithValue  {
         // - up to N values;
         // - infinite number of values (nValues doesn't matter in this case)
         enum class NValuesRole {
-            exact,
-            upto, // todo: 0..upto or 1..upto
-            infinite, // todo: 0..inf or 1..inf
+            EXACT,
+            UPTO, // todo: 0..upto or 1..upto
+            INFINITE, // todo: 0..inf or 1..inf
         };
         bool valueRequired() { return value_required_; }
         bool setValueRequired(bool value_required) { return value_required_ = value_required; }
@@ -103,7 +103,7 @@ class AbstractOptionWithValue  {
         size_t nValues() const {return nvalues_;}
 
     private:
-        NValuesRole nvalues_role_{NValuesRole::exact};
+        NValuesRole nvalues_role_{NValuesRole::EXACT};
         size_t nvalues_{1};
         bool value_required_{false};
 };

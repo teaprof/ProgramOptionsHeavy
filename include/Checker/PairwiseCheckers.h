@@ -1,5 +1,5 @@
-#ifndef __PAIRWISE_CHECKERS_H__
-#define __PAIRWISE_CHECKERS_H__
+#ifndef CHECKER_PAIRWISECHECKERS_H
+#define CHECKER_PAIRWISECHECKERS_H
 
 #include <Backend/Option.h>
 #include <Checker/Exceptions.h>
@@ -43,4 +43,4 @@ class PairwiseChecker {
         }
 };
 
-#endif // __PAIRWISE_CHECKERS_H__
+#endif // CHECKER_PAIRWISECHECKERS_H

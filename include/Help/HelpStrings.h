@@ -1,5 +1,5 @@
-#ifndef __HELP_HELPSTRINGS_H__
-#define __HELP_HELPSTRINGS_H__
+#ifndef HELP_HELPSTRINGS_H
+#define HELP_HELPSTRINGS_H
 
 #include <Help/TextualDescriptions.h>
 
@@ -15,21 +15,21 @@ class HelpStrings {
             public:
                 HelpBuilder(std::string& dest) : dest_{dest} {}
                 ~HelpBuilder() {
-                    dest_ = stream.str();
+                    dest_ = stream_.str();
                 }
                 template<class T>
                 HelpBuilder& operator<<(T&& val) {
-                    stream<<val;
+                    stream_<<val;
                     return *this;
                 }
             private:
-                std::stringstream stream;
+                std::stringstream stream_;
                 std::string& dest_;
         };
     public:
         // TODO: add possibility to replace option names with preformatted string
         HelpBuilder operator<<(std::shared_ptr<AbstractOption> opt) {
-            return HelpBuilder(help_strings_[opt]);
+            return HelpBuilder(help_strings[opt]);
         }
         void setGroupName(std::shared_ptr<OptionsGroup2> opt, const std::string& str) {
             group_descriptions[opt].name = str;
@@ -50,23 +50,23 @@ class HelpStrings {
             // TODO merge program_description
             
             // some sanity checks:
-            for(const auto& it : other.help_strings_)
-                assert(help_strings_.count(it.first) == 0);
-            for(const auto& it : other.key_strings_)
-                assert(key_strings_.count(it.first) == 0);
+            for(const auto& it : other.help_strings)
+                assert(help_strings.count(it.first) == 0);
+            for(const auto& it : other.key_strings)
+                assert(key_strings.count(it.first) == 0);
             for(const auto& it : other.group_descriptions)
                 assert(group_descriptions.count(it.first) == 0);
 
             // do merge
-            help_strings_.insert(other.help_strings_.begin(), other.help_strings_.end());
-            key_strings_.insert(other.key_strings_.begin(), other.key_strings_.end());
+            help_strings.insert(other.help_strings.begin(), other.help_strings.end());
+            key_strings.insert(other.key_strings.begin(), other.key_strings.end());
             group_descriptions.insert(other.group_descriptions.begin(), other.group_descriptions.end());
         }
       
         ProgramDescription program_description;
         std::map<std::shared_ptr<OptionsGroup2>, GroupDescription> group_descriptions;
-        std::map<std::shared_ptr<AbstractOption>, std::string> help_strings_;
-        std::map<std::shared_ptr<AbstractOption>, std::string> key_strings_;
+        std::map<std::shared_ptr<AbstractOption>, std::string> help_strings;
+        std::map<std::shared_ptr<AbstractOption>, std::string> key_strings;
 };
 
 

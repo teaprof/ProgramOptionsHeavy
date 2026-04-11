@@ -1,5 +1,5 @@
-#ifndef BASIC_OPTIONS_H
-#define BASIC_OPTIONS_H
+#ifndef PARSERS_BASICOPTIONS_H
+#define PARSERS_BASICOPTIONS_H
 
 #include <Printers/PrettyPrinter.h>
 #include <Parsers/OptionsGroup.h>
@@ -18,7 +18,7 @@ class HelpOptions : public OptionsGroup
     {
         namespace po = boost::program_options;
         //addPartialVisible("help", po::bool_switch(&need_help), "produce this help");
-        addPartial("help", std::ref(need_help), "produce this help");
+        addPartial("help", std::ref(need_help_), "produce this help");
     }
     void update(const boost::program_options::variables_map &vm) override
     {
@@ -26,11 +26,11 @@ class HelpOptions : public OptionsGroup
     }
     bool needHelp() const
     {
-        return need_help;
+        return need_help_;
     }
 
   private:
-    bool need_help;
+    bool need_help_;
 };
 
 class MultithreadOptions : public OptionsGroup
@@ -39,11 +39,11 @@ class MultithreadOptions : public OptionsGroup
     MultithreadOptions() : OptionsGroup("multithreading options")
     {
         namespace po = boost::program_options;
-        concurency = std::thread::hardware_concurrency();
+        concurency_ = std::thread::hardware_concurrency();
         std::stringstream str;
         str << "number of threads, if not set then "
                "std::threads::hardware_concurrency will be used ["
-            << concurency << " on this machine]";
+            << concurency_ << " on this machine]";
         //addPartialVisible("nthreads,t", po::value(&nthreads_), str.str().c_str());
         addPartial("nthreads,t", std::ref(nthreads_), str.str());
     }
@@ -53,11 +53,11 @@ class MultithreadOptions : public OptionsGroup
         {
             return *nthreads_;
         }
-        return concurency;
+        return concurency_;
     }
 
   private:
-    size_t concurency;
+    size_t concurency_;
     std::optional<size_t> nthreads_;
 };
 

@@ -1,5 +1,5 @@
-#ifndef _UNO_CHECKERS_H__
-#define _UNO_CHECKERS_H__
+#ifndef CHECKER_UNOCHECKERS_H
+#define CHECKER_UNOCHECKERS_H
 
 #include<Backend/Option.h>
 #include<Backend/ValueSemantics.h>
@@ -47,4 +47,4 @@ class Unochecker : public AbstractOptionVisitor {
 };
 
 
-#endif // _UNO_CHECKERS_H__
+#endif // CHECKER_UNOCHECKERS_H

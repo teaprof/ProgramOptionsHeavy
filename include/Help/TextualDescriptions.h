@@ -1,5 +1,5 @@
-#ifndef __HELP_TEXTUAL_DESCRIPTIONS_H__
-#define __HELP_TEXTUAL_DESCRIPTIONS_H__
+#ifndef HELP_TEXTUALDESCRIPTIONS_H
+#define HELP_TEXTUALDESCRIPTIONS_H
 
 #include <string>
 #include <vector>

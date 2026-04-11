@@ -1,5 +1,5 @@
-#ifndef __BACKEND_EXCEPTIONS_H__
-#define __BACKEND_EXCEPTIONS_H__
+#ifndef BACKEND_EXCEPTIONS_H
+#define BACKEND_EXCEPTIONS_H
 
 #include "Option.h"
 #include <stdexcept>
@@ -108,8 +108,8 @@ class IncorrectAlternative : public std::logic_error {
 };
 class IncorrectLiteralString : public ExpectedValue {
     public:
-        IncorrectLiteralString(std::shared_ptr<LiteralString> expected, std::string received) : ExpectedValue(expected), literal_string_{expected} {}
-        std::shared_ptr<LiteralString> literal_string_;
+        IncorrectLiteralString(std::shared_ptr<LiteralString> expected, std::string received) : ExpectedValue(expected), literal_string{expected} {}
+        std::shared_ptr<LiteralString> literal_string;
 };
 class TooFewValuesForOption : public BaseOptionError {
     public:

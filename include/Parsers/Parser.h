@@ -1,5 +1,5 @@
-#ifndef __PROGRAM_OPTIONS_PARSER_H__
-#define __PROGRAM_OPTIONS_PARSER_H__
+#ifndef PARSERS_PARSER_H
+#define PARSERS_PARSER_H
 
 #include <Parsers/AbstractOptionsParser.h>
 #include <Parsers/OptionsGroup.h>
@@ -65,4 +65,4 @@ class Parser : public AbstractOptionsParser
 
 } /* namespace program_options_heavy */
 
-#endif // __PROGRAM_OPTIONS_PARSER_H__
+#endif // PARSERS_PARSER_H

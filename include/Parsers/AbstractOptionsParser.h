@@ -1,5 +1,5 @@
-#ifndef __ABSTRACT_OPTIONS_PARSER_H__
-#define __ABSTRACT_OPTIONS_PARSER_H__
+#ifndef PARSERS_ABSTRACTOPTIONSPARSER_H
+#define PARSERS_ABSTRACTOPTIONSPARSER_H
 
 #include <boost/program_options.hpp>
 #include <filesystem>
@@ -10,7 +10,7 @@ namespace program_options_heavy
 class AbstractOptionsParser
 {
   public:
-    AbstractOptionsParser(const std::string &exename_) : exename{exename_}
+    AbstractOptionsParser(const std::string &exename) : exename{exename}
     {
     }
     AbstractOptionsParser(int argc, const char *argv[])
@@ -32,4 +32,4 @@ class AbstractOptionsParser
 
 } /* namespace program_options_heavy */
 
-#endif // __ABSTRACT_OPTIONS_PARSER_H__
+#endif // PARSERS_ABSTRACTOPTIONSPARSER_H

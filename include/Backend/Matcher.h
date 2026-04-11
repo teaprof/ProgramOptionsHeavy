@@ -1,5 +1,5 @@
-#ifndef _BACKEND_MATCHER_H
-#define _BACKEND_MATCHER_H
+#ifndef BACKEND_MATCHER_H
+#define BACKEND_MATCHER_H
 
 #include "Option.h"
 #include "Exceptions.h"
@@ -46,14 +46,14 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             unlocks.clear();
             checked_positional_options.push_back(opt);
             switch(grammar_parser_.current_result.token_type) {
-                case ArgGrammarParser::TokenTypes::long_option:
-                case ArgGrammarParser::TokenTypes::long_option_eq_value:
-                case ArgGrammarParser::TokenTypes::short_option:
-                case ArgGrammarParser::TokenTypes::short_option_without_value:
-                case ArgGrammarParser::TokenTypes::short_option_eq_value:
-                case ArgGrammarParser::TokenTypes::double_dash:
+                case ArgGrammarParser::TokenTypes::LONG_OPTION:
+                case ArgGrammarParser::TokenTypes::LONG_OPTION_EQ_VALUE:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION_EQ_VALUE:
+                case ArgGrammarParser::TokenTypes::DOUBLE_DASH:
                     return;
-                case ArgGrammarParser::TokenTypes::value:
+                case ArgGrammarParser::TokenTypes::VALUE:
                     /* nothing to do */;
             }
             match = true;
@@ -65,14 +65,14 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             match = false;
             checked_positional_options.push_back(opt);
             switch(grammar_parser_.current_result.token_type) {
-                case ArgGrammarParser::TokenTypes::long_option:                    
-                case ArgGrammarParser::TokenTypes::long_option_eq_value:                    
-                case ArgGrammarParser::TokenTypes::short_option:
-                case ArgGrammarParser::TokenTypes::short_option_without_value:
-                case ArgGrammarParser::TokenTypes::short_option_eq_value:
-                case ArgGrammarParser::TokenTypes::double_dash:
+                case ArgGrammarParser::TokenTypes::LONG_OPTION:                    
+                case ArgGrammarParser::TokenTypes::LONG_OPTION_EQ_VALUE:                    
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION_EQ_VALUE:
+                case ArgGrammarParser::TokenTypes::DOUBLE_DASH:
                 break;
-                case ArgGrammarParser::TokenTypes::value:
+                case ArgGrammarParser::TokenTypes::VALUE:
                     match = opt->str() == grammar_parser_.current_result.value;
                     break;
 
@@ -85,17 +85,17 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             unlocks.clear();
             match = false;
             switch(grammar_parser_.current_result.token_type) {
-                case ArgGrammarParser::TokenTypes::long_option:                    
-                case ArgGrammarParser::TokenTypes::long_option_eq_value:
+                case ArgGrammarParser::TokenTypes::LONG_OPTION:                    
+                case ArgGrammarParser::TokenTypes::LONG_OPTION_EQ_VALUE:
                     match = opt->longName().has_value() && opt->longName().value() == grammar_parser_.current_result.long_option_name;
                     break;
-                case ArgGrammarParser::TokenTypes::short_option:
-                case ArgGrammarParser::TokenTypes::short_option_without_value:
-                case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION_EQ_VALUE:
                     match = opt->shortName().has_value() && opt->shortName().value() == grammar_parser_.current_result.short_option_name;
                     break;
-                case ArgGrammarParser::TokenTypes::double_dash:
-                case ArgGrammarParser::TokenTypes::value:
+                case ArgGrammarParser::TokenTypes::DOUBLE_DASH:
+                case ArgGrammarParser::TokenTypes::VALUE:
                     break;
             }            
             if(match) {
@@ -106,17 +106,17 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             unlocks.clear();
             match = false;
             switch(grammar_parser_.current_result.token_type) {
-                case ArgGrammarParser::TokenTypes::long_option:                    
-                case ArgGrammarParser::TokenTypes::long_option_eq_value:
+                case ArgGrammarParser::TokenTypes::LONG_OPTION:                    
+                case ArgGrammarParser::TokenTypes::LONG_OPTION_EQ_VALUE:
                     match = opt->longName().has_value() && opt->longName().value() == grammar_parser_.current_result.long_option_name;
                     break;
-                case ArgGrammarParser::TokenTypes::short_option:
-                case ArgGrammarParser::TokenTypes::short_option_without_value:
-                case ArgGrammarParser::TokenTypes::short_option_eq_value:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
+                case ArgGrammarParser::TokenTypes::SHORT_OPTION_EQ_VALUE:
                     match = opt->shortName().has_value() && opt->shortName().value() == grammar_parser_.current_result.short_option_name;
                     break;
-                case ArgGrammarParser::TokenTypes::double_dash:
-                case ArgGrammarParser::TokenTypes::value:
+                case ArgGrammarParser::TokenTypes::DOUBLE_DASH:
+                case ArgGrammarParser::TokenTypes::VALUE:
                     /* nothing to do*/;
             }            
             if(match) {
@@ -153,9 +153,9 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
 
 class BaseMatcher {
     protected:
-        std::vector<std::shared_ptr<AbstractOption>> remaining_options;
-        std::vector<std::shared_ptr<AbstractOption>> used_options;
-        std::set<std::shared_ptr<AbstractOption>> already_joined;
+        std::vector<std::shared_ptr<AbstractOption>> remaining_options_;
+        std::vector<std::shared_ptr<AbstractOption>> used_options_;
+        std::set<std::shared_ptr<AbstractOption>> already_joined_;
         std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
         std::shared_ptr<AbstractOption> options_;
     public:
@@ -167,12 +167,12 @@ class BaseMatcher {
         }
 
         void clear() {
-            remaining_options.clear();
-            used_options.clear();
-            already_joined.clear();
+            remaining_options_.clear();
+            used_options_.clear();
+            already_joined_.clear();
             storage.clear();
             opts_counter_.clear();
-            joinOptionsTo({options_}, remaining_options);
+            joinOptionsTo({options_}, remaining_options_);
         }
 
         bool eatNextValueIfCan(ArgGrammarParser& args, SingleOptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
@@ -180,21 +180,21 @@ class BaseMatcher {
             bool can_accept = false;
             bool should_accept = false;
             switch(opt->nValuesRole()) {
-                case AbstractNamedOptionWithValue::NValuesRole::exact: {                    
+                case AbstractNamedOptionWithValue::NValuesRole::EXACT: {                    
                     size_t actual_count = storage[opt].lastOccurrenceSize();
                     size_t required_count = opt->nValues();
                     can_accept = (actual_count < required_count);
                     should_accept = can_accept;
                     break;
                 }
-                case AbstractNamedOptionWithValue::NValuesRole::upto: {
+                case AbstractNamedOptionWithValue::NValuesRole::UPTO: {
                     size_t actual_count = storage[opt].lastOccurrenceSize();
                     size_t max_count = opt->nValues();
                     can_accept = (actual_count < max_count);
                     should_accept = false;
                     break;
                 }
-                case AbstractNamedOptionWithValue::NValuesRole::infinite: {
+                case AbstractNamedOptionWithValue::NValuesRole::INFINITE: {
                     can_accept = true;
                     should_accept = false;
                     break;
@@ -204,8 +204,8 @@ class BaseMatcher {
                 return false;
             }
             args.getNextOption();
-            bool arg_is_value = args.current_result.token_type == ArgGrammarParser::value;
-            bool arg_is_double_dash = args.current_result.token_type == ArgGrammarParser::double_dash;
+            bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
+            bool arg_is_double_dash = args.current_result.token_type == ArgGrammarParser::DOUBLE_DASH;
             if(!arg_is_value) {
                 if(!arg_is_double_dash)                
                     args.ungetOption();
@@ -222,28 +222,28 @@ class BaseMatcher {
 
         std::shared_ptr<AbstractOption> eatNextToken(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
             args.getNextOption();
-            if(args.current_result.token_type == ArgGrammarParser::TokenTypes::double_dash) {
+            if(args.current_result.token_type == ArgGrammarParser::TokenTypes::DOUBLE_DASH) {
                 matcher.setPositionalOnlyFlag(true);
                 return nullptr;
             }
             bool option_matched = false;            
             matcher.checked_positional_options.clear();
             std::shared_ptr<AbstractOption> res = nullptr;
-            for(auto it : remaining_options) {
+            for(auto it : remaining_options_) {
                 it->accept(matcher);
                 if(matcher.match) {
                     std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value;
                     addValueToNewOccurrence(it, matcher, unlocked_by_value);
-                    joinOptionsTo(unlocked_by_value, remaining_options);
-                    if(!already_joined.contains(it)) {
-                        joinOptionsTo(matcher.unlocks, remaining_options); // TODO: what should we do if this option was unpacked (multiple occurrence)
-                        already_joined.insert(it);
+                    joinOptionsTo(unlocked_by_value, remaining_options_);
+                    if(!already_joined_.contains(it)) {
+                        joinOptionsTo(matcher.unlocks, remaining_options_); // TODO: what should we do if this option was unpacked (multiple occurrence)
+                        already_joined_.insert(it);
                     }
                     if(optionEncountered(it) == it->maxOccurrence()) {
                         // if the number of occurences of this option is exausted
                         // then remove this option from the list of remaining options
-                        std::erase(remaining_options, it);
-                        used_options.push_back(it);
+                        std::erase(remaining_options_, it);
+                        used_options_.push_back(it);
                     }
                     option_matched = true;
                     res = it;
@@ -259,7 +259,7 @@ class BaseMatcher {
                     return nullptr;
                 }*/
                 // maybe this options is correct but occurred more than allowed number of times
-                for(auto it : used_options) {
+                for(auto it : used_options_) {
                     // skip positional options
                     if(auto p = std::dynamic_pointer_cast<AbstractPositionalOption>(it)) {
                         continue;                            
@@ -272,7 +272,7 @@ class BaseMatcher {
                     }
                 }
                 // check for correct use of the positional options
-                if(args.current_result.token_type == ArgGrammarParser::value)  {
+                if(args.current_result.token_type == ArgGrammarParser::VALUE)  {
                     // TODO it could be LiteralString
                     if(matcher.checked_positional_options.size() == 0) {
                         // no positional option have been expected
@@ -360,7 +360,7 @@ class BaseMatcher {
             storage.addValueToCurrentOccurence(opt, value, val);
         }
         void checkIfOptionIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) { // TODO: rename to something like checkIfValueListIsCompleted
-            if(opt->nValuesRole() == AbstractOptionWithValue::NValuesRole::exact) {
+            if(opt->nValuesRole() == AbstractOptionWithValue::NValuesRole::EXACT) {
                 assert(storage.contains(opt));
                 size_t actual = storage[opt].lastOccurrenceSize();
                 size_t expected = opt->nValues();
@@ -391,7 +391,7 @@ class Matcher : public BaseMatcher {
     private:
         void checkUnusedRequiredOptions() {
             // check that all required options are used
-            for(auto p : remaining_options)
+            for(auto p : remaining_options_)
             {
                 if(p->required() && opts_counter_.count(p) == 0) {
                     if(auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p)) {
@@ -404,7 +404,7 @@ class Matcher : public BaseMatcher {
         }
 
         void applyDefaultValues() {
-            for(auto opt : remaining_options)
+            for(auto opt : remaining_options_)
             {
                 if(opts_counter_.count(opt) > 0) {
                     continue;

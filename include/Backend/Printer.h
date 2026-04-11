@@ -1,5 +1,5 @@
-#ifndef __BACKEND_PRINTER_H__
-#define __BACKEND_PRINTER_H__
+#ifndef BACKEND_PRINTER_H
+#define BACKEND_PRINTER_H
 
 #include "ValueSemantics.h"
 #include "Option.h"
@@ -44,59 +44,59 @@ class Printer : public AbstractOptionVisitor {
         std::string prefix;
 
         void visit(std::shared_ptr<AbstractOption> opt) override {
-            prn<<"AbstractOption"<<"\n";
+            prn_<<"AbstractOption"<<"\n";
             printUnlocks(opt);
         }
         void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-            prn<<"AbstractPositionalOption"<<"\n";
+            prn_<<"AbstractPositionalOption"<<"\n";
             printUnlocks(opt);
         }
         void visit(std::shared_ptr<NamedOption> opt) override {
-            prn<<"Named: "<<"--"<<opt->longName()<<" : -"<<opt->shortName()<<"\n";
+            prn_<<"Named: "<<"--"<<opt->longName()<<" : -"<<opt->shortName()<<"\n";
             printUnlocks(opt);
         }
         void visit(std::shared_ptr<LiteralString> opt) override {
-            prn<<"Literal \""<<opt->str()<<"\"\n";
+            prn_<<"Literal \""<<opt->str()<<"\"\n";
             printUnlocks(opt);
         }
         void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
-            prn<<"NamedWithValue: "<<"--"<<opt->longName()<<" : -"<<opt->shortName()<<"\n";
+            prn_<<"NamedWithValue: "<<"--"<<opt->longName()<<" : -"<<opt->shortName()<<"\n";
             printUnlocks(opt);
         }
         void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
-            prn<<"AbstractPositionalOptionWithValue"<<"\n";
+            prn_<<"AbstractPositionalOptionWithValue"<<"\n";
             printUnlocks(opt);
         }
         void visit(std::shared_ptr<OptionsGroup2> opt) override {
-            prn<<"OptionsGroup2"<<"\n";
+            prn_<<"OptionsGroup2"<<"\n";
             printUnlocks(opt);
         }
         void visit(std::shared_ptr<OneOf> opt) override {
-            prn<<"OneOf"<<"\n";
-            prn++;
+            prn_<<"OneOf"<<"\n";
+            prn_++;
             size_t counter = 0;
             for(auto it : opt->alternatives) {
-                prn<<"Alternative "<<counter<<"\n";
-                prn++;
+                prn_<<"Alternative "<<counter<<"\n";
+                prn_++;
                 it->accept(*this);
-                prn--;
+                prn_--;
                 counter++;
             }
-            prn--;
+            prn_--;
             printUnlocks(opt);
         }
     private:
-        TabbedPrinter prn;
+        TabbedPrinter prn_;
         void printUnlocks(std::shared_ptr<AbstractOption> opt) {
             if(opt->unlocksCount() == 0)
                 return;
             //prn++;
             //prn<<"unlocks:"<<"\n";
-            prn++;
+            prn_++;
             for(auto it : opt->unlocks()) {
                 it->accept(*this);
             }
-            prn--;
+            prn_--;
             //prn--;
         }
 };

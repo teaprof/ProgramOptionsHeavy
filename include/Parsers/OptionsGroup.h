@@ -1,5 +1,5 @@
-#ifndef __OPTIONS_GROUP_H__
-#define __OPTIONS_GROUP_H__
+#ifndef PARSERS_OPTIONSGROUP_H
+#define PARSERS_OPTIONSGROUP_H
 
 #include <Backend/Facade.h>
 #include <boost/make_shared.hpp>
@@ -58,8 +58,8 @@ class OptionsGroup : public OptionsFacade
         help_<<options<<str;
     }
     std::string description() {
-        if(help_.help_strings_.count(options) > 0)
-            return help_.help_strings_[options];
+        if(help_.help_strings.count(options) > 0)
+            return help_.help_strings[options];
         return "";
     }
     std::shared_ptr<OptionsGroup2> options;
@@ -69,4 +69,4 @@ class OptionsGroup : public OptionsFacade
 
 } /* namespace program_options_heavy */
 
-#endif //__OPTIONS_GROUP_H__
+#endif // PARSERS_OPTIONSGROUP_H

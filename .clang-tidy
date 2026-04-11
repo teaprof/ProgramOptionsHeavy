@@ -1,0 +1,73 @@
+---
+#Checks: -*,
+#        readability-*,
+#        modernize-*, -modernize-use-using,
+#        cppcoreguidelines-*, -cppcoreguidelines-pro-*, -cppcoreguidelines-special-member-functions, -cppcoreguidelines-owning-memory, -cppcoreguidelines-avoid-goto,
+#        performance-*, -performance-unnecessary-value-param,
+#        misc-*, -misc-misplaced-const,
+#        bugprone-*, -bugprone-suspicious-missing-comma, -bugprone-sizeof-expression,
+#        google-*, -google-runtime-references, -google-readability-todo
+Checks: readability-identifier-naming
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'include/'
+#AnalyzeTemporaryDtors: false
+#FormatStyle: file
+CheckOptions:
+  - { key: readability-identifier-naming.AbstractClassCase,                  value: CamelCase  }
+  - { key: readability-identifier-naming.ClassCase,                          value: CamelCase  }
+  - { key: readability-identifier-naming.ClassConstantCase,                  value: lower_case }
+  - { key: readability-identifier-naming.ClassConstantSuffix,                value: _          }
+  - { key: readability-identifier-naming.ClassMemberCase,                    value: lower_case }
+  - { key: readability-identifier-naming.ClassMemberSuffix,                  value: _          }
+  - { key: readability-identifier-naming.ClassMethodCase,                    value: camelBack  }
+  - { key: readability-identifier-naming.ConstantCase,                       value: UPPER_CASE }
+  - { key: readability-identifier-naming.ConstantMemberCase,                 value: lower_case }
+  - { key: readability-identifier-naming.ConstantMemberSuffix,               value: _          }
+  - { key: readability-identifier-naming.ConstantParameterCase,              value: lower_case }
+  - { key: readability-identifier-naming.ConstantPointerParameterCase,       value: lower_case }
+  - { key: readability-identifier-naming.ConstexprFunctionCase,              value: camelBack  }
+  - { key: readability-identifier-naming.ConstexprMethodCase,                value: camelBack  }
+  - { key: readability-identifier-naming.ConstexprVariableCase,              value: lower_case }
+  - { key: readability-identifier-naming.EnumCase,                           value: CamelCase  }
+  - { key: readability-identifier-naming.EnumConstantCase,                   value: UPPER_CASE }
+  - { key: readability-identifier-naming.FunctionCase,                       value: camelBack  }
+  - { key: readability-identifier-naming.GlobalConstantCase,                 value: UPPER_CASE }
+  - { key: readability-identifier-naming.GlobalConstantPointerCase,          value: UPPER_CASE }
+  - { key: readability-identifier-naming.GlobalFunctionCase,                 value: camelBack  }
+  - { key: readability-identifier-naming.GlobalPointerCase,                  value: lower_case }
+  - { key: readability-identifier-naming.GlobalVariableCase,                 value: lower_case }
+  - { key: readability-identifier-naming.InlineNamespaceCase,                value: lower_case }
+  - { key: readability-identifier-naming.LocalConstantCase,                  value: lower_case }
+  - { key: readability-identifier-naming.LocalConstantPointerCase,           value: lower_case }
+  - { key: readability-identifier-naming.LocalPointerCase,                   value: lower_case }
+  - { key: readability-identifier-naming.LocalVariableCase,                  value: lower_case }
+  - { key: readability-identifier-naming.MacroDefinitionCase,                value: UPPER_CASE }
+  - { key: readability-identifier-naming.MemberCase,                         value: lower_case }
+  - { key: readability-identifier-naming.MemberSuffix,                       value: _          }
+  - { key: readability-identifier-naming.MethodCase,                         value: camelBack  }
+  - { key: readability-identifier-naming.NamespaceCase,                      value: lower_case }
+  - { key: readability-identifier-naming.ParameterCase,                      value: lower_case }
+  - { key: readability-identifier-naming.ParameterPackCase,                  value: lower_case }
+  - { key: readability-identifier-naming.PointerParameterCase,               value: lower_case }
+  - { key: readability-identifier-naming.PrivateMemberCase,                  value: lower_case }
+  - { key: readability-identifier-naming.PrivateMemberSuffix,                value: _          }
+  - { key: readability-identifier-naming.PrivateMethodCase,                  value: camelBack  }
+  - { key: readability-identifier-naming.ProtectedMemberCase,                value: lower_case }
+  - { key: readability-identifier-naming.ProtectedMemberSuffix,              value: _          }
+  - { key: readability-identifier-naming.ProtectedMethodCase,                value: camelBack  }
+  - { key: readability-identifier-naming.PublicMemberCase,                   value: lower_case }
+  - { key: readability-identifier-naming.PublicMethodCase,                   value: camelBack  }
+  - { key: readability-identifier-naming.ScopedEnumConstantCase,             value: UPPER_CASE }
+  - { key: readability-identifier-naming.StaticConstantCase,                 value: UPPER_CASE }
+  - { key: readability-identifier-naming.StaticVariableCase,                 value: lower_case }
+  - { key: readability-identifier-naming.StructCase,                         value: CamelCase  }
+  - { key: readability-identifier-naming.TemplateParameterCase,              value: CamelCase  }
+  - { key: readability-identifier-naming.TemplateTemplateParameterCase,      value: CamelCase  }
+  - { key: readability-identifier-naming.TypeAliasCase,                      value: CamelCase  }
+  - { key: readability-identifier-naming.TypedefCase,                        value: CamelCase  }
+  - { key: readability-identifier-naming.TypeTemplateParameterCase,          value: CamelCase  }
+  - { key: readability-identifier-naming.TypeTemplateParameterIgnoredRegexp, value: expr-type  }
+  - { key: readability-identifier-naming.ValueTemplateParameterCase,         value: lower_case }
+  - { key: readability-identifier-naming.VariableCase,                       value: lower_case }
+  - { key: readability-identifier-naming.VirtualMethodCase,                  value: camelBack  }
+...

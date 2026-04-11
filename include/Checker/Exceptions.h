@@ -1,5 +1,5 @@
-#ifndef __CHECKER_EXCEPTIONS_H__
-#define __CHECKER_EXCEPTIONS_H__
+#ifndef CHECKER_EXCEPTIONS_H
+#define CHECKER_EXCEPTIONS_H
 
 #include <Backend/Exceptions.h>
 #include <stdexcept>
@@ -23,4 +23,4 @@ class DuplicateOptionName : public CheckerException {
         //DuplicateOption(std::shared_ptr<AbstractOption> opt) : std::logic_error("option should be specified only once") {}
         DuplicateOptionName() : CheckerException("Duplicate option name detected") {}
 };
-#endif //__CHECKER_EXCEPTIONS_H__
+#endif // CHECKER_EXCEPTIONS_H

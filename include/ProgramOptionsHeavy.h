@@ -1,5 +1,5 @@
-#ifndef __PROGRAM_OPTIONS_H__
-#define __PROGRAM_OPTIONS_H__
+#ifndef PROGRAMOPTIONSHEAVY_H
+#define PROGRAMOPTIONSHEAVY_H
 #include <Backend/Facade.h>
 #include <Parsers/AbstractOptionsParser.h>
 #include <Parsers/BasicOptions.h>

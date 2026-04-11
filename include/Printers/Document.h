@@ -1,5 +1,5 @@
-#ifndef __ABSTRACT_TEXT_SECTION__
-#define __ABSTRACT_TEXT_SECTION__
+#ifndef PRINTERS_DOCUMENT_H
+#define PRINTERS_DOCUMENT_H
 
 #include <memory>
 #include <sstream>
@@ -62,7 +62,7 @@ class Section : public AbstractItem
   public:
     std::string title;
     std::vector<std::shared_ptr<AbstractItem>> items;
-    void add_paragraph(const std::string &str)
+    void addParagraph(const std::string &str)
     {
         items.push_back(std::make_shared<Paragraph>(str));
     }
@@ -76,4 +76,4 @@ class Section : public AbstractItem
 
 } /* namespace program_options_heavy */
 
-#endif // __ABSTRACT_TEXT_SECTION__
+#endif // PRINTERS_DOCUMENT_H

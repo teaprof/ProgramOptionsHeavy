@@ -84,33 +84,33 @@ TEST(CheckerTest, Alternatives3) {
 
 
 TEST(CheckerTest, OneOfComplex) {
-    auto helpOption = std::make_shared<NamedOption>("--help", "-h");
-    auto hypercubeOptions = std::make_shared<OneOf>(
-        helpOption,
+    auto help_option = std::make_shared<NamedOption>("--help", "-h");
+    auto hypercube_options = std::make_shared<OneOf>(
+        help_option,
         std::make_shared<LiteralString>("run")->
             addUnlock(std::make_shared<NamedOption>("--dim", "-d"))->
             addUnlock(std::make_shared<NamedOption>("--mIntervalsPerDim", "-m"))->
-            addUnlock(helpOption),
-        std::make_shared<LiteralString>("gather")->addUnlock(helpOption)
+            addUnlock(help_option),
+        std::make_shared<LiteralString>("gather")->addUnlock(help_option)
     );
     Checker checker;
-    EXPECT_NO_THROW(checker(hypercubeOptions));
+    EXPECT_NO_THROW(checker(hypercube_options));
 }
 
 
 TEST(CheckerTest, ComplexDuplicateOptionName) {
-    auto helpOption1 = std::make_shared<NamedOption>("--help", "-h");
-    auto helpOption2 = std::make_shared<NamedOption>("--help", "-h");
-    auto hypercubeOptions = std::make_shared<OneOf>(
+    auto help_option1 = std::make_shared<NamedOption>("--help", "-h");
+    auto help_option2 = std::make_shared<NamedOption>("--help", "-h");
+    auto hypercube_options = std::make_shared<OneOf>(
         std::make_shared<LiteralString>("run")->
             addUnlock(std::make_shared<NamedOption>("--dim", "-d"))->
             addUnlock(std::make_shared<NamedOption>("--mIntervalsPerDim", "-m"))->
-            addUnlock(helpOption1)->
-            addUnlock(helpOption2),
-        std::make_shared<LiteralString>("gather")->addUnlock(helpOption1)
+            addUnlock(help_option1)->
+            addUnlock(help_option2),
+        std::make_shared<LiteralString>("gather")->addUnlock(help_option1)
     );
     Checker checker;
-    EXPECT_THROW(checker(hypercubeOptions), DuplicateOptionName);
+    EXPECT_THROW(checker(hypercube_options), DuplicateOptionName);
 }
 
 TEST(CheckerTest, PositionalWithAllowedOptions) {
@@ -148,14 +148,14 @@ TEST(CheckerTest, OneOfAlternatives3) {
 
 
 TEST(CheckerTest, Complex) {
-    auto helpOption = std::make_shared<NamedOption>("--help", "-h");
+    auto help_option = std::make_shared<NamedOption>("--help", "-h");
     auto options = std::make_shared<PositionalOptionWithValue<std::string>>();
     //option->addUnlock(helpOption);
     options->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--dim", "-d"));
     options->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--mIntervalsPerDim", "-m"));
-    options->valueSemantics().unlocks("run").push_back(helpOption);
-    options->valueSemantics().unlocks("gather").push_back(helpOption);
-    options->valueSemantics().unlocks("clean").push_back(helpOption);
+    options->valueSemantics().unlocks("run").push_back(help_option);
+    options->valueSemantics().unlocks("gather").push_back(help_option);
+    options->valueSemantics().unlocks("clean").push_back(help_option);
 
     Checker checker;
     EXPECT_NO_THROW(checker(options));

@@ -1,5 +1,5 @@
-#ifndef __BACKEND_VALUE_STORAGE_H__
-#define __BACKEND_VALUE_STORAGE_H__
+#ifndef BACKEND_VALUESTORAGE_H
+#define BACKEND_VALUESTORAGE_H
 
 #include "ValueSemantics.h"
 #include <any>

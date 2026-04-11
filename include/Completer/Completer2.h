@@ -1,5 +1,5 @@
-#ifndef __BACKEND_COMPLETER_2_H__
-#define __BACKEND_COMPLETER_2_H__
+#ifndef COMPLETER_COMPLETER2_H
+#define COMPLETER_COMPLETER2_H
 
 #include <Backend/Option.h>
 #include <Backend/Matcher.h>
@@ -112,16 +112,16 @@ class Completer : public BaseMatcher {
                 return {};
             } catch (const UnknownNamedOption& err) {
                 switch(args.current_result.token_type)  {
-                    case ArgGrammarParser::short_option:
-                    case ArgGrammarParser::short_option_eq_value:
-                    case ArgGrammarParser::short_option_without_value:
-                    case ArgGrammarParser::long_option_eq_value:
+                    case ArgGrammarParser::SHORT_OPTION:
+                    case ArgGrammarParser::SHORT_OPTION_EQ_VALUE:
+                    case ArgGrammarParser::SHORT_OPTION_WITHOUT_VALUE:
+                    case ArgGrammarParser::LONG_OPTION_EQ_VALUE:
                         // option is completed but unknown
                         return {};
-                    case ArgGrammarParser::long_option:
+                    case ArgGrammarParser::LONG_OPTION:
                         regexstr = std::string("--") + args.current_result.long_option_name + ".*";
                         break;
-                    case ArgGrammarParser::value:
+                    case ArgGrammarParser::VALUE:
                         regexstr = args.current_result.value + ".*";
 
                 }
@@ -135,7 +135,7 @@ class Completer : public BaseMatcher {
             }
 
             NameCompleter visitor(results, regexstr);
-            for(auto &opt : this->remaining_options) {
+            for(auto &opt : this->remaining_options_) {
                 opt->accept(visitor);
             }
             return results;

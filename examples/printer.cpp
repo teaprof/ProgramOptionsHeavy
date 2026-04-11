@@ -11,12 +11,12 @@ int main() {
     auto gather_options = std::make_shared<OptionsGroup2>();
     gather_options->addUnlock(std::make_shared<PositionalOptionWithValue<std::string>>());
 
-    auto runCommand = std::make_shared<LiteralString>("run")->addUnlock(run_options)->addUnlock(common_options);
-    auto gatherCommand = std::make_shared<LiteralString>("gather")->addUnlock(gather_options)->addUnlock(common_options);
+    auto run_command = std::make_shared<LiteralString>("run")->addUnlock(run_options)->addUnlock(common_options);
+    auto gather_command = std::make_shared<LiteralString>("gather")->addUnlock(gather_options)->addUnlock(common_options);
     
     auto top_level_options = std::make_shared<OneOf>();
-    top_level_options->addAlternative(runCommand);
-    top_level_options->addAlternative(gatherCommand);
+    top_level_options->addAlternative(run_command);
+    top_level_options->addAlternative(gather_command);
 
     Printer prn;
     top_level_options->accept(prn);

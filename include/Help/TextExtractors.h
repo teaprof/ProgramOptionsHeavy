@@ -1,5 +1,5 @@
-#ifndef __HELP_TEXTEXTRACTORS_H__
-#define __HELP_TEXTEXTRACTORS_H__
+#ifndef HELP_TEXTEXTRACTORS_H
+#define HELP_TEXTEXTRACTORS_H
 
 #include <Help/TextualDescriptions.h>
 #include <Parsers/Parser.h>
@@ -47,8 +47,8 @@ class OptionTextExtractor : public AbstractOptionVisitor {
         std::optional<std::reference_wrapper<const HelpStrings>> help_;
         std::string displayName(std::shared_ptr<NamedOption> opt) {
             if(help_) {
-                if(help_->get().key_strings_.count(opt) > 0) {
-                    return help_->get().key_strings_.at(opt);
+                if(help_->get().key_strings.count(opt) > 0) {
+                    return help_->get().key_strings.at(opt);
                 }
             }
             std::string res;
@@ -64,8 +64,8 @@ class OptionTextExtractor : public AbstractOptionVisitor {
         }
         std::string helpString(std::shared_ptr<AbstractOption> opt) {
             if(help_) {
-                if(help_->get().help_strings_.count(opt) > 0) {
-                    return help_->get().help_strings_.at(opt);
+                if(help_->get().help_strings.count(opt) > 0) {
+                    return help_->get().help_strings.at(opt);
                 }
             }
             return "";

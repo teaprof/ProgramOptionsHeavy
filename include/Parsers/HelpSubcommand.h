@@ -1,5 +1,5 @@
-#ifndef __HELP_SUBCOMMAND_H__
-#define __HELP_SUBCOMMAND_H__
+#ifndef PARSERS_HELPSUBCOMMAND_H
+#define PARSERS_HELPSUBCOMMAND_H
 
 #include <Parsers/BasicOptions.h>
 #include <Parsers/Parser.h>
@@ -22,4 +22,4 @@ class HelpSubcommand : public Parser
 };
 
 } /* namespace program_options_heavy */
-#endif //__HELP_SUBCOMMAND_H__
+#endif // PARSERS_HELPSUBCOMMAND_H

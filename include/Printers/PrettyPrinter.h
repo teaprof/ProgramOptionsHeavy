@@ -1,5 +1,5 @@
-#ifndef __PRETTY_PRINTER_H__
-#define __PRETTY_PRINTER_H__
+#ifndef PRINTERS_PRETTYPRINTER_H
+#define PRINTERS_PRETTYPRINTER_H
 
 #include <Printers/Document.h>
 
@@ -25,24 +25,24 @@ class PrettyPrinter : public DocumentVisitor
     }
     void visit(const Paragraph &item) override
     {
-        printText(level, item.text);
+        printText(level_, item.text);
     }
     void visit(const UnorderedList &lst) override
     {
         for (const auto &item : lst.items)
         {
-            printText(level, std::string("*") + item);
+            printText(level_, std::string("*") + item);
         }
     }
     void visit(const Section &item) override
     {
-        printTitle(level, item.title);
-        level++;
+        printTitle(level_, item.title);
+        level_++;
         for (const auto &item : item.items)
         {
             item->accept(*this);
         }
-        level--;
+        level_--;
     }
 
     void print(const std::shared_ptr<AbstractItem> item)
@@ -51,7 +51,7 @@ class PrettyPrinter : public DocumentVisitor
     }
 
   private:
-    size_t level{0};
+    size_t level_{0};
 
     static void printTitle(size_t level, const std::string &str)
     {

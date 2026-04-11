@@ -1,5 +1,5 @@
-#ifndef __BACKEND_VALUE_SEMANTICS__
-#define __BACKEND_VALUE_SEMANTICS__
+#ifndef BACKEND_VALUESEMANTICS_H
+#define BACKEND_VALUESEMANTICS_H
 
 #include "Exceptions.h"
 #include <utils/strutils.h>

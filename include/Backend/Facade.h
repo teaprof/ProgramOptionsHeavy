@@ -1,5 +1,5 @@
-#ifndef __BACKEND_FACADE_H__
-#define __BACKEND_FACADE_H__
+#ifndef BACKEND_FACADE_H
+#define BACKEND_FACADE_H
 
 #include <Backend/ValueSemantics.h>
 #include <Backend/Option.h>

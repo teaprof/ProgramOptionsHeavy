@@ -1,5 +1,5 @@
-#ifndef __PROGRAM_SUBCOMMANDS_PRINTER_H__
-#define __PROGRAM_SUBCOMMANDS_PRINTER_H__
+#ifndef PRINTERS_PROGRAMSUBCOMMANDSPRINTER_H
+#define PRINTERS_PROGRAMSUBCOMMANDSPRINTER_H
 
 #include <Parsers/ParserWithSubcommands.h>
 #include <Printers/PrettyPrinter.h>
@@ -20,15 +20,15 @@ class ProgramSubcommandsPrinter
         usage->title = "Usage:";
         for (auto &subcmd : parser.subcommandsOrder())
         {
-            usage->add_paragraph("\t" + shortHelp(parser, subcmd));
+            usage->addParagraph("\t" + shortHelp(parser, subcmd));
         }
 
         auto description = std::make_shared<Section>();
         description->title = "Description:";
-        description->add_paragraph(parser.program_description);
+        description->addParagraph(parser.program_description);
         for (auto &subcmd : parser.subcommandsOrder())
         {
-            description->add_paragraph("\t" + subcommandDescription(parser, subcmd));
+            description->addParagraph("\t" + subcommandDescription(parser, subcmd));
         }
 
         auto details = std::make_shared<Section>();
@@ -47,7 +47,7 @@ class ProgramSubcommandsPrinter
         res->items.push_back(details);
         return res;
     }
-    std::string shortHelp(ParserWithSubcommands &parser, ParserWithSubcommands::subcommands_t::iterator it) const
+    std::string shortHelp(ParserWithSubcommands &parser, ParserWithSubcommands::SubcommandsT::iterator it) const
     {
         std::stringstream str;
         str << parser.exename << " ";
@@ -69,7 +69,7 @@ class ProgramSubcommandsPrinter
         }
         return str.str();
     }
-    std::string subcommandDescription(ParserWithSubcommands &parser, ParserWithSubcommands::subcommands_t::iterator it) const
+    std::string subcommandDescription(ParserWithSubcommands &parser, ParserWithSubcommands::SubcommandsT::iterator it) const
     {
         std::stringstream str;
         if (it->first != parser.defaultSubcommandName() || !parser.hideDefaultSubcommandName())
@@ -84,10 +84,10 @@ class ProgramSubcommandsPrinter
         std::vector<std::shared_ptr<Section>> res;
         for (auto it : parser.groups())
         {
-            if (!options_groups_printed_already_.contains(it->groupName()))
+            if (!options_groups_printed_already.contains(it->groupName()))
             {
                 res.push_back(print(*it));
-                options_groups_printed_already_.insert(it->groupName());
+                options_groups_printed_already.insert(it->groupName());
             }
         }
         return res;
@@ -96,11 +96,11 @@ class ProgramSubcommandsPrinter
     {
         return ProgramOptionsPrinter::print(grp);
     }
-    std::set<std::string> options_groups_printed_already_;
+    std::set<std::string> options_groups_printed_already;
 };
 
 } /* namespace printers */
 
 } /* namespace program_options_heavy */
 
-#endif // __PROGRAM_SUBCOMMANDS_PRINTER_H__
+#endif // PRINTERS_PROGRAMSUBCOMMANDSPRINTER_H

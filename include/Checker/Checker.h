@@ -1,5 +1,5 @@
-#ifndef __BACKEND_CHECKER_H__
-#define __BACKEND_CHECKER_H__
+#ifndef CHECKER_CHECKER_H
+#define CHECKER_CHECKER_H
 
 #include "Exceptions.h"
 #include "Combinator.h"
@@ -21,14 +21,14 @@ public:
     void operator()(std::shared_ptr<AbstractOption> opt) {
         Combinator combinator(opt);
         Unochecker unocheker;
-        PairwiseChecker pairwiseChecker;
+        PairwiseChecker pairwise_checker;
         for(auto& branch : combinator.branches) {
             for(auto& opt : branch) {
                 opt->accept(unocheker);
             }
             for(size_t i = 0; i < branch.size(); i++) {
                 for(size_t j = i + 1; j < branch.size(); j++) {
-                    pairwiseChecker.check(branch[i], branch[j]);
+                    pairwise_checker.check(branch[i], branch[j]);
                 }
             }
         }

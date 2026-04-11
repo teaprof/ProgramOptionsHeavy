@@ -1,5 +1,5 @@
-#ifndef __UTILS_STRUTILS_H__
-#define __UTILS_STRUTILS_H__
+#ifndef UTILS_STRUTILS_H
+#define UTILS_STRUTILS_H
 
 #include <Grammar/Parser.h> // for ArgLexer::short_options_pattern and ArgLexer::long_option_pattern
 
