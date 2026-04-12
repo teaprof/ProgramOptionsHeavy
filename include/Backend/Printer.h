@@ -88,8 +88,9 @@ class Printer : public AbstractOptionVisitor {
     private:
         TabbedPrinter prn_;
         void printUnlocks(std::shared_ptr<AbstractOption> opt) {
-            if(opt->unlocksCount() == 0)
+            if(opt->unlocksCount() == 0) {
                 return;
+}
             //prn++;
             //prn<<"unlocks:"<<"\n";
             prn_++;

@@ -12,12 +12,14 @@ class NamesCollisionChecker {
             auto second_named = std::dynamic_pointer_cast<NamedOption>(second);
             if(first_named && second_named) {
                 if(first_named->longName() && second_named->longName()) {
-                    if(*first_named->longName() == *second_named->longName())
+                    if(*first_named->longName() == *second_named->longName()) {
                         return false;
+}
                 }
                 if(first_named->shortName() && second_named->shortName()) {
-                    if(*first_named->shortName() == *second_named->shortName())
+                    if(*first_named->shortName() == *second_named->shortName()) {
                         return false;
+}
                 }
             }
             return true;
@@ -33,7 +35,7 @@ class DuplicateOptionPtrChecker {
 
 class PairwiseChecker {
     public:
-        void check(std::shared_ptr<AbstractOption> opt1, std::shared_ptr<AbstractOption> opt2) {
+        static void check(std::shared_ptr<AbstractOption> opt1, std::shared_ptr<AbstractOption> opt2) {
             if(!DuplicateOptionPtrChecker::checkDuplicates(opt1, opt2)) {
                 throw DuplicateOptionPtrDetected(); // not tested
             }

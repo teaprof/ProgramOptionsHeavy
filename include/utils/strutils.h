@@ -21,16 +21,17 @@ inline std::pair<std::optional<std::string>, std::optional<std::string>> splitTo
     if(sep_pos != std::string::npos) {
         std::string first = names.substr(0, sep_pos);
         std::string second = names.substr(sep_pos+1, std::string::npos);
-        if(first.size() > 0) {
+        if(!first.empty()) {
             v.push_back(first);
         }
-        if(second.size() > 0) {
+        if(!second.empty()) {
             v.push_back(second);
         }        
     } else {
         v.push_back(names);
     }
-    std::optional<std::string> long_name, short_name;
+    std::optional<std::string> long_name;
+    std::optional<std::string> short_name;
     for(auto it : v) {
         auto [is_long, stripped_long_name] = isLongName(it);
         if(is_long) {
@@ -76,11 +77,13 @@ inline std::string trim(const std::string& src) {
         return src;
     }
     size_t start = 0;
-    while(start < src.size() && std::isspace(src[start]))
+    while(start < src.size() && (std::isspace(src[start]) != 0)) {
         start++;
+}
     size_t end = src.length() - 1;
-    while(end > start && std::isspace(src[end]))
+    while(end > start && (std::isspace(src[end]) != 0)) {
         end--;
+}
     return src.substr(start, end - start + 1);
 }
 

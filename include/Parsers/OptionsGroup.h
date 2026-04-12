@@ -58,8 +58,9 @@ class OptionsGroup : public OptionsFacade
         help_<<options<<str;
     }
     std::string description() {
-        if(help_.help_strings.count(options) > 0)
+        if(help_.help_strings.contains(options)) {
             return help_.help_strings[options];
+}
         return "";
     }
     std::shared_ptr<OptionsGroup2> options;

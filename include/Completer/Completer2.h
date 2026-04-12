@@ -12,10 +12,11 @@ class NameCompleter : public AbstractOptionVisitor {
         std::optional<std::regex> regex_;
     public:
         NameCompleter(std::vector<std::string>& results, const std::string& regexstr = "") : results_{results} {
-            if(regexstr.size() > 0)
+            if(!regexstr.empty()) {
                 regex_ = std::regex(regexstr);
+}
         }
-        void visit(std::shared_ptr<AbstractOption>) override {
+        void visit(std::shared_ptr<AbstractOption> /*unused*/) override {
             // nothing to do
         }
         void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
@@ -23,8 +24,9 @@ class NameCompleter : public AbstractOptionVisitor {
         }
         void visit(std::shared_ptr<LiteralString> opt) override {
             if(regex_.has_value()) {
-                if(!std::regex_match(opt->str(), regex_.value()))
+                if(!std::regex_match(opt->str(), regex_.value())) {
                     return;
+}
             }
             results_.push_back(opt->str());
         }
@@ -32,34 +34,37 @@ class NameCompleter : public AbstractOptionVisitor {
             if(regex_.has_value()) {
                 if(opt->longName()) {
                     std::string long_name = std::string("--") + *opt->longName();
-                    if(std::regex_match(long_name, regex_.value()))
+                    if(std::regex_match(long_name, regex_.value())) {
                         results_.push_back(long_name);
+}
                     return;
                 }
                 if(opt->shortName()) {
                     std::string short_name = std::string("-") + *opt->shortName();
-                    if(std::regex_match(short_name, regex_.value())) 
+                    if(std::regex_match(short_name, regex_.value())) { 
                         results_.push_back(short_name);
+}
                 }
                 return;
             }
 
             std::string res;
-            if(opt->longName())
+            if(opt->longName()) {
                 res = std::string("--") + *opt->longName();
-            else
+            } else {
                 res = std::string("-") + *opt->shortName();
+}
             results_.push_back(res);
 
         }
         void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
             visit(std::static_pointer_cast<NamedOption>(opt));
         }
-        void visit(std::shared_ptr<AbstractPositionalOption>) override {
+        void visit(std::shared_ptr<AbstractPositionalOption> /*unused*/) override {
             /* not implemented yet */
         }
         void visit(std::shared_ptr<OptionsGroup2> opt) override {
-            for(auto& p : opt->unlocks()) {
+            for(const auto& p : opt->unlocks()) {
                 p->accept(*this);
             }
         }
@@ -91,8 +96,9 @@ class Completer : public BaseMatcher {
 
             //Parse all arguments except the last, but the last argument can be still consumed if the previous one requires the value
             try {
-                while(args.getNextIndex() + 1 < args.size())                    
+                while(args.getNextIndex() + 1 < args.size()) {                    
                     BaseMatcher::parseNext(args);            
+}
             } catch (BaseOptionError& err) {
                 // in case of error return empty results
                 return results;
@@ -100,8 +106,9 @@ class Completer : public BaseMatcher {
 
             //Parse the last argument
             try {
-                if(!args.eof())
+                if(!args.eof()) {
                     BaseMatcher::parseNext(args);
+}
                 assert(args.eof());
             } catch (const UnexpectedValueForPositionalOption& err) {
                 regexstr = args.current_result.value + ".*";

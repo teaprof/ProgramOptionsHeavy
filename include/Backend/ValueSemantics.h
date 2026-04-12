@@ -100,10 +100,12 @@ class TypedValueSemantics : public BaseValueSemantics {
         std::map<T, std::vector<std::shared_ptr<AbstractOption>>> unlocks_;
 
         void checkIfValueIsInList(const T& val) {
-            if(only_allowed_values_ == false)
+            if(!only_allowed_values_) {
                 return;
-            if(unlocks_.contains(val) == false)
+}
+            if(!static_cast<bool>(unlocks_.contains(val))) {
                 throw InvalidOptionValue(nullptr, "", "");
+}
         }
 };
 

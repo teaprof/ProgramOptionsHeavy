@@ -54,7 +54,7 @@ class Parser : public AbstractOptionsParser
     void update(const boost::program_options::variables_map &vm) override
     {
     }
-    const std::vector<std::shared_ptr<OptionsGroup>> groups() const
+    std::vector<std::shared_ptr<OptionsGroup>> groups() const
     {
         return groups_;
     }

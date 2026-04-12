@@ -14,7 +14,7 @@ namespace printers
 class ProgramOptionsPrinter
 {
   public:
-    std::shared_ptr<Section> print(Parser &parser)
+    std::shared_ptr<Section> print(Parser &parser) const
     {
         auto res = std::make_shared<Section>();
         auto usage = std::make_shared<Section>();
@@ -27,7 +27,7 @@ class ProgramOptionsPrinter
 
         auto details = std::make_shared<Section>();
         details->title = "Details:";
-        for (auto &group : parser.groups())
+        for (const auto &group : parser.groups())
         {
             details->items.push_back(print(*group));
         }
@@ -37,7 +37,7 @@ class ProgramOptionsPrinter
         res->items.push_back(details);
         return res;
     }
-    std::string shortHelp(Parser &parser) const
+    static std::string shortHelp(Parser &parser) 
     {
         std::stringstream str;
         str << parser.exename << " ";

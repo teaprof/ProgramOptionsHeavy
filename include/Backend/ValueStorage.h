@@ -19,7 +19,7 @@ class ValueStorage {
         raw_values_.push_back({});
     }
     void addValueToCurrentOccurence(const std::string& raw_value, const std::any& value) {
-        assert(values_.size() > 0);
+        assert(!values_.empty());
         values_.back().push_back(value);
         raw_values_.back().push_back(raw_value);
     }
@@ -29,13 +29,13 @@ class ValueStorage {
     }
     template<class T>
     const T& valueAs() const {
-        assert(values_.size() > 0);
-        assert(values_.back().size() > 0);
+        assert(!values_.empty());
+        assert(!values_.back().empty());
         return std::any_cast<const T&>(values_.back().back());
     }
     template<class T>
     const T& valueAs(size_t idx) const {
-        assert(values_.size() > 0);
+        assert(!values_.empty());
         assert(idx < values_.back().size());
         return std::any_cast<const T&>(values_.back()[idx]);
     }
@@ -45,7 +45,7 @@ class ValueStorage {
         return std::any_cast<const T&>(values_[occurrence][idx]);
     }
     const std::string& rawValues(size_t idx) const {
-        assert(raw_values_.size() > 0);
+        assert(!raw_values_.empty());
         assert(idx < raw_values_[0].size());
         return raw_values_.back()[idx];
     }
@@ -55,11 +55,11 @@ class ValueStorage {
         return raw_values_[occurrence][idx];
     }
     const std::string& rawValue() const {
-        assert(raw_values_.size() > 0);
+        assert(!raw_values_.empty());
         return raw_values_.back().back();
     }    
     size_t lastOccurrenceSize() {
-        assert(values_.size() > 0);
+        assert(!values_.empty());
         return values_.back().size(); // equals to raw_values_.back().size()
     }
     size_t occurrenceCount() {
@@ -84,13 +84,13 @@ class KeyValueStorage {
     public:
     void addValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value, const std::any value) {
         value_storage_[opt].add(raw_value, value);
-        if(external_pointers_.count(opt) > 0) {
+        if(external_pointers_.contains(opt)) {
             opt->baseValueSemantics().store(value, external_pointers_[opt]);
         };
     }
     void addValueToCurrentOccurence(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value, const std::any value) {
         value_storage_[opt].addValueToCurrentOccurence(raw_value, value);
-        if(external_pointers_.count(opt) > 0) {
+        if(external_pointers_.contains(opt)) {
             opt->baseValueSemantics().store(value, external_pointers_[opt]);
         };
     }
@@ -102,7 +102,7 @@ class KeyValueStorage {
         value_storage_.clear();
     }
     bool contains(std::shared_ptr<AbstractOptionWithValue> opt) const {
-        return value_storage_.count(opt) > 0;
+        return value_storage_.contains(opt);
     }
     template<class T>
     void setExternalStorage(std::shared_ptr<AbstractOptionWithValue> opt, T* val_ptr) {

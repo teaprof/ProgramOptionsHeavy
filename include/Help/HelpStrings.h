@@ -35,7 +35,7 @@ class HelpStrings {
             group_descriptions[opt].name = str;
         }
         std::string getGroupName(std::shared_ptr<OptionsGroup2> opt) const {
-            if(group_descriptions.count(opt) == 0) {
+            if(!group_descriptions.contains(opt)) {
                 return "grp";
                 /*static size_t ccc = 0;
                 std::stringstream str;
@@ -50,12 +50,15 @@ class HelpStrings {
             // TODO merge program_description
             
             // some sanity checks:
-            for(const auto& it : other.help_strings)
+            for(const auto& it : other.help_strings) {
                 assert(help_strings.count(it.first) == 0);
-            for(const auto& it : other.key_strings)
+}
+            for(const auto& it : other.key_strings) {
                 assert(key_strings.count(it.first) == 0);
-            for(const auto& it : other.group_descriptions)
+}
+            for(const auto& it : other.group_descriptions) {
                 assert(group_descriptions.count(it.first) == 0);
+}
 
             // do merge
             help_strings.insert(other.help_strings.begin(), other.help_strings.end());

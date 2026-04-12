@@ -1,13 +1,13 @@
 ---
-#Checks: -*,
-#        readability-*,
+Checks: -*,
+        readability-*,
 #        modernize-*, -modernize-use-using,
 #        cppcoreguidelines-*, -cppcoreguidelines-pro-*, -cppcoreguidelines-special-member-functions, -cppcoreguidelines-owning-memory, -cppcoreguidelines-avoid-goto,
 #        performance-*, -performance-unnecessary-value-param,
 #        misc-*, -misc-misplaced-const,
 #        bugprone-*, -bugprone-suspicious-missing-comma, -bugprone-sizeof-expression,
 #        google-*, -google-runtime-references, -google-readability-todo
-Checks: readability-identifier-naming
+#Checks: readability-identifier-naming
 WarningsAsErrors: '*'
 HeaderFilterRegex: 'include/'
 #AnalyzeTemporaryDtors: false
@@ -70,4 +70,8 @@ CheckOptions:
   - { key: readability-identifier-naming.ValueTemplateParameterCase,         value: lower_case }
   - { key: readability-identifier-naming.VariableCase,                       value: lower_case }
   - { key: readability-identifier-naming.VirtualMethodCase,                  value: camelBack  }
+  - { key: readability-identifier-length.MinimumExceptionNameLength, value: 2}
+  - { key: readability-identifier-length.MinimumLoopCounterNameLength, value: 1}
+  - { key: readability-identifier-length.MinimumParameterNameLength, value: 3}
+  - { key: readability-identifier-length.MinimumVariableNameLength, value: 3}
 ...

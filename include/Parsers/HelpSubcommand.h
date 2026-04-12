@@ -10,7 +10,7 @@ namespace program_options_heavy
 class HelpSubcommand : public Parser
 {
   public:
-    HelpSubcommand() : Parser()
+    HelpSubcommand() : 
     {
         help_options = std::make_shared<program_options_heavy::HelpOptions>();
         addGroup(help_options);

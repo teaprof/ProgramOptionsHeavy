@@ -115,8 +115,9 @@ class PrettyPrinter : public DocumentVisitor
     static std::string repeat(size_t level, std::string pattern = " ")
     {
         std::string res;
-        for (size_t n = 0; n < level; n++)
+        for (size_t n = 0; n < level; n++) {
             res += pattern;
+}
         return res;
     }
     static std::string toUpper(const std::string_view &str)

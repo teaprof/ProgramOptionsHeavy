@@ -42,7 +42,7 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
         AbstractOption();
         AbstractOption(bool required);
 
-        const std::vector<std::shared_ptr<AbstractOption>> unlocks() const;
+        std::vector<std::shared_ptr<AbstractOption>> unlocks() const;
         size_t unlocksCount() const;
         std::shared_ptr<AbstractOption> addUnlock(std::shared_ptr<AbstractOption> opt);
 
@@ -69,7 +69,7 @@ class NamedOption : public AbstractOption {
         // leading dashes are removed
         const std::optional<std::string>& longName() const;
         const std::optional<std::string>& shortName() const;
-        const std::string displayName() const;
+        std::string displayName() const;
 
         void accept(AbstractOptionVisitor& visitor) override;
     private:
@@ -93,7 +93,7 @@ class AbstractOptionWithValue  {
             UPTO, // todo: 0..upto or 1..upto
             INFINITE, // todo: 0..inf or 1..inf
         };
-        bool valueRequired() { return value_required_; }
+        bool valueRequired() const { return value_required_; }
         bool setValueRequired(bool value_required) { return value_required_ = value_required; }
         void setNValues(NValuesRole role, size_t count = 1) {
             nvalues_role_ = role;
@@ -203,7 +203,7 @@ inline AbstractOption::AbstractOption(bool required) : required_{required} {
     // nothing to do
 }
 
-inline const std::vector<std::shared_ptr<AbstractOption>> AbstractOption::unlocks() const { 
+inline std::vector<std::shared_ptr<AbstractOption>> AbstractOption::unlocks() const { 
     return unlocks_;
 }
 inline size_t AbstractOption::unlocksCount() const {
@@ -245,13 +245,13 @@ inline void NamedOption::sanitizeNames() {
         if(undecorated_long_name_->starts_with("--")) {
             undecorated_long_name_->erase(0, 2);
         };
-        assert(undecorated_long_name_->size() > 0 && undecorated_long_name_.value()[0] != '-');
+        assert(!undecorated_long_name_->empty() && undecorated_long_name_.value()[0] != '-');
     };
     if(undecorated_short_name_.has_value()) {
         if(undecorated_short_name_->starts_with("-")) {
             undecorated_short_name_->erase(0, 1);
         };
-        assert(undecorated_short_name_->size() > 0 && undecorated_short_name_.value()[0] != '-');
+        assert(!undecorated_short_name_->empty() && undecorated_short_name_.value()[0] != '-');
     };
 }
 
@@ -261,9 +261,10 @@ inline const std::optional<std::string>& NamedOption::longName() const {
 inline const std::optional<std::string>& NamedOption::shortName() const {
     return undecorated_short_name_;
 }
-inline const std::string NamedOption::displayName() const { // TODO where is it used?
-    if(undecorated_long_name_.has_value())
+inline std::string NamedOption::displayName() const { // TODO where is it used?
+    if(undecorated_long_name_.has_value()) {
         return std::string("--") + undecorated_long_name_.value();
+}
     assert(undecorated_short_name_.has_value());
     return std::string("-") + undecorated_long_name_.value();
 }

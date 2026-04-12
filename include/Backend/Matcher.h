@@ -200,15 +200,16 @@ class BaseMatcher {
                     break;
                 }
             }
-            if(can_accept == false) {
+            if(!can_accept) {
                 return false;
             }
             args.getNextOption();
             bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
             bool arg_is_double_dash = args.current_result.token_type == ArgGrammarParser::DOUBLE_DASH;
             if(!arg_is_value) {
-                if(!arg_is_double_dash)                
+                if(!arg_is_double_dash) {                
                     args.ungetOption();
+}
                 if(should_accept) {
                     throw TooFewValuesForOption(); // todo: print how many options should be (expected N or at least N)
                 }
@@ -274,7 +275,7 @@ class BaseMatcher {
                 // check for correct use of the positional options
                 if(args.current_result.token_type == ArgGrammarParser::VALUE)  {
                     // TODO it could be LiteralString
-                    if(matcher.checked_positional_options.size() == 0) {
+                    if(matcher.checked_positional_options.empty()) {
                         // no positional option have been expected
                         throw TooManyPositionalOptions(args.getRawOptionName());
                     }
@@ -288,9 +289,8 @@ class BaseMatcher {
                     }
                     // If OneOf was encountered more than one positional option can be checked
                     throw UnexpectedValueForPositionalOption(args.getRawOptionName());
-                } else {
-                    throw UnknownNamedOption(args.getRawOptionName());
-                }
+                }                     throw UnknownNamedOption(args.getRawOptionName());
+               
             }
             return res;
         }
@@ -320,7 +320,7 @@ class BaseMatcher {
         /// how many times the specified option has been encountered in the already parsed context
         size_t optionEncountered(std::shared_ptr<AbstractOption> opt) {
             size_t counter = 0;
-            if(opts_counter_.count(opt) > 0) {
+            if(opts_counter_.contains(opt)) {
                 counter = opts_counter_[opt];
             }
             return counter;
@@ -393,12 +393,12 @@ class Matcher : public BaseMatcher {
             // check that all required options are used
             for(auto p : remaining_options_)
             {
-                if(p->required() && opts_counter_.count(p) == 0) {
-                    if(auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p)) {
+                if(p->required() && !opts_counter_.contains(p)) {
+                    auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p);
+if(q) {
                         throw TooFewPositionalOptions(); /// TODO print how many pos options are expected
-                    } else {
-                        throw RequiredOptionIsNotSet(q);
-                    }
+                    }                         throw RequiredOptionIsNotSet(q);
+                   
                 }
             }
         }
@@ -406,13 +406,14 @@ class Matcher : public BaseMatcher {
         void applyDefaultValues() {
             for(auto opt : remaining_options_)
             {
-                if(opts_counter_.count(opt) > 0) {
+                if(opts_counter_.contains(opt)) {
                     continue;
                 }
                 if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
                     if(!p->baseValueSemantics().hasDefaultValue()) {
-                        if(opt->required())
+                        if(opt->required()) {
                             throw RequiredOptionIsNotSet(opt);
+}
                     } else {
                         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value;
                         setDefaultValue(p, unlocked_by_value);

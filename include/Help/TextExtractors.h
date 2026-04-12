@@ -40,14 +40,14 @@ class OptionTextExtractor : public AbstractOptionVisitor {
             descr = ParameterDescription{{"one of"}, helpString(opt)}; // TODO implement this
         }
         ParameterDescription descr;
-        std::string str() {
+        std::string str() const {
             return descr.keys + "\n" + descr.description;
         }
     private:
         std::optional<std::reference_wrapper<const HelpStrings>> help_;
         std::string displayName(std::shared_ptr<NamedOption> opt) {
             if(help_) {
-                if(help_->get().key_strings.count(opt) > 0) {
+                if(help_->get().key_strings.contains(opt)) {
                     return help_->get().key_strings.at(opt);
                 }
             }
@@ -64,7 +64,7 @@ class OptionTextExtractor : public AbstractOptionVisitor {
         }
         std::string helpString(std::shared_ptr<AbstractOption> opt) {
             if(help_) {
-                if(help_->get().help_strings.count(opt) > 0) {
+                if(help_->get().help_strings.contains(opt)) {
                     return help_->get().help_strings.at(opt);
                 }
             }
@@ -72,7 +72,7 @@ class OptionTextExtractor : public AbstractOptionVisitor {
         }
         std::string groupName(std::shared_ptr<OptionsGroup2> opt) {
             if(help_) {
-                if(help_->get().group_descriptions.count(opt) > 0) {
+                if(help_->get().group_descriptions.contains(opt)) {
                     return help_->get().group_descriptions.at(opt).name;
                 }
             }
@@ -82,7 +82,7 @@ class OptionTextExtractor : public AbstractOptionVisitor {
 
 class Extractor {
     public:
-        const EntireDescription extract(HelpStrings& help, std::shared_ptr<AbstractOption> opt) {
+        EntireDescription extract(HelpStrings& help, std::shared_ptr<AbstractOption> opt) {
             EntireDescription res;
             res.program_description = extractProgramDescription(help, opt);
             res.run_variants = extractRunVariants(help, opt);

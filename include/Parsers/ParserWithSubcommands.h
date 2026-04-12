@@ -83,8 +83,9 @@ class ParserWithSubcommands : public AbstractOptionsParser
         auto top_level_options = std::make_shared<OneOf>();
         for(auto it : subcommands_) {
             auto command = std::make_shared<LiteralString>(it.first);
-            for(auto grp : it.second->groups())
+            for(auto grp : it.second->groups()) {
                 command->addUnlock(grp->options);
+}
             top_level_options->addAlternative(command);
         }
 /*        bool fallback_to_default = true;
@@ -134,7 +135,7 @@ class ParserWithSubcommands : public AbstractOptionsParser
     {
         return subcommands_order_;
     }
-    bool hideDefaultSubcommandName()
+    bool hideDefaultSubcommandName() const
     {
         return hide_default_subcommand_name_;
     }

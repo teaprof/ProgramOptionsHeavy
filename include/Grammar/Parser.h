@@ -90,8 +90,9 @@ class ArgLexer {
             return res;
         } 
         static std::string undecorateValue(const std::string& str) {
-            if(str.length() == 0 || str[0] != '\\')
+            if(str.empty() || str[0] != '\\') {
                 return str;
+}
             return str.substr(1, std::string::npos);
         }
 };
@@ -195,7 +196,7 @@ class ArgGrammarParser {
         }
 
         /// the raw option name is used in error messages to address the option by the name that was actually passed (short or long)
-        std::string getRawOptionName() {
+        std::string getRawOptionName() const {
             switch(current_result.token_type) {
                 case TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
                 case TokenTypes::SHORT_OPTION_EQ_VALUE:
@@ -242,7 +243,7 @@ class ArgGrammarParser {
             }
             return ""; // to suppress warning "no return value"
         }
-        size_t getNextIndex() {
+        size_t getNextIndex() const {
             // return arg index that will be parsed on next call of getNextOption()
             return idx_;
         }

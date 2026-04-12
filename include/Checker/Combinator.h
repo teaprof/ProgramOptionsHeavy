@@ -50,7 +50,7 @@ class Combinator2 : public AbstractOptionVisitor {
         virtual ~Combinator2() {};
         virtual void visit(std::shared_ptr<AbstractOption> opt) {
             pushBack(opt);
-            for(auto &it : opt->unlocks()) {
+            for(const auto &it : opt->unlocks()) {
                 it->accept(*this);
             }
         }
@@ -114,7 +114,7 @@ class Combinator {
             void operator++() {
                 idx++;
             }
-            bool operator!=(const Iterator& other) {
+            bool operator!=(const Iterator& other) const {
                 return idx != other.idx;
             }
         };
