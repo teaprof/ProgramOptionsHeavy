@@ -1,21 +1,8 @@
 ALTERNATIVES:
-    1. The alternative should have unique options
-    2. If such option is encountered the alternative is selected. Options for other altenatives become unavailable.
-    3. Check should check names collisions to ensure that p. 1 holds
-    4. Check should check cross product if two or more alternative options are used
-
-CROSS PRODUCT:
-
-def processAlternatives(self, OneOf):
-    for it in unlocks:
-        check and add it
-    push
-    for options_variant in OneOf.alternatives:
-        for it in options_variant:
-            check and add it
-            yield this
-            restoreTop
-    pop
+    1.+ The alternative should start from unique options
+    2.+ If such option is encountered the alternative is selected. Options for other altenatives become unavailable.
+    3.+ Check should check names collisions to ensure that p. 1 holds
+    4.+ Check should check cross product if two or more alternative options are used
 
 Use cases
 
@@ -65,17 +52,17 @@ opt1<<"This is a very long description of the option";
 opt1->tie(v, opt2val);
 ```
 
-0. Value semantic class \<Type\>:
+0. Value semantic class:
     + is used to check if the actual value can be accepted
 
-0. Option \<Type\> :
+0. Option:
     + long and short names
     + with value or not
-    + \<TYPE\> of the value
+    + type of the value
     + default value
     + is required
     + multiple_values vs multiple_occurrences
-    - multiple_occurences: '--' stop symbol or custom stop symbol, multiple values are not allowed with "=": "--opt=1 2 3" is treated as "--opt=1", but "2" and "3" are the next positional arguments
+    ? multiple_occurences: '--' stop symbol or custom stop symbol, multiple values are not allowed with "=": "--opt=1 2 3" is treated as "--opt=1", but "2" and "3" are the next positional arguments
     - add support of comma: "--opt=1, 2, 3"
     - add support of brackets: "--opt=[1, 2, 3]"
     - implicit value (requires reconsidering of the parser and lexer)
@@ -105,8 +92,8 @@ Solution:
 How it could be done? What is the best way? I don't want to associate values with options
 
 Value should store the following flags:
-    - std::vector\<str\>
-    - std::vector\<std::variant\<...\>\> value
+    - std::vector<str>
+    - std::vector<std::variant<...>> value
     - is_default
     - is_implicit
     - shared_ptr to option
@@ -115,10 +102,10 @@ Value should store the following flags:
 
 3. Checker:
     + check duplicates among long and short names (check names collision);
-    - run all branches for all BaseValueSemantics::getUnlocks(value) and AbstractOptions::unlocks Alternatives ;
-    - check duplicates using pointer comparison;
+    + run all branches for all BaseValueSemantics::getUnlocks(value) and AbstractOptions::unlocks Alternatives ;
+    + check duplicates using pointer comparison;
     - check positional arguments: the system of equation should be solvable
-    - check cycles
+    + check cycles
 
 
 
