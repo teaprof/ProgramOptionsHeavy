@@ -47,7 +47,7 @@ class ProgramSubcommandsPrinter
         res->items.push_back(details);
         return res;
     }
-    static std::string shortHelp(ParserWithSubcommands &parser, ParserWithSubcommands::SubcommandsT::iterator it) 
+    static std::string shortHelp(ParserWithSubcommands &parser, ParserWithSubcommands::SubcommandsT::iterator it)
     {
         std::stringstream str;
         str << parser.exename << " ";
@@ -69,7 +69,8 @@ class ProgramSubcommandsPrinter
         }
         return str.str();
     }
-    static std::string subcommandDescription(ParserWithSubcommands &parser, ParserWithSubcommands::SubcommandsT::iterator it) 
+    static std::string subcommandDescription(ParserWithSubcommands &parser,
+                                             ParserWithSubcommands::SubcommandsT::iterator it)
     {
         std::stringstream str;
         if (it->first != parser.defaultSubcommandName() || !parser.hideDefaultSubcommandName())
@@ -92,7 +93,7 @@ class ProgramSubcommandsPrinter
         }
         return res;
     }
-    static std::shared_ptr<Section> print(OptionsGroup &grp) 
+    static std::shared_ptr<Section> print(OptionsGroup &grp)
     {
         return ProgramOptionsPrinter::print(grp);
     }

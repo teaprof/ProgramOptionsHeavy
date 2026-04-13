@@ -22,11 +22,11 @@ class ParserWithSubcommands : public AbstractOptionsParser
     ParserWithSubcommands(int argc, const char *argv[]) : AbstractOptionsParser(argc, argv)
     {
     }
-    SubcommandsT getSubcommands() {
+    SubcommandsT getSubcommands()
+    {
         return subcommands_;
     }
-    std::shared_ptr<Parser> pushBack(const std::string &subcommand_name,
-                                                    std::shared_ptr<Parser> val)
+    std::shared_ptr<Parser> pushBack(const std::string &subcommand_name, std::shared_ptr<Parser> val)
     {
         auto res = subcommands_.emplace(subcommand_name, val);
         if (!res.second)
@@ -81,44 +81,47 @@ class ParserWithSubcommands : public AbstractOptionsParser
     {
         assert(!subcommands_.empty());
         auto top_level_options = std::make_shared<OneOf>();
-        for(auto it : subcommands_) {
+        for (auto it : subcommands_)
+        {
             auto command = std::make_shared<LiteralString>(it.first);
-            for(auto grp : it.second->groups()) {
+            for (auto grp : it.second->groups())
+            {
                 command->addUnlock(grp->options);
-}
+            }
             top_level_options->addAlternative(command);
         }
-/*        bool fallback_to_default = true;
-        if (argc >= 2)
-        {
-            const char *first_arg = argv[1];
-            selected_subcommand_ = subcommands_.find(first_arg);
-            if (selected_subcommand_ != subcommands_.end())
-            {
-                argc--;
-                argv++;
-                fallback_to_default = false;
-            };
-        };
-        if (fallback_to_default)
-        {
-            // Subcommand is unknown or no subcommand is specified, select the
-            // default subcommand
-            if (is_default_subcommand_enabled_)
-            {
-                selected_subcommand_ = subcommands_.find(default_subcommand_name_);
-                assert(selected_subcommand_ != subcommands_.end());
-            }
-            else
-            {
-                throw std::runtime_error("Invalid program arguments");
-            }
-        };
-        selected_subcommand_->second->parse(argc, argv);
-        activated = true;*/
+        /*        bool fallback_to_default = true;
+                if (argc >= 2)
+                {
+                    const char *first_arg = argv[1];
+                    selected_subcommand_ = subcommands_.find(first_arg);
+                    if (selected_subcommand_ != subcommands_.end())
+                    {
+                        argc--;
+                        argv++;
+                        fallback_to_default = false;
+                    };
+                };
+                if (fallback_to_default)
+                {
+                    // Subcommand is unknown or no subcommand is specified, select the
+                    // default subcommand
+                    if (is_default_subcommand_enabled_)
+                    {
+                        selected_subcommand_ = subcommands_.find(default_subcommand_name_);
+                        assert(selected_subcommand_ != subcommands_.end());
+                    }
+                    else
+                    {
+                        throw std::runtime_error("Invalid program arguments");
+                    }
+                };
+                selected_subcommand_->second->parse(argc, argv);
+                activated = true;*/
         Matcher matcher(top_level_options);
         std::vector<std::string> args;
-        for(int n = 1; n < argc; n++) { // skip the name of executable
+        for (int n = 1; n < argc; n++)
+        { // skip the name of executable
             args.push_back(argv[n]);
         }
         activated = true; // TODO wtf?

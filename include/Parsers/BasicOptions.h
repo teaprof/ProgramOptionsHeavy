@@ -1,8 +1,8 @@
 #ifndef PARSERS_BASICOPTIONS_H
 #define PARSERS_BASICOPTIONS_H
 
-#include <Printers/PrettyPrinter.h>
 #include <Parsers/OptionsGroup.h>
+#include <Printers/PrettyPrinter.h>
 #include <boost/optional.hpp>
 #include <iostream>
 #include <thread>
@@ -17,7 +17,7 @@ class HelpOptions : public OptionsGroup
     HelpOptions() : OptionsGroup("Help options")
     {
         namespace po = boost::program_options;
-        //addPartialVisible("help", po::bool_switch(&need_help), "produce this help");
+        // addPartialVisible("help", po::bool_switch(&need_help), "produce this help");
         addPartial("help", std::ref(need_help_), "produce this help");
     }
     void update(const boost::program_options::variables_map &vm) override
@@ -44,7 +44,7 @@ class MultithreadOptions : public OptionsGroup
         str << "number of threads, if not set then "
                "std::threads::hardware_concurrency will be used ["
             << concurency_ << " on this machine]";
-        //addPartialVisible("nthreads,t", po::value(&nthreads_), str.str().c_str());
+        // addPartialVisible("nthreads,t", po::value(&nthreads_), str.str().c_str());
         addPartial("nthreads,t", std::ref(nthreads_), str.str());
     }
     size_t nThreads()

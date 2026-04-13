@@ -19,16 +19,14 @@ class OptionsGroup : public OptionsFacade
         options = std::make_shared<OptionsGroup2>();
     }
 
-    template <class ... Args>
-    auto addPartial(Args... args)
+    template <class... Args> auto addPartial(Args... args)
     {
         auto opt = makeOption(args...);
         options->addUnlock(opt);
 
         return opt;
     }
-    template <class T>
-    auto addPositional(std::string name, int count, std::reference_wrapper<T> external_storage)
+    template <class T> auto addPositional(std::string name, int count, std::reference_wrapper<T> external_storage)
     {
         auto opt = makePositionalOption(name, count, external_storage);
         options->addUnlock(opt);
@@ -54,16 +52,20 @@ class OptionsGroup : public OptionsFacade
     {
         return group_name_;
     }
-    void setGroupDescription(std::string str) {
-        help_<<options<<str;
+    void setGroupDescription(std::string str)
+    {
+        help_ << options << str;
     }
-    std::string description() {
-        if(help_.help_strings.contains(options)) {
+    std::string description()
+    {
+        if (help_.help_strings.contains(options))
+        {
             return help_.help_strings[options];
-}
+        }
         return "";
     }
     std::shared_ptr<OptionsGroup2> options;
+
   private:
     std::string group_name_;
 };

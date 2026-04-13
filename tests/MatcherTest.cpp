@@ -1,82 +1,88 @@
-#include <Backend/ValueSemantics.h>
 #include <Backend/Matcher.h>
 #include <Backend/Printer.h>
+#include <Backend/ValueSemantics.h>
 #include <gtest/gtest.h>
 
-class MatcherFixtureSimple : public ::testing::Test {
-    protected:
-        std::shared_ptr<AbstractOption> options_;
-        std::shared_ptr<NamedOption> opt1_;
-        std::shared_ptr<NamedOptionWithValue<int>> opt2_;
-        std::shared_ptr<PositionalOptionWithValue<std::string>> opt3_;
-        void SetUp() override {
-            options_ = std::make_shared<OptionsGroup2>();
-            opt1_ = std::make_shared<NamedOption>("--opt1", "-1");
-            opt2_ = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
-            opt3_ = std::make_shared<PositionalOptionWithValue<std::string>>();
-            options_->addUnlock(opt1_);
-            options_->addUnlock(opt2_);
-            options_->addUnlock(opt3_);
+class MatcherFixtureSimple : public ::testing::Test
+{
+  protected:
+    std::shared_ptr<AbstractOption> options_;
+    std::shared_ptr<NamedOption> opt1_;
+    std::shared_ptr<NamedOptionWithValue<int>> opt2_;
+    std::shared_ptr<PositionalOptionWithValue<std::string>> opt3_;
+    void SetUp() override
+    {
+        options_ = std::make_shared<OptionsGroup2>();
+        opt1_ = std::make_shared<NamedOption>("--opt1", "-1");
+        opt2_ = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
+        opt3_ = std::make_shared<PositionalOptionWithValue<std::string>>();
+        options_->addUnlock(opt1_);
+        options_->addUnlock(opt2_);
+        options_->addUnlock(opt3_);
 
-            opt1_->setRequired(true);
-            opt2_->valueSemantics().setMinMax(-10, 10);
-        }
+        opt1_->setRequired(true);
+        opt2_->valueSemantics().setMinMax(-10, 10);
+    }
 
-        void TearDown() override {
-        }        
+    void TearDown() override
+    {
+    }
 };
 
-class MatcherFixture : public ::testing::Test {
-    protected:
-        std::shared_ptr<AbstractOption> options_;
-        std::shared_ptr<NamedOption> common_option_;
-        std::shared_ptr<OneOf> command_;
-        void SetUp() override {
-            common_option_ = std::make_shared<NamedOption>("--common", "-c");
-            options_ = std::make_shared<OptionsGroup2>();
-            options_->addUnlock(common_option_);            
-            auto run_options = std::make_shared<LiteralString>("run");
-            run_options->addUnlock(
-                std::make_shared<NamedOption>("--dim", "-d")
-            );
-            auto gather_options= std::make_shared<LiteralString>("gather");
-            gather_options->addUnlock(std::make_shared<NamedOption>("--gatheropt", "-g"));
-            command_ = std::make_shared<OneOf>(run_options, gather_options);
-            options_->addUnlock(command_);
+class MatcherFixture : public ::testing::Test
+{
+  protected:
+    std::shared_ptr<AbstractOption> options_;
+    std::shared_ptr<NamedOption> common_option_;
+    std::shared_ptr<OneOf> command_;
+    void SetUp() override
+    {
+        common_option_ = std::make_shared<NamedOption>("--common", "-c");
+        options_ = std::make_shared<OptionsGroup2>();
+        options_->addUnlock(common_option_);
+        auto run_options = std::make_shared<LiteralString>("run");
+        run_options->addUnlock(std::make_shared<NamedOption>("--dim", "-d"));
+        auto gather_options = std::make_shared<LiteralString>("gather");
+        gather_options->addUnlock(std::make_shared<NamedOption>("--gatheropt", "-g"));
+        command_ = std::make_shared<OneOf>(run_options, gather_options);
+        options_->addUnlock(command_);
 
-            Printer prn;
-            options_->accept(prn);
-        }
+        Printer prn;
+        options_->accept(prn);
+    }
 
-        void TearDown() override {
-        }        
+    void TearDown() override
+    {
+    }
 };
 
+class MatcherFixtureWithUnlocksByValue : public ::testing::Test
+{
+  protected:
+    std::shared_ptr<AbstractOption> options_;
+    std::shared_ptr<NamedOption> common_option_;
+    std::shared_ptr<PositionalOptionWithValue<std::string>> command_;
 
-class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
-    protected:
-        std::shared_ptr<AbstractOption> options_;
-        std::shared_ptr<NamedOption> common_option_;
-        std::shared_ptr<PositionalOptionWithValue<std::string>> command_;
+    void SetUp() override
+    {
+        options_ = std::make_shared<OptionsGroup2>();
 
-        void SetUp() override {
-            options_ = std::make_shared<OptionsGroup2>();
+        common_option_ = std::make_shared<NamedOption>("--common", "-c");
+        options_->addUnlock(common_option_);
 
-            common_option_ = std::make_shared<NamedOption>("--common", "-c");
-            options_->addUnlock(common_option_);            
+        command_ = std::make_shared<PositionalOptionWithValue<std::string>>();
+        command_->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--dim", "-d"));
+        command_->valueSemantics().unlocks("gather").push_back(std::make_shared<NamedOption>("--gatheropt", "-g"));
+        options_->addUnlock(command_);
+    }
 
-            command_ = std::make_shared<PositionalOptionWithValue<std::string>>();
-            command_->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--dim", "-d"));
-            command_->valueSemantics().unlocks("gather").push_back(std::make_shared<NamedOption>("--gatheropt", "-g"));
-            options_->addUnlock(command_);
-        }
-
-        void TearDown() override {
-        }        
+    void TearDown() override
+    {
+    }
 };
 
-
-TEST_F(MatcherFixtureSimple, Test1) {
+TEST_F(MatcherFixtureSimple, Test1)
+{
     Matcher parser(options_);
     int v{0};
     opt2_->valueSemantics().setExternalStorage(v);
@@ -101,12 +107,14 @@ TEST_F(MatcherFixtureSimple, Test1) {
     EXPECT_EQ(v, 10);
 }
 
-TEST_F(MatcherFixture, Test1) {
+TEST_F(MatcherFixture, Test1)
+{
     Matcher parser(options_);
     EXPECT_TRUE(parser.parse({}));
 }
 
-TEST_F(MatcherFixture, Test2) {
+TEST_F(MatcherFixture, Test2)
+{
     Matcher parser(options_);
     command_->setRequired(true);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
@@ -117,7 +125,8 @@ TEST_F(MatcherFixture, Test2) {
     EXPECT_TRUE(parser.parse({"--common", "run", "-d"}));
 }
 
-TEST_F(MatcherFixtureWithUnlocksByValue, Test2) {
+TEST_F(MatcherFixtureWithUnlocksByValue, Test2)
+{
     Matcher parser(options_);
     command_->setRequired(true);
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
@@ -128,7 +137,8 @@ TEST_F(MatcherFixtureWithUnlocksByValue, Test2) {
     EXPECT_TRUE(parser.parse({"--common", "run", "-d"}));
 }
 
-TEST(Matcher, OptionRequired) {
+TEST(Matcher, OptionRequired)
+{
     auto opt = std::make_shared<NamedOption>("--opt1");
     opt->setRequired(true);
 
@@ -137,9 +147,10 @@ TEST(Matcher, OptionRequired) {
     EXPECT_TRUE(parser.parse({"--opt1"}));
 }
 
-TEST(Matcher, DefaultValue) {
+TEST(Matcher, DefaultValue)
+{
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
-    opt->valueSemantics().setDefaultValue(10);    
+    opt->valueSemantics().setDefaultValue(10);
 
     Matcher parser(opt);
     int d{0};
@@ -151,7 +162,8 @@ TEST(Matcher, DefaultValue) {
     EXPECT_EQ(d, 20);
 }
 
-TEST(Matcher, MultipleOccurrenceOfNamedOption) {
+TEST(Matcher, MultipleOccurrenceOfNamedOption)
+{
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(2);
@@ -180,7 +192,8 @@ TEST(Matcher, MultipleOccurrenceOfNamedOption) {
     ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1 40"), MaxOptionOccurenceIsExceeded);
 }
 
-TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
+TEST(Matcher, MultipleOccurrenceOfPositionalOption)
+{
     auto opt = std::make_shared<PositionalOptionWithValue<int>>();
     opt->setMaxOccurreneCount(2);
 
@@ -194,13 +207,13 @@ TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
     EXPECT_NO_THROW(parser.parse({}));
     opt->valueSemantics().setDefaultValue(10);
     ASSERT_FALSE(parser.storage.contains(opt));
-    EXPECT_NO_THROW(parser.parse({}));    
+    EXPECT_NO_THROW(parser.parse({}));
     EXPECT_EQ(d, 10);
     EXPECT_TRUE(parser.parse("20"));
     ASSERT_TRUE(parser.storage.contains(opt));
     ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
     ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
-    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");    
+    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
     ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
     ASSERT_EQ(parser.storage[opt].valueAs<int>(0), 20);
     EXPECT_EQ(d, 20);
@@ -214,7 +227,8 @@ TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
     ASSERT_THROW(parser.parse("20 30 40"), TooManyPositionalOptions);
 }
 
-TEST(Matcher, MultipleValuesOfNamedOptionExact) {
+TEST(Matcher, MultipleValuesOfNamedOptionExact)
+{
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
@@ -232,13 +246,14 @@ TEST(Matcher, MultipleValuesOfNamedOptionExact) {
     ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 2);
     EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
     EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
-    EXPECT_EQ(d, 30);    
+    EXPECT_EQ(d, 30);
     ASSERT_THROW(parser.parse("--opt1 20 30 --opt1 40 40 --opt1 20 20"), MaxOptionOccurenceIsExceeded);
     ASSERT_THROW(parser.parse("--opt1 20"), TooFewValuesForOption);
     ASSERT_THROW(parser.parse("--opt1"), ExpectedValue); /// todo: ExpectedValue vs TooFewValuesForOption
 }
 
-TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
+TEST(Matcher, MultipleValuesOfNamedOptionUpTo)
+{
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
@@ -288,7 +303,8 @@ TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
     EXPECT_EQ(d, 30);
 }
 
-TEST(Matcher, MultipleValuesOfNamedOptionInfinite) {
+TEST(Matcher, MultipleValuesOfNamedOptionInfinite)
+{
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
@@ -309,7 +325,8 @@ TEST(Matcher, MultipleValuesOfNamedOptionInfinite) {
     EXPECT_EQ(d, 30);
 }
 
-TEST(Matcher, MultipleValuesOfPositionalOption) {
+TEST(Matcher, MultipleValuesOfPositionalOption)
+{
     auto opt = std::make_shared<PositionalOptionWithValue<int>>();
     opt->setMaxOccurreneCount(2);
     opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
@@ -356,7 +373,8 @@ TEST(Matcher, MultipleValuesOfPositionalOption) {
     ASSERT_THROW(parser.parse("20 30 40 50 60"), TooManyPositionalOptions);
 }
 
-TEST(Matcher, TwoPositionalOptions) {
+TEST(Matcher, TwoPositionalOptions)
+{
     auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
     opt2->setMaxOccurreneCount(2);
@@ -370,7 +388,8 @@ TEST(Matcher, TwoPositionalOptions) {
     EXPECT_THROW(parser.parse("file1 10 20 30"), TooManyPositionalOptions);
 }
 
-TEST(Matcher, TwoPositionalOptionsWithDoubleDash) {
+TEST(Matcher, TwoPositionalOptionsWithDoubleDash)
+{
     auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
     opt1->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 10);
@@ -387,11 +406,11 @@ TEST(Matcher, TwoPositionalOptionsWithDoubleDash) {
 
     ASSERT_EQ(parser.storage[opt2].occurrenceCount(), 1);
     ASSERT_EQ(parser.storage[opt2].occurrenceSize(0), 1);
-    ASSERT_EQ(parser.storage[opt2].rawValues(0, 0), "10");    
+    ASSERT_EQ(parser.storage[opt2].rawValues(0, 0), "10");
 }
 
-
-TEST(Matcher, DoubleDashTerminatesNamedOptions) {
+TEST(Matcher, DoubleDashTerminatesNamedOptions)
+{
     auto opt1 = std::make_shared<NamedOptionWithValue<int>>("--arg1");
     auto opt2 = std::make_shared<NamedOptionWithValue<int>>("--arg2");
     auto opt3 = std::make_shared<PositionalOptionWithValue<std::string>>();
@@ -405,10 +424,11 @@ TEST(Matcher, DoubleDashTerminatesNamedOptions) {
     ASSERT_FALSE(parser.storage.contains(opt2));
     ASSERT_EQ(parser.storage[opt3].occurrenceCount(), 1);
     ASSERT_EQ(parser.storage[opt3].occurrenceSize(0), 1);
-    ASSERT_EQ(parser.storage[opt3].rawValues(0, 0), "--arg2"); 
+    ASSERT_EQ(parser.storage[opt3].rawValues(0, 0), "--arg2");
 }
 
-TEST(Matcher, PositionalAndNamed) {
+TEST(Matcher, PositionalAndNamed)
+{
     auto posopt = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto namedopt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     posopt->setMaxOccurreneCount(2);
@@ -427,22 +447,23 @@ TEST(Matcher, PositionalAndNamed) {
     EXPECT_NO_THROW(parser.parse("filename --opt1 10 filename --opt1 20"));
 }
 
-TEST(Matcher, NestedAlternatives) {
-    auto alt_nested_1 = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<LiteralString>("alt11")->addUnlock(std::make_shared<NamedOption>("--opt11"))
-    )->addAlternative(
-        std::make_shared<LiteralString>("alt12")->addUnlock(std::make_shared<NamedOption>("--opt12"))
-    );
-    auto alt_nested_2 = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<LiteralString>("alt21")->addUnlock(std::make_shared<NamedOption>("--opt21"))
-    )->addAlternative(
-        std::make_shared<LiteralString>("alt22")->addUnlock(std::make_shared<NamedOption>("--opt22"))
-    );
-    auto opts = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1)
-    )->addAlternative(
-        std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2)
-    );
+TEST(Matcher, NestedAlternatives)
+{
+    auto alt_nested_1 =
+        std::make_shared<OneOf>()
+            ->addAlternative(
+                std::make_shared<LiteralString>("alt11")->addUnlock(std::make_shared<NamedOption>("--opt11")))
+            ->addAlternative(
+                std::make_shared<LiteralString>("alt12")->addUnlock(std::make_shared<NamedOption>("--opt12")));
+    auto alt_nested_2 =
+        std::make_shared<OneOf>()
+            ->addAlternative(
+                std::make_shared<LiteralString>("alt21")->addUnlock(std::make_shared<NamedOption>("--opt21")))
+            ->addAlternative(
+                std::make_shared<LiteralString>("alt22")->addUnlock(std::make_shared<NamedOption>("--opt22")));
+    auto opts = std::make_shared<OneOf>()
+                    ->addAlternative(std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1))
+                    ->addAlternative(std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2));
 
     Matcher parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt11 --opt11"));
@@ -453,26 +474,27 @@ TEST(Matcher, NestedAlternatives) {
     ASSERT_THROW(parser.parse("--opt11"), UnknownNamedOption);
     ASSERT_THROW(parser.parse("alt1 alt12 --opt12 --unknown"), UnknownNamedOption);
     ASSERT_THROW(parser.parse("alt2 --opt21"), UnknownNamedOption);
-    ASSERT_THROW(parser.parse("alt1 alt2"), OnlyOneChoiseIsAllowed); 
-    ASSERT_THROW(parser.parse("alt1 alt11 alt12"), OnlyOneChoiseIsAllowed); 
+    ASSERT_THROW(parser.parse("alt1 alt2"), OnlyOneChoiseIsAllowed);
+    ASSERT_THROW(parser.parse("alt1 alt11 alt12"), OnlyOneChoiseIsAllowed);
 }
 
-TEST(Matcher, NestedAlternativesWithEqualNames) {
-    auto alt_nested_1 = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1"))
-    )->addAlternative(
-        std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2"))
-    );
-    auto alt_nested_2 = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1"))
-    )->addAlternative(
-        std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2"))
-    );
-    auto opts = std::make_shared<OneOf>()->addAlternative(
-        std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1)
-    )->addAlternative(
-        std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2)
-    );
+TEST(Matcher, NestedAlternativesWithEqualNames)
+{
+    auto alt_nested_1 =
+        std::make_shared<OneOf>()
+            ->addAlternative(
+                std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1")))
+            ->addAlternative(
+                std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2")));
+    auto alt_nested_2 =
+        std::make_shared<OneOf>()
+            ->addAlternative(
+                std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1")))
+            ->addAlternative(
+                std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2")));
+    auto opts = std::make_shared<OneOf>()
+                    ->addAlternative(std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1))
+                    ->addAlternative(std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2));
 
     Matcher parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt1 --opt1"));
@@ -481,7 +503,8 @@ TEST(Matcher, NestedAlternativesWithEqualNames) {
     ASSERT_NO_THROW(parser.parse("alt2 alt2 --opt2"));
 }
 
-TEST(MatcherWithUnlocksByValue, NestedAlternatives) {
+TEST(MatcherWithUnlocksByValue, NestedAlternatives)
+{
     auto alt_nested_1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     alt_nested_1->valueSemantics().unlocks("alt11").push_back(std::make_shared<NamedOption>("--opt11"));
     alt_nested_1->valueSemantics().unlocks("alt12").push_back(std::make_shared<NamedOption>("--opt12"));
@@ -502,11 +525,12 @@ TEST(MatcherWithUnlocksByValue, NestedAlternatives) {
     ASSERT_THROW(parser.parse("--opt11"), UnknownNamedOption);
     ASSERT_THROW(parser.parse("alt1 alt12 --opt12 --unknown"), UnknownNamedOption);
     ASSERT_THROW(parser.parse("alt2 --opt21"), UnknownNamedOption);
-    ASSERT_THROW(parser.parse("alt1 alt2"), InvalidOptionValue); 
-    ASSERT_THROW(parser.parse("alt1 alt11 alt12"), TooManyPositionalOptions); 
+    ASSERT_THROW(parser.parse("alt1 alt2"), InvalidOptionValue);
+    ASSERT_THROW(parser.parse("alt1 alt11 alt12"), TooManyPositionalOptions);
 }
 
-TEST(MatcherWithUnlocksByValue, NestedAlternativesWithEqualNames) {
+TEST(MatcherWithUnlocksByValue, NestedAlternativesWithEqualNames)
+{
     auto alt_nested_1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     alt_nested_1->valueSemantics().unlocks("alt1").push_back(std::make_shared<NamedOption>("--opt1"));
     alt_nested_1->valueSemantics().unlocks("alt2").push_back(std::make_shared<NamedOption>("--opt2"));

@@ -1,9 +1,9 @@
 #ifndef PARSERS_PARSER_H
 #define PARSERS_PARSER_H
 
+#include <Backend/Matcher.h>
 #include <Parsers/AbstractOptionsParser.h>
 #include <Parsers/OptionsGroup.h>
-#include <Backend/Matcher.h>
 
 #include <iostream>
 #include <locale>
@@ -35,11 +35,13 @@ class Parser : public AbstractOptionsParser
     bool parse(int argc, const char *argv[]) override
     {
         auto options = std::make_shared<OptionsGroup2>();
-        for(auto grp : groups_) {
+        for (auto grp : groups_)
+        {
             options->addUnlock(grp->options);
         }
         std::vector<std::string> args;
-        for(int n = 0; n < argc; n++) {
+        for (int n = 0; n < argc; n++)
+        {
             args.push_back(argv[n]);
         }
         Matcher matcher(options);

@@ -2,10 +2,10 @@
 hypercube --help
 hypercube run --help
 hypercube gather --help
-hypercube run 
-    --help 
+hypercube run
+    --help
     -d 1 -m 1 outputfile
-    --bitsRepack 
+    --bitsRepack
         --srcLittleEndian
         --dstLittleEndian
 
@@ -22,13 +22,12 @@ alt2.addCompatible(repack)
 
 
 */
+#include <Backend/Matcher.h>
 #include <Backend/Option.h>
 #include <Backend/Printer.h>
-#include <Backend/Matcher.h>
 
-
-
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
     /*auto helpOption = std::make_shared<NamedOption>("--help", "-h");
     auto hypercubeOptions = std::make_shared<OneOf>(
         helpOption,

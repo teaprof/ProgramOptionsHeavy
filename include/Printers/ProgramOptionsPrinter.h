@@ -37,7 +37,7 @@ class ProgramOptionsPrinter
         res->items.push_back(details);
         return res;
     }
-    static std::string shortHelp(Parser &parser) 
+    static std::string shortHelp(Parser &parser)
     {
         std::stringstream str;
         str << parser.exename << " ";
@@ -53,10 +53,11 @@ class ProgramOptionsPrinter
         res->title = grp.groupName();
         res->addParagraph(grp.description());
         std::stringstream options_list;
-        for(const auto& opt : grp.options->unlocks()) {
+        for (const auto &opt : grp.options->unlocks())
+        {
             OptionTextExtractor prn(grp.help());
             opt->accept(prn);
-            options_list<<prn.str()<<"\n";
+            options_list << prn.str() << "\n";
         }
         res->addParagraph(options_list.str());
         return res;

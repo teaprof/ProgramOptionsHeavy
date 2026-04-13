@@ -1,7 +1,8 @@
 #include <Backend/Matcher.h>
 #include <gtest/gtest.h>
 
-TEST(ArgumentsLexer, TestBlock1) {
+TEST(ArgumentsLexer, TestBlock1)
+{
     auto res = ArgLexer::lex("--dim", false);
     EXPECT_EQ(res.type, ArgLexer::LONG_OPTION);
     EXPECT_EQ(res.long_option_name, "dim");
@@ -22,9 +23,10 @@ TEST(ArgumentsLexer, TestBlock1) {
     res = ArgLexer::lex("---a", false);
     EXPECT_EQ(res.type, ArgLexer::VALUE);
     EXPECT_EQ(res.value, "---a");
-}    
+}
 
-TEST(ArgumentsLexer, TestBlock2) {
+TEST(ArgumentsLexer, TestBlock2)
+{
     auto res = ArgLexer::lex("--dim", false);
     EXPECT_EQ(res.type, ArgLexer::LONG_OPTION);
     EXPECT_EQ(res.long_option_name, "dim");
@@ -37,14 +39,15 @@ TEST(ArgumentsLexer, TestBlock2) {
     EXPECT_EQ(res.short_option_names, "d");
     res = ArgLexer::lex("-xyz", false);
     EXPECT_EQ(res.type, ArgLexer::SHORT_OPTIONS);
-    EXPECT_EQ(res.short_option_names, "xyz");    
+    EXPECT_EQ(res.short_option_names, "xyz");
     res = ArgLexer::lex("-xyz=4", false);
     EXPECT_EQ(res.type, ArgLexer::SHORT_OPTIONS_EQ_VALUE);
     EXPECT_EQ(res.short_option_names, "xyz");
     EXPECT_EQ(res.value, "4");
 }
 
-TEST(ArgumentsLexer, TestBlock3) {
+TEST(ArgumentsLexer, TestBlock3)
+{
     auto res = ArgLexer::lex("--dim", true);
     EXPECT_EQ(res.type, ArgLexer::VALUE);
     res = ArgLexer::lex("--dim=10", true);
@@ -53,5 +56,4 @@ TEST(ArgumentsLexer, TestBlock3) {
     EXPECT_EQ(res.type, ArgLexer::VALUE);
     res = ArgLexer::lex("-d=10", true);
     EXPECT_EQ(res.type, ArgLexer::VALUE);
-}    
-
+}
