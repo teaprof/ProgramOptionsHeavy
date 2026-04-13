@@ -1,8 +1,7 @@
 #include <Backend/ValueSemantics.h>
 #include <gtest/gtest.h>
 
-TEST(ValueSematics, TrimTest)
-{
+TEST(ValueSematics, TrimTest) {
     ValueSemantics<int> semantics;
     semantics.setMinMax(-10, 10);
     semantics.semanticParse("  10  ");
@@ -19,8 +18,7 @@ TEST(ValueSematics, TrimTest)
     ASSERT_THROW(semantics.semanticParse("11  "), ValueIsOutOfRange);
 }
 
-TEST(ValueSematics, Int)
-{
+TEST(ValueSematics, Int) {
     ValueSemantics<int> semantics;
     semantics.semanticParse("10");
     ASSERT_EQ(semantics.value(), 10);
@@ -47,16 +45,14 @@ TEST(ValueSematics, Int)
     ASSERT_THROW(semantics.semanticParse("-6"), ValueIsOutOfRange);
 }
 
-TEST(ValueSematics, UnsignedInt)
-{
+TEST(ValueSematics, UnsignedInt) {
     ValueSemantics<unsigned int> semantics;
     semantics.semanticParse("10");
     ASSERT_EQ(semantics.value(), 10);
     ASSERT_THROW(semantics.semanticParse("-10"), ValueIsOutOfRange);
 }
 
-TEST(ValueSematics, Float)
-{
+TEST(ValueSematics, Float) {
     ValueSemantics<float> semantics;
     semantics.semanticParse("1.2");
     ASSERT_NEAR(semantics.value(), 1.2, 1e-5);
@@ -65,8 +61,7 @@ TEST(ValueSematics, Float)
     ASSERT_THROW(semantics.semanticParse("1.2"), ValueIsOutOfRange);
 }
 
-TEST(ValueSematics, String)
-{
+TEST(ValueSematics, String) {
     ValueSemantics<std::string> semantics;
     semantics.semanticParse(" abdacadabra ");
     ASSERT_EQ(semantics.value(), " abdacadabra ");
@@ -76,8 +71,7 @@ TEST(ValueSematics, String)
     ASSERT_THROW(semantics.semanticParse("123"), ValueMustMatchRegex);
 }
 
-TEST(ValueSematics, Bool)
-{
+TEST(ValueSematics, Bool) {
     ValueSemantics<bool> semantics;
     semantics.semanticParse(" TRUE");
     ASSERT_TRUE(semantics.value());
@@ -97,8 +91,7 @@ TEST(ValueSematics, Bool)
     ASSERT_FALSE(semantics.value());
 }
 
-TEST(ValueSematics, UnlockByValue)
-{
+TEST(ValueSematics, UnlockByValue) {
     ValueSemantics<int> semantics;
     semantics.unlocks(0);
     semantics.unlocks(1).push_back(nullptr);
@@ -109,8 +102,7 @@ TEST(ValueSematics, UnlockByValue)
     ASSERT_EQ(semantics.getUnlocks()[0], nullptr);
 }
 
-TEST(ValueSematics, InvalidValue)
-{
+TEST(ValueSematics, InvalidValue) {
     ValueSemantics<int> semantics;
     semantics.unlocks(0);
     semantics.unlocks(1).push_back(nullptr);

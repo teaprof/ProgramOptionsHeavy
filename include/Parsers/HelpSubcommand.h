@@ -4,22 +4,19 @@
 #include <Parsers/BasicOptions.h>
 #include <Parsers/Parser.h>
 
-namespace program_options_heavy
-{
+namespace program_options_heavy {
 
-class HelpSubcommand : public Parser
-{
-  public:
-    HelpSubcommand() :
-    {
+class HelpSubcommand : public Parser {
+   public:
+    HelpSubcommand() : {
         help_options = std::make_shared<program_options_heavy::HelpOptions>();
         addGroup(help_options);
         program_description = "--help - produce this help";
     }
     std::shared_ptr<program_options_heavy::HelpOptions> help_options;
 
-  private:
+   private:
 };
 
 } /* namespace program_options_heavy */
-#endif // PARSERS_HELPSUBCOMMAND_H
+#endif  // PARSERS_HELPSUBCOMMAND_H

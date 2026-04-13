@@ -4,47 +4,41 @@
 #include <string>
 #include <vector>
 
-class ParameterDescription
-{
-  public:
+class ParameterDescription {
+   public:
     std::string keys;
     std::string description;
 };
 
-class GroupDescription
-{
-  public:
+class GroupDescription {
+   public:
     std::string name;
     std::string brief;
     std::string detailed;
     std::vector<ParameterDescription> parameter_descriptions;
 };
 
-class RunVariantDescription
-{
-  public:
+class RunVariantDescription {
+   public:
     std::string exename;
     std::string brief;
     std::string detailed;
     std::vector<std::string> options;
 };
 
-class RunVariantsDescription
-{
-  public:
+class RunVariantsDescription {
+   public:
     std::vector<RunVariantDescription> variants;
 };
 
-class ProgramDescription
-{
-  public:
+class ProgramDescription {
+   public:
     std::string brief;
     std::string detailed;
 };
 
-class EntireDescription
-{
-  public:
+class EntireDescription {
+   public:
     ProgramDescription program_description;
     RunVariantsDescription run_variants;
     std::vector<GroupDescription> group_descriptions;

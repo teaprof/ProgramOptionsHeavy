@@ -26,8 +26,7 @@ alt2.addCompatible(repack)
 #include <Backend/Option.h>
 #include <Backend/Printer.h>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     /*auto helpOption = std::make_shared<NamedOption>("--help", "-h");
     auto hypercubeOptions = std::make_shared<OneOf>(
         helpOption,

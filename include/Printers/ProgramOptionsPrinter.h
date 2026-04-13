@@ -5,17 +5,13 @@
 #include <Parsers/Parser.h>
 #include <Printers/PrettyPrinter.h>
 
-namespace program_options_heavy
-{
+namespace program_options_heavy {
 
-namespace printers
-{
+namespace printers {
 
-class ProgramOptionsPrinter
-{
-  public:
-    std::shared_ptr<Section> print(Parser &parser) const
-    {
+class ProgramOptionsPrinter {
+   public:
+    std::shared_ptr<Section> print(Parser& parser) const {
         auto res = std::make_shared<Section>();
         auto usage = std::make_shared<Section>();
         usage->title = "Usage";
@@ -27,8 +23,7 @@ class ProgramOptionsPrinter
 
         auto details = std::make_shared<Section>();
         details->title = "Details:";
-        for (const auto &group : parser.groups())
-        {
+        for (const auto& group : parser.groups()) {
             details->items.push_back(print(*group));
         }
 
@@ -37,24 +32,20 @@ class ProgramOptionsPrinter
         res->items.push_back(details);
         return res;
     }
-    static std::string shortHelp(Parser &parser)
-    {
+    static std::string shortHelp(Parser& parser) {
         std::stringstream str;
         str << parser.exename << " ";
-        for (auto group : parser.groups())
-        {
+        for (auto group : parser.groups()) {
             str << "[" << group->groupName() << "] ";
         }
         return str.str();
     }
-    static std::shared_ptr<Section> print(OptionsGroup &grp)
-    {
+    static std::shared_ptr<Section> print(OptionsGroup& grp) {
         auto res = std::make_shared<Section>();
         res->title = grp.groupName();
         res->addParagraph(grp.description());
         std::stringstream options_list;
-        for (const auto &opt : grp.options->unlocks())
-        {
+        for (const auto& opt : grp.options->unlocks()) {
             OptionTextExtractor prn(grp.help());
             opt->accept(prn);
             options_list << prn.str() << "\n";
@@ -69,4 +60,4 @@ class ProgramOptionsPrinter
 
 } /* namespace program_options_heavy */
 
-#endif // PRINTERS_PROGRAMOPTIONSPRINTER_H
+#endif  // PRINTERS_PROGRAMOPTIONSPRINTER_H

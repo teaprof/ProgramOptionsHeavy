@@ -1,8 +1,7 @@
 #include <Backend/Matcher.h>
 #include <gtest/gtest.h>
 
-TEST(ArgumentsLexer, TestBlock1)
-{
+TEST(ArgumentsLexer, TestBlock1) {
     auto res = ArgLexer::lex("--dim", false);
     EXPECT_EQ(res.type, ArgLexer::LONG_OPTION);
     EXPECT_EQ(res.long_option_name, "dim");
@@ -15,7 +14,8 @@ TEST(ArgumentsLexer, TestBlock1)
     res = ArgLexer::lex("--dim+1", false);
     EXPECT_EQ(res.type, ArgLexer::VALUE);
     EXPECT_EQ(res.value, "--dim+1");
-    res = ArgLexer::lex("--dim -a", false); // this treater as a single string, white space doesn't matt, falseer
+    res = ArgLexer::lex("--dim -a", false);  // this treater as a single string,
+                                             // white space doesn't matt, falseer
     EXPECT_EQ(res.type, ArgLexer::VALUE);
     EXPECT_EQ(res.value, "--dim -a");
     res = ArgLexer::lex("--", false);
@@ -25,8 +25,7 @@ TEST(ArgumentsLexer, TestBlock1)
     EXPECT_EQ(res.value, "---a");
 }
 
-TEST(ArgumentsLexer, TestBlock2)
-{
+TEST(ArgumentsLexer, TestBlock2) {
     auto res = ArgLexer::lex("--dim", false);
     EXPECT_EQ(res.type, ArgLexer::LONG_OPTION);
     EXPECT_EQ(res.long_option_name, "dim");
@@ -46,8 +45,7 @@ TEST(ArgumentsLexer, TestBlock2)
     EXPECT_EQ(res.value, "4");
 }
 
-TEST(ArgumentsLexer, TestBlock3)
-{
+TEST(ArgumentsLexer, TestBlock3) {
     auto res = ArgLexer::lex("--dim", true);
     EXPECT_EQ(res.type, ArgLexer::VALUE);
     res = ArgLexer::lex("--dim=10", true);

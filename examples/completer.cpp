@@ -8,20 +8,16 @@ using program_options_heavy::Completer;
 using program_options_heavy::OptionsGroup;
 using program_options_heavy::ParserWithSubcommands;
 
-int main()
-{
+int main() {
     namespace po = boost::program_options;
     auto commands_parser = std::make_shared<ParserWithSubcommands>("completer");
     auto runOptions = std::make_shared<OptionsGroup>("run group");
     size_t dim;
-    runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(),
-                                  "hypercube dimension");
-    runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(),
-                                  "hypercube dimension");
+    runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(), "hypercube dimension");
+    runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(), "hypercube dimension");
     auto gatherOptions = std::make_shared<OptionsGroup>("gather group");
     size_t gather_opt;
-    gatherOptions->addPartialVisible("gather,g", po::value<size_t>(&gather_opt)->default_value(2),
-                                     "some option for gathering");
+    gatherOptions->addPartialVisible("gather,g", po::value<size_t>(&gather_opt)->default_value(2), "some option for gathering");
     auto commonOptions = std::make_shared<OptionsGroup>("common group");
     size_t common_value;
     commonOptions->addPartialVisible("common,c", po::value<size_t>(&common_value)->default_value(2), "common value");
@@ -39,8 +35,7 @@ int main()
 
     Completer completer(commands_parser);
     std::vector<std::string> variants = completer.getCompletionVariants();
-    for (const auto &it : variants)
-    {
+    for (const auto& it : variants) {
         std::cout << it << "\n";
     }
     return 0;
