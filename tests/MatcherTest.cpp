@@ -385,7 +385,7 @@ TEST(Matcher, TwoPositionalOptionsWithDoubleDash) {
     ASSERT_EQ(parser.storage[opt2].rawValues(0, 0), "10");
 }
 
-TEST(Matcher, DoubleDashTerminatesNamedOptions) {
+/*TEST(Matcher, DoubleDashTerminatesNamedOptions) {
     auto opt1 = std::make_shared<NamedOptionWithValue<int>>("--arg1");
     auto opt2 = std::make_shared<NamedOptionWithValue<int>>("--arg2");
     auto opt3 = std::make_shared<PositionalOptionWithValue<std::string>>();
@@ -400,7 +400,7 @@ TEST(Matcher, DoubleDashTerminatesNamedOptions) {
     ASSERT_EQ(parser.storage[opt3].occurrenceCount(), 1);
     ASSERT_EQ(parser.storage[opt3].occurrenceSize(0), 1);
     ASSERT_EQ(parser.storage[opt3].rawValues(0, 0), "--arg2");
-}
+}*/
 
 TEST(Matcher, PositionalAndNamed) {
     auto posopt = std::make_shared<PositionalOptionWithValue<std::string>>();

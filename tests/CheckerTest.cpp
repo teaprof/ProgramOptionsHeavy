@@ -38,7 +38,7 @@ TEST(CheckerTest, SimplePositionalOptions) {
 }
 
 TEST(CheckerTest, TooManyPositionalOptions) {
-    /// TODO replace this single test with tests for positional options
+    /// TODO replace this simple test with tests for positional options
     /// compatibility
     auto options = std::make_shared<AbstractOption>();
     auto posopt = std::make_shared<PositionalOptionWithValue<int>>();

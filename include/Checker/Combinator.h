@@ -1,6 +1,7 @@
 #ifndef CHECKER_COMBINATOR_H
 #define CHECKER_COMBINATOR_H
 #include <Backend/Option.h>
+#include <Checker/Exceptions.h>
 
 #include <memory>
 #include <vector>

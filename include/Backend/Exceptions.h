@@ -96,6 +96,17 @@ class UnexpectedValueForPositionalOption : public BaseOptionError {
         : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
 };
 
+class UnexpectedValue : public BaseOptionError {
+   public:
+    UnexpectedValue(const std::string& str)
+        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
+};
+
+class OptionDoesntAcceptValue : public BaseOptionError {
+    public:
+        OptionDoesntAcceptValue(): BaseOptionError(nullptr) {}
+};
+
 class OnlyOneChoiseIsAllowed : public BaseOptionError {
    public:
     OnlyOneChoiseIsAllowed(std::shared_ptr<OneOf> opt) : BaseOptionError(opt) {}

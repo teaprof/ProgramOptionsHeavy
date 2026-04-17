@@ -16,7 +16,7 @@ int main(int argc, const char* argv[]) {
     ProgramOptionsPrinter printer;
     auto dom = printer.print(parser);
 
-    PrettyPrinter printer;
-    dom->accept(printer);
+    PrettyPrinter pprinter;
+    dom->accept(pprinter);
     return 0;
 }

@@ -1,3 +1,14 @@
+Arrays:
+    Since array is non-standard extension the syntax to create an array is non-standard too.
+    To create array use comma:
+    hypercube run -d=1,2,3,4
+    hypercube run -d 1,2,3,4
+    hypercube run -d "1, 2, 3, 4"
+    hypercube inputfile "outputfile1, outputfile2, outputfile3"
+
+    When parsing --longname=value the last step should be to parse the <value> if 
+    it is a comma-separated list
+
 ALTERNATIVES:
     1.+ The alternative should start from unique options
     2.+ If such option is encountered the alternative is selected. Options for other altenatives become unavailable.
@@ -80,13 +91,13 @@ Solution:
     First, find min(n1+n2+..+nk) and max(n1+n2+..+nk). 
     If not min <= act_number_of_args <= max, than no solution exists
     If act_number_of_args == min or == max than solution is found (it corresponds to arg_min or arg_max).
-    Otherwise, solution exists if only one i exists such that min n_i < max_ni.         
+    Otherwise, solution exists if only one i exists such that min n_i < max_ni.
 
 1. Parser:
     - unknown options could be collected instead of throwing UnknownOption (like program_options::basic_option::unregistered)
     - support of implicit value (only if no positional options are specified)
 
-1. Value storage
+2. Value storage
     + value regex
     - expected value type and range (or validator, generally)
 How it could be done? What is the best way? I don't want to associate values with options

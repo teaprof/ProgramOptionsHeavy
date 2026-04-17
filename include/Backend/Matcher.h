@@ -18,26 +18,16 @@
 #include "ValueSemantics.h"
 #include "ValueStorage.h"
 
-/// TODO: ambiguous behavior: what should we do in the following cases:
-///  program -d=1 2 filename
-//  there are two possible cases:
-// 1. d = [1, 2],   pos = filename
-// 2. d = [1],      pos = [2, filename]
-// Some solutions:
-// 1. Eat as many values as possible. If value can't be converted to Int the
-// value list is finished
-// 2. Use `--` (double dash) to indicate the end of the value list
-
 class SingleOptionMatcher : public AbstractOptionVisitor {
    private:
     ArgGrammarParser& grammar_parser_;
 
    public:
     bool match;
-    std::string value;
+    std::optional<std::string> value;
     std::vector<std::shared_ptr<AbstractOption>> unlocks;
     SingleOptionMatcher(ArgGrammarParser& args) : grammar_parser_{args} {}
-    std::vector<std::shared_ptr<AbstractOption>> checked_positional_options;
+    std::vector<std::shared_ptr<AbstractOption>> checked_positional_options; // TODO: wtf?
 
     void visit(std::shared_ptr<AbstractOption> opt) override {
         // should not never visit abstract object
@@ -79,6 +69,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 break;
         }
         if (match) {
+            value = std::nullopt;
             unlocks = opt->unlocks();  // todo: avoid copying of a vector
         };
     }
@@ -101,6 +92,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 break;
         }
         if (match) {
+            value = std::nullopt;
             unlocks = opt->unlocks();  // todo: avoid copying of a vector
         };
     }
@@ -123,7 +115,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 /* nothing to do*/;
         }
         if (match) {
-            value = grammar_parser_.getValue(opt);  // todo: try to read as many values as possible
+            value = grammar_parser_.getValue(opt); 
             unlocks = opt->unlocks();               // todo: avoid copying of a vector
         };
     }
@@ -134,6 +126,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
     void visit(std::shared_ptr<OptionsGroup2> opt) override {
         assert(false);
         match = true;
+        value = std::nullopt;
         unlocks = opt->unlocks();  // todo: avoid copying of a vector
     }
     void visit(std::shared_ptr<OneOf> opt) override {
@@ -143,6 +136,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
             auto alt = opt->alternatives[n];
             alt->accept(*this);
             if (match) {
+                value = std::nullopt;
                 unlocks = opt->alternatives[n]->unlocks();  // todo: avoid copying of a vector
                 return;
             }
@@ -159,6 +153,9 @@ class BaseMatcher {
     std::set<std::shared_ptr<AbstractOption>> already_joined_;
     std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
     std::shared_ptr<AbstractOption> options_;
+    
+    std::optional<std::string> value_; // yet unparsed value if arg is in form --opt=value
+
 
    public:
     KeyValueStorage storage;
@@ -177,55 +174,7 @@ class BaseMatcher {
         joinOptionsTo({options_}, remaining_options_);
     }
 
-    bool eatNextValueIfCan(ArgGrammarParser& args, SingleOptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
-        // check if opt can accept one more value
-        bool can_accept = false;
-        bool should_accept = false;
-        switch (opt->nValuesRole()) {
-            case AbstractNamedOptionWithValue::NValuesRole::EXACT: {
-                size_t actual_count = storage[opt].lastOccurrenceSize();
-                size_t required_count = opt->nValues();
-                can_accept = (actual_count < required_count);
-                should_accept = can_accept;
-                break;
-            }
-            case AbstractNamedOptionWithValue::NValuesRole::UPTO: {
-                size_t actual_count = storage[opt].lastOccurrenceSize();
-                size_t max_count = opt->nValues();
-                can_accept = (actual_count < max_count);
-                should_accept = false;
-                break;
-            }
-            case AbstractNamedOptionWithValue::NValuesRole::INFINITE: {
-                can_accept = true;
-                should_accept = false;
-                break;
-            }
-        }
-        if (!can_accept) {
-            return false;
-        }
-        args.getNextOption();
-        bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
-        bool arg_is_double_dash = args.current_result.token_type == ArgGrammarParser::DOUBLE_DASH;
-        if (!arg_is_value) {
-            if (!arg_is_double_dash) {
-                args.ungetOption();
-            }
-            if (should_accept) {
-                throw TooFewValuesForOption();  // todo: print how many options
-                                                // should be (expected N or at
-                                                // least N)
-            }
-            return false;
-        }
-        std::vector<std::shared_ptr<AbstractOption>> unlocked_by_values;
-        addValueToCurrentOccurrence(opt, args.current_result.value, unlocked_by_values);
-        // todo: unused unlocked_by_values
-        return true;
-    }
-
-    std::shared_ptr<AbstractOption> eatNextToken(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
+    std::shared_ptr<AbstractOption> eatNextOption(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
         args.getNextOption();
         if (args.current_result.token_type == ArgGrammarParser::TokenTypes::DOUBLE_DASH) {
             matcher.setPositionalOnlyFlag(true);
@@ -237,17 +186,8 @@ class BaseMatcher {
         for (auto it : remaining_options_) {
             it->accept(matcher);
             if (matcher.match) {
-                std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value;
-                addValueToNewOccurrence(it, matcher, unlocked_by_value);
-                joinOptionsTo(unlocked_by_value, remaining_options_);
-                if (!already_joined_.contains(it)) {
-                    joinOptionsTo(matcher.unlocks,
-                                  remaining_options_);  // TODO: what should we do if this
-                                                        // option was unpacked (multiple
-                                                        // occurrence)
-                    already_joined_.insert(it);
-                }
-                if (optionEncountered(it) == it->maxOccurrence()) {
+                value_ = matcher.value;
+                if (optionEncountered(it) + 1 == it->maxOccurrence()) {
                     // if the number of occurences of this option is exausted
                     // then remove this option from the list of remaining
                     // options
@@ -306,16 +246,57 @@ class BaseMatcher {
         return res;
     }
 
+    void eatValueIfCan(ArgGrammarParser& args, SingleOptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
+        if(matcher.value.has_value()) {
+            auto p = std::dynamic_pointer_cast<AbstractOption>(opt);
+            assert(p!=nullptr);
+            addValueToOption(p, matcher.value.value()); // TODO: addValueToOption should accept AbstractOptionWithValue
+            matcher.value = std::nullopt;
+            return;
+        }
+        args.getNextOption();
+        bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
+        if (!arg_is_value) {
+            args.ungetOption();
+            bool has_default_value = opt->baseValueSemantics().hasDefaultValue();
+            if (has_default_value) {
+                std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value;
+                setDefaultValue(opt, unlocked_by_value); 
+                joinOptionsTo(unlocked_by_value, remaining_options_);
+                return;
+            }
+            throw ExpectedValue(nullptr); 
+        }
+    }
+
+    void addValueToOption(std::shared_ptr<AbstractOption> opt, const std::string& value) {
+        if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
+            std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value;
+            addValueToNewOccurrence(p, value, unlocked_by_value);
+            joinOptionsTo(unlocked_by_value, remaining_options_);
+            return;
+        };
+        throw UnexpectedValue("");
+    }
+
     void parseNext(ArgGrammarParser& args) {
         SingleOptionMatcher matcher(args);
-        auto opt = eatNextToken(args, matcher);
+        auto opt = eatNextOption(args, matcher);
         if (opt) {
+            if (!already_joined_.contains(opt)) {
+                joinOptionsTo(matcher.unlocks, remaining_options_);
+                already_joined_.insert(opt);
+            } 
+
             if (auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
-                while (!args.eof() && eatNextValueIfCan(args, matcher, p)) {
-                };
-                if (args.eof()) {
-                    checkIfOptionIsCompleted(p);
-                }
+                eatValueIfCan(args, matcher, p);
+                checkIfOccurrenceIsCompleted(p);
+            } else {
+                opts_counter_[opt] = 1;
+            }
+
+            if(matcher.value.has_value()) {
+                throw OptionDoesntAcceptValue(); // TODO: OptionDoesntAcceptValue
             }
         };
     }
@@ -324,7 +305,7 @@ class BaseMatcher {
         clear();
         SingleOptionMatcher matcher(args);
         while (!args.eof()) {
-            // eatNextToken(args, matcher);
+            // eatNextOption(args, matcher);
             parseNext(args);
         }
     }
@@ -359,25 +340,28 @@ class BaseMatcher {
             throw MaxOptionOccurenceIsExceeded(opt);
         }
     }
-    void addValueToNewOccurrence(std::shared_ptr<AbstractOption> opt,
-                                 const SingleOptionMatcher& matcher,
+    void addValueToNewOccurrence(std::shared_ptr<AbstractOptionWithValue> opt,
+                                 const std::string& value,
                                  std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) {
-        checkMaxOccurrence(opt);
+        auto p = std::dynamic_pointer_cast<AbstractOption>(opt);
+        assert(p != nullptr);                                    
+        checkMaxOccurrence(p);
         if (auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
-            std::any val = p->baseValueSemantics().semanticParse(matcher.value);
+            std::any val = p->baseValueSemantics().semanticParse(value);
             unlocked_by_value = p->baseValueSemantics().getUnlocks();
             // todo: unused unlocked_by_value
-            storage.addValue(p, matcher.value, val);
+            storage.addValue(p, value, val);
         }
-        opts_counter_[opt]++;
+        opts_counter_[p]++;
     }
     void addValueToCurrentOccurrence(std::shared_ptr<AbstractOptionWithValue> opt,
                                      const std::string& value,
                                      std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) {
+        //TODO: remove this function since value list can be specified using comman
         std::any val = opt->baseValueSemantics().semanticParse(value);
         storage.addValueToCurrentOccurence(opt, value, val);
     }
-    void checkIfOptionIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {  // TODO: rename to something like
+    void checkIfOccurrenceIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {  // TODO: rename to something like
                                                                                    // checkIfValueListIsCompleted
         if (opt->nValuesRole() == AbstractOptionWithValue::NValuesRole::EXACT) {
             assert(storage.contains(opt));
@@ -394,6 +378,17 @@ class BaseMatcher {
             }
         }
     }
+    void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt,
+                         std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) {
+        auto abs_opt = std::dynamic_pointer_cast<AbstractOption>(opt);
+        checkMaxOccurrence(abs_opt);
+        std::any v = opt->baseValueSemantics().setToDefault();
+        unlocked_by_value = opt->baseValueSemantics().getUnlocks();
+        storage.addValue(opt, "", v);  /// TODO here should be default value
+        // storage.setDefault(opt, true);
+        opts_counter_[abs_opt]++;
+    }
+
 };
 
 class Matcher : public BaseMatcher {
@@ -444,17 +439,7 @@ class Matcher : public BaseMatcher {
         }
     }
 
-    void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt,
-                         std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) {
-        auto abs_opt = std::dynamic_pointer_cast<AbstractOption>(opt);
-        checkMaxOccurrence(abs_opt);
-        std::any v = opt->baseValueSemantics().setToDefault();
-        unlocked_by_value = opt->baseValueSemantics().getUnlocks();
-        storage.addValue(opt, "", v);  /// TODO here should be default value
-        // storage.setDefault(opt, true);
-        opts_counter_[abs_opt]++;
-        ;
-    }
+
 };
 
 #endif
