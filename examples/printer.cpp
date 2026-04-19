@@ -13,9 +13,9 @@ int main() {
     auto run_command = std::make_shared<LiteralString>("run")->addUnlock(run_options)->addUnlock(common_options);
     auto gather_command = std::make_shared<LiteralString>("gather")->addUnlock(gather_options)->addUnlock(common_options);
 
-    auto top_level_options = std::make_shared<OneOf>();
-    top_level_options->addAlternative(run_command);
-    top_level_options->addAlternative(gather_command);
+    auto top_level_options = std::make_shared<OneOf<LiteralString>>();
+    top_level_options->addAlternative(std::dynamic_pointer_cast<LiteralString>(run_command));
+    top_level_options->addAlternative(std::dynamic_pointer_cast<LiteralString>(gather_command));
 
     Printer prn;
     top_level_options->accept(prn);

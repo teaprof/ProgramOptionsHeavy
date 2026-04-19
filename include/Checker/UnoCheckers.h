@@ -39,7 +39,7 @@ class Unochecker : public AbstractOptionVisitor {
     void visit(std::shared_ptr<OptionsGroup2> opt) {
         // nothing to do
     }
-    void visit(std::shared_ptr<OneOf> opt) {
+    void visit(std::shared_ptr<OneOfAbstract> opt) {
         // nothing to do
     }
 };

@@ -228,7 +228,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionExact) {
     EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
     EXPECT_EQ(d, 30);
     ASSERT_THROW(parser.parse("--opt1 20,30 --opt1 40,40 --opt1 20,20"), MaxOptionOccurenceIsExceeded);
-    ASSERT_THROW(parser.parse("--opt1 20"), TooFewValuesForOption);
+    ASSERT_THROW(parser.parse("--opt1 20"), ExpectedExactNumberOfValues);
     ASSERT_THROW(parser.parse("--opt1"),
                  ExpectedValue);  /// todo: ExpectedValue vs TooFewValuesForOption
 }
@@ -268,7 +268,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
     ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
     EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");*/
 
-    ASSERT_THROW(parser.parse("--opt1 20,30,40"), TooManyPositionalOptions);
+    ASSERT_THROW(parser.parse("--opt1 20,30 filename"), TooManyPositionalOptions);
 
     ASSERT_THROW(parser.parse("--opt1"), ExpectedValue);
     opt->setValueRequired(false);

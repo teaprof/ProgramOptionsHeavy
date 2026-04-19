@@ -79,23 +79,6 @@ class MaxOptionOccurenceIsExceeded : public BaseOptionError {
     MaxOptionOccurenceIsExceeded(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
 };
 
-class TooFewPositionalOptions : public BaseOptionError {
-   public:
-    TooFewPositionalOptions() : BaseOptionError(nullptr) {}  //::runtime_error("too few positional options are specified") {}
-};
-
-class TooManyPositionalOptions : public BaseOptionError {
-   public:
-    TooManyPositionalOptions(const std::string& str)
-        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
-};
-
-class UnexpectedValueForPositionalOption : public BaseOptionError {
-   public:
-    UnexpectedValueForPositionalOption(const std::string& str)
-        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
-};
-
 class UnexpectedValue : public BaseOptionError {
    public:
     UnexpectedValue(const std::string& str)
@@ -109,7 +92,7 @@ class OptionDoesntAcceptValue : public BaseOptionError {
 
 class OnlyOneChoiseIsAllowed : public BaseOptionError {
    public:
-    OnlyOneChoiseIsAllowed(std::shared_ptr<OneOf> opt) : BaseOptionError(opt) {}
+    OnlyOneChoiseIsAllowed(std::shared_ptr<OneOfAbstract> opt) : BaseOptionError(std::dynamic_pointer_cast<AbstractOption>(opt)) {}
 };
 
 class MultipleOccurenceOnlyForLastPosopt : public std::logic_error {  /// TODO: may be unused
@@ -140,11 +123,42 @@ class TooManyValuesForOption : public BaseOptionError {
     TooManyValuesForOption() : BaseOptionError(nullptr) {}  // too few values for options, expected at least N or exact N
 };
 
+class UnexpectedValueForPositionalOption : public BaseOptionError {
+   public:
+    UnexpectedValueForPositionalOption(const std::string& str)
+        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
+};
+
+
+// POSITIONAL OPTIONS
+
+class TooFewPositionalOptions : public BaseOptionError {
+   public:
+    TooFewPositionalOptions() : BaseOptionError(nullptr) {}  //::runtime_error("too few positional options are specified") {}
+};
+
+class TooManyPositionalOptions : public BaseOptionError {
+    //conflicts with TooManyOccurrencesOfPositionalOptions, UnexpectedPositionalOption
+   public:
+    TooManyPositionalOptions(const std::string& str)
+        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
+};
+
+class TooManyOccurrencesOfPositionalOptions : public BaseOptionError {
+    TooManyOccurrencesOfPositionalOptions(const std::string& str)
+        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
+};
+
+class UnexpectedPositionalOption : public BaseOptionError {
+   public:
+    UnexpectedPositionalOption(const std::string& str)
+        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
+};
+
 
 /*
 TODO:
 From boost::program_options
-invalid_command_line_style
 invalid_command_line_style
 error_with_option_name
 multiple_occurrences

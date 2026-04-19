@@ -66,11 +66,12 @@ class Combinator2 : public AbstractOptionVisitor {
         visit(std::dynamic_pointer_cast<AbstractOption>(opt));
     }
     virtual void visit(std::shared_ptr<OptionsGroup2> opt) { visit(std::dynamic_pointer_cast<AbstractOption>(opt)); }
-    virtual void visit(std::shared_ptr<OneOf> oneof) {
+    virtual void visit(std::shared_ptr<OneOfAbstract> oneof) {
         std::vector<Combinator2> combinators;
-        assert(!oneof->alternatives.empty());  // todo: throw Alternatives is empty
+        assert(oneof->alternativesSize() != 0);  // todo: throw Alternatives is empty
         visit(std::dynamic_pointer_cast<AbstractOption>(oneof));
-        for (auto it : oneof->alternatives) {
+        for (size_t idx = 0; idx < oneof->alternativesSize(); idx++) {
+            std::shared_ptr<AbstractOption> it = oneof->alternative(idx);
             Combinator2 c;
             it->accept(c);
             combinators.push_back(std::move(c));
