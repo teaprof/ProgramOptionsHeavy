@@ -83,6 +83,7 @@ opt1->tie(v, opt2val);
     + double dash can be used to indicate the end of the values list: "--input file1.txt file2.txt -- outputfile.txt"
     + all options after the double dash are treated as positional
     - check https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
+    - use internal splitter for cmd line args: first join all args to a single string then split it back
 
 
 Solve equation:

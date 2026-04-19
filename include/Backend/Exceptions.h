@@ -131,6 +131,15 @@ class TooFewValuesForOption : public BaseOptionError {
    public:
     TooFewValuesForOption() : BaseOptionError(nullptr) {}  // too few values for options, expected at least N or exact N
 };
+class ExpectedExactNumberOfValues : public BaseOptionError {
+   public:
+    ExpectedExactNumberOfValues() : BaseOptionError(nullptr) {}  // too few values for options, expected at least N or exact N
+};
+class TooManyValuesForOption : public BaseOptionError {
+   public:
+    TooManyValuesForOption() : BaseOptionError(nullptr) {}  // too few values for options, expected at least N or exact N
+};
+
 
 /*
 TODO:

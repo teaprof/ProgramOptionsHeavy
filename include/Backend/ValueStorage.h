@@ -45,6 +45,7 @@ class ValueStorage {
         assert(idx < values_.size());
         return std::any_cast<const T&>(values_[occurrence][idx]);
     }
+    // NOTE: rawValues(idx) can be empty (zero-len), if option valued was defaulted
     const std::string& rawValues(size_t idx) const {
         assert(!raw_values_.empty());
         assert(idx < raw_values_[0].size());
@@ -73,7 +74,7 @@ class ValueStorage {
     // = 2, values[1][0] = 4
     std::vector<std::vector<std::any>> values_;
     // indicies have the same meaning as for values_
-    std::vector<std::vector<std::string>> raw_values_;
+    std::vector<std::vector<std::string>> raw_values_; 
 };
 
 /// key is an option name, value is object of type Value storage
@@ -114,8 +115,7 @@ class KeyValueStorage {
 };
 
 // TODO: ValueStorage is responsible for splitting comma-separated string values to the list of strings
-/*
-bool eatNextValueIfCan(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
+    /*bool eatNextValueIfCan(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
         // check if opt can accept one more value
         bool can_accept = false;
         bool should_accept = false;
@@ -161,8 +161,7 @@ bool eatNextValueIfCan(std::shared_ptr<AbstractOptionWithValue> opt, const std::
         addValueToCurrentOccurrence(opt, args.current_result.value, unlocked_by_values);
         // todo: unused unlocked_by_values
         return true;
-    }
-}
-*/
+    }*/
+
 
 #endif
