@@ -62,7 +62,12 @@ class NameCompleter : public AbstractOptionVisitor {
             p->accept(*this);
         }
     }
-    void visit(std::shared_ptr<OneOf> opt) override {
+    void visit(std::shared_ptr<OneOfPositional> opt) override {
+        for (auto& p : opt->alternatives) {
+            p->accept(*this);
+        }
+    }
+    void visit(std::shared_ptr<OneOfNamed> opt) override {
         for (auto& p : opt->alternatives) {
             p->accept(*this);
         }

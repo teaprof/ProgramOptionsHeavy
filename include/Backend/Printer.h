@@ -72,8 +72,23 @@ class Printer : public AbstractOptionVisitor {
         prn_ << "OptionsGroup2" << "\n";
         printUnlocks(opt);
     }
-    void visit(std::shared_ptr<OneOfAbstract> opt) override {
-        prn_ << "OneOf" << "\n";
+    void visit(std::shared_ptr<OneOfPositional> opt) override {
+        prn_ << "OneOfPositional" << "\n";
+        prn_++;
+        size_t counter = 0;
+        for (size_t idx = 0; idx < opt->alternativesSize(); idx++) {
+            std::shared_ptr<AbstractOption> it = opt->alternative(idx);
+            prn_ << "Alternative " << counter << "\n";
+            prn_++;
+            it->accept(*this);
+            prn_--;
+            counter++;
+        }
+        prn_--;
+        printUnlocks(opt);
+    }
+    void visit(std::shared_ptr<OneOfNamed> opt) override {
+        prn_ << "OneOfNamed" << "\n";
         prn_++;
         size_t counter = 0;
         for (size_t idx = 0; idx < opt->alternativesSize(); idx++) {

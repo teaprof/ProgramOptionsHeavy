@@ -21,7 +21,7 @@ Commands (or Alternatives):
 git push ...
 git commit ...
 
-OneOf:
+OneOfPositional:
 hypercube run --nPoints=100000
 hypercube run --nPointsPerCell=10
 

@@ -49,7 +49,7 @@ class Combinator2 : public AbstractOptionVisitor {
         }
     }
 
-    virtual ~Combinator2() {};
+    virtual ~Combinator2(){};
     virtual void visit(std::shared_ptr<AbstractOption> opt) {
         pushBack(opt);
         for (const auto& it : opt->unlocks()) {
@@ -66,12 +66,24 @@ class Combinator2 : public AbstractOptionVisitor {
         visit(std::dynamic_pointer_cast<AbstractOption>(opt));
     }
     virtual void visit(std::shared_ptr<OptionsGroup2> opt) { visit(std::dynamic_pointer_cast<AbstractOption>(opt)); }
-    virtual void visit(std::shared_ptr<OneOfAbstract> oneof) {
+    virtual void visit(std::shared_ptr<OneOfPositional> OneOfPositional) {
         std::vector<Combinator2> combinators;
-        assert(oneof->alternativesSize() != 0);  // todo: throw Alternatives is empty
-        visit(std::dynamic_pointer_cast<AbstractOption>(oneof));
-        for (size_t idx = 0; idx < oneof->alternativesSize(); idx++) {
-            std::shared_ptr<AbstractOption> it = oneof->alternative(idx);
+        assert(OneOfPositional->alternativesSize() != 0);  // todo: throw Alternatives is empty
+        visit(std::dynamic_pointer_cast<AbstractOption>(OneOfPositional));
+        for (size_t idx = 0; idx < OneOfPositional->alternativesSize(); idx++) {
+            std::shared_ptr<AbstractOption> it = OneOfPositional->alternative(idx);
+            Combinator2 c;
+            it->accept(c);
+            combinators.push_back(std::move(c));
+        }
+        pushBack(combinators);
+    }
+    virtual void visit(std::shared_ptr<OneOfNamed> OneOfPositional) {
+        std::vector<Combinator2> combinators;
+        assert(OneOfPositional->alternativesSize() != 0);  // todo: throw Alternatives is empty
+        visit(std::dynamic_pointer_cast<AbstractOption>(OneOfPositional));
+        for (size_t idx = 0; idx < OneOfPositional->alternativesSize(); idx++) {
+            std::shared_ptr<AbstractOption> it = OneOfPositional->alternative(idx);
             Combinator2 c;
             it->accept(c);
             combinators.push_back(std::move(c));

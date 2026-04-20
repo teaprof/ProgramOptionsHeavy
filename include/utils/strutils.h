@@ -6,10 +6,10 @@
 #include <cassert>
 #include <map>
 #include <optional>
+#include <ranges>
 #include <regex>
 #include <string>
 #include <string_view>
-#include <ranges>
 #include <vector>
 
 std::pair<bool, std::string> isLongName(std::string name);
@@ -99,11 +99,11 @@ inline std::string tolower(const std::string& src) {
 
 inline std::vector<std::string> mysplit(const std::string& str) {
     // TODO: revisit this function and optimize it
-    std::vector<std::string> tokens;
-    for(auto word : str | std::views::split(',')) {
-        tokens.push_back(std::string(std::string_view(word)));
+    std::vector<std::string> res;
+    for (auto token : str | std::views::split(',')) {
+        res.push_back(std::string(std::string_view(token)));
     }
-    return tokens;
+    return res;
 }
 
 #endif

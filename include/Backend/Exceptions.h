@@ -71,7 +71,7 @@ class ValueIsOutOfRange : public BaseOptionError {
 
 class ValueMustMatchRegex : public BaseOptionError {
    public:
-    ValueMustMatchRegex(std::shared_ptr<AbstractOption> opt, const std::string& regex) : BaseOptionError(opt) {};
+    ValueMustMatchRegex(std::shared_ptr<AbstractOption> opt, const std::string& regex) : BaseOptionError(opt){};
 };
 
 class MaxOptionOccurenceIsExceeded : public BaseOptionError {
@@ -86,13 +86,14 @@ class UnexpectedValue : public BaseOptionError {
 };
 
 class OptionDoesntAcceptValue : public BaseOptionError {
-    public:
-        OptionDoesntAcceptValue(): BaseOptionError(nullptr) {}
+   public:
+    OptionDoesntAcceptValue() : BaseOptionError(nullptr) {}
 };
 
 class OnlyOneChoiseIsAllowed : public BaseOptionError {
    public:
-    OnlyOneChoiseIsAllowed(std::shared_ptr<OneOfAbstract> opt) : BaseOptionError(std::dynamic_pointer_cast<AbstractOption>(opt)) {}
+    OnlyOneChoiseIsAllowed(std::shared_ptr<OneOfPositional> opt)
+        : BaseOptionError(std::dynamic_pointer_cast<AbstractOption>(opt)) {}
 };
 
 class MultipleOccurenceOnlyForLastPosopt : public std::logic_error {  /// TODO: may be unused
@@ -129,7 +130,6 @@ class UnexpectedValueForPositionalOption : public BaseOptionError {
         : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
 };
 
-
 // POSITIONAL OPTIONS
 
 class TooFewPositionalOptions : public BaseOptionError {
@@ -138,7 +138,7 @@ class TooFewPositionalOptions : public BaseOptionError {
 };
 
 class TooManyPositionalOptions : public BaseOptionError {
-    //conflicts with TooManyOccurrencesOfPositionalOptions, UnexpectedPositionalOption
+    // conflicts with TooManyOccurrencesOfPositionalOptions, UnexpectedPositionalOption
    public:
     TooManyPositionalOptions(const std::string& str)
         : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
@@ -154,7 +154,6 @@ class UnexpectedPositionalOption : public BaseOptionError {
     UnexpectedPositionalOption(const std::string& str)
         : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
 };
-
 
 /*
 TODO:

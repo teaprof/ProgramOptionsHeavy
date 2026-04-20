@@ -15,9 +15,9 @@ class Completer2Fixture : public ::testing::Test {
         common_options->addUnlock(std::make_shared<NamedOption>("--common", "-c"));
         common_options->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--value", "-v"));
 
-        auto options = std::make_shared<OneOf>();
-        options->addAlternative(std::make_shared<LiteralString>("run")->addUnlock(run_options)->addUnlock(common_options))
-            ->addAlternative(std::make_shared<LiteralString>("gather")->addUnlock(gather_options)->addUnlock(common_options));
+        auto options = std::make_shared<OneOfPositional>();
+        options->addAlternative2(std::make_shared<LiteralString>("run")->addUnlock(run_options)->addUnlock(common_options))
+            ->addAlternative2(std::make_shared<LiteralString>("gather")->addUnlock(gather_options)->addUnlock(common_options));
 
         exename_with_options_ = std::make_shared<LiteralString>("exename");
         exename_with_options_->addUnlock(options);

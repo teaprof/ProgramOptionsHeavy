@@ -74,7 +74,7 @@ class ValueStorage {
     // = 2, values[1][0] = 4
     std::vector<std::vector<std::any>> values_;
     // indicies have the same meaning as for values_
-    std::vector<std::vector<std::string>> raw_values_; 
+    std::vector<std::vector<std::string>> raw_values_;
 };
 
 /// key is an option name, value is object of type Value storage
@@ -115,53 +115,52 @@ class KeyValueStorage {
 };
 
 // TODO: ValueStorage is responsible for splitting comma-separated string values to the list of strings
-    /*bool eatNextValueIfCan(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
-        // check if opt can accept one more value
-        bool can_accept = false;
-        bool should_accept = false;
-        switch (opt->nValuesRole()) {
-            case AbstractNamedOptionWithValue::NValuesRole::EXACT: {
-                size_t actual_count = storage[opt].lastOccurrenceSize();
-                size_t required_count = opt->nValues();
-                can_accept = (actual_count < required_count);
-                should_accept = can_accept;
-                break;
-            }
-            case AbstractNamedOptionWithValue::NValuesRole::UPTO: {
-                size_t actual_count = storage[opt].lastOccurrenceSize();
-                size_t max_count = opt->nValues();
-                can_accept = (actual_count < max_count);
-                should_accept = false;
-                break;
-            }
-            case AbstractNamedOptionWithValue::NValuesRole::INFINITE: {
-                can_accept = true;
-                should_accept = false;
-                break;
-            }
+/*bool eatNextValueIfCan(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
+    // check if opt can accept one more value
+    bool can_accept = false;
+    bool should_accept = false;
+    switch (opt->nValuesRole()) {
+        case AbstractNamedOptionWithValue::NValuesRole::EXACT: {
+            size_t actual_count = storage[opt].lastOccurrenceSize();
+            size_t required_count = opt->nValues();
+            can_accept = (actual_count < required_count);
+            should_accept = can_accept;
+            break;
         }
-        if (!can_accept) {
-            return false;
+        case AbstractNamedOptionWithValue::NValuesRole::UPTO: {
+            size_t actual_count = storage[opt].lastOccurrenceSize();
+            size_t max_count = opt->nValues();
+            can_accept = (actual_count < max_count);
+            should_accept = false;
+            break;
         }
-        args.getNextOption();
-        bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
-        bool arg_is_double_dash = args.current_result.token_type == ArgGrammarParser::DOUBLE_DASH;
-        if (!arg_is_value) {
-            if (!arg_is_double_dash) {
-                args.ungetOption();
-            }
-            if (should_accept) {
-                throw TooFewValuesForOption();  // todo: print how many options
-                                                // should be (expected N or at
-                                                // least N)
-            }
-            return false;
+        case AbstractNamedOptionWithValue::NValuesRole::INFINITE: {
+            can_accept = true;
+            should_accept = false;
+            break;
         }
-        std::vector<std::shared_ptr<AbstractOption>> unlocked_by_values;
-        addValueToCurrentOccurrence(opt, args.current_result.value, unlocked_by_values);
-        // todo: unused unlocked_by_values
-        return true;
-    }*/
-
+    }
+    if (!can_accept) {
+        return false;
+    }
+    args.getNextOption();
+    bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
+    bool arg_is_double_dash = args.current_result.token_type == ArgGrammarParser::DOUBLE_DASH;
+    if (!arg_is_value) {
+        if (!arg_is_double_dash) {
+            args.ungetOption();
+        }
+        if (should_accept) {
+            throw TooFewValuesForOption();  // todo: print how many options
+                                            // should be (expected N or at
+                                            // least N)
+        }
+        return false;
+    }
+    std::vector<std::shared_ptr<AbstractOption>> unlocked_by_values;
+    addValueToCurrentOccurrence(opt, args.current_result.value, unlocked_by_values);
+    // todo: unused unlocked_by_values
+    return true;
+}*/
 
 #endif

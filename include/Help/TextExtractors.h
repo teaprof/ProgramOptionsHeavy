@@ -28,7 +28,10 @@ class OptionTextExtractor : public AbstractOptionVisitor {
         descr = ParameterDescription{{"some positional option = value"}, helpString(opt)};  // TODO implement this
     }
     void visit(std::shared_ptr<OptionsGroup2> opt) { descr = ParameterDescription{groupName(opt), helpString(opt)}; }
-    void visit(std::shared_ptr<OneOf> opt) {
+    void visit(std::shared_ptr<OneOfPositional> opt) {
+        descr = ParameterDescription{{"one of"}, helpString(opt)};  // TODO implement this
+    }
+    void visit(std::shared_ptr<OneOfNamed> opt) {
         descr = ParameterDescription{{"one of"}, helpString(opt)};  // TODO implement this
     }
     ParameterDescription descr;

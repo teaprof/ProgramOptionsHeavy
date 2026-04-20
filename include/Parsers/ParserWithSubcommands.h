@@ -56,7 +56,7 @@ class ParserWithSubcommands : public AbstractOptionsParser {
     }
     bool parse(int argc, const char* argv[]) override {
         assert(!subcommands_.empty());
-        auto top_level_options = std::make_shared<OneOf>();
+        auto top_level_options = std::make_shared<OneOfPositional>();
         for (auto it : subcommands_) {
             auto command = std::make_shared<LiteralString>(it.first);
             for (auto grp : it.second->groups()) {

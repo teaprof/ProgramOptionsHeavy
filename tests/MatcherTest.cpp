@@ -29,7 +29,7 @@ class MatcherFixture : public ::testing::Test {
    protected:
     std::shared_ptr<AbstractOption> options_;
     std::shared_ptr<NamedOption> common_option_;
-    std::shared_ptr<OneOf> command_;
+    std::shared_ptr<OneOfPositional> command_;
     void SetUp() override {
         common_option_ = std::make_shared<NamedOption>("--common", "-c");
         options_ = std::make_shared<OptionsGroup2>();
@@ -38,7 +38,7 @@ class MatcherFixture : public ::testing::Test {
         run_options->addUnlock(std::make_shared<NamedOption>("--dim", "-d"));
         auto gather_options = std::make_shared<LiteralString>("gather");
         gather_options->addUnlock(std::make_shared<NamedOption>("--gatheropt", "-g"));
-        command_ = std::make_shared<OneOf>(run_options, gather_options);
+        command_ = std::make_shared<OneOfPositional>(run_options, gather_options);
         options_->addUnlock(command_);
 
         Printer prn;
@@ -117,7 +117,7 @@ TEST_F(MatcherFixtureWithUnlocksByValue, Test2) {
     EXPECT_TRUE(parser.parse({"run"}));
     EXPECT_TRUE(parser.parse({"gather", "-g"}));
     EXPECT_THROW(parser.parse({"run", "gather", "-g"}), TooManyPositionalOptions);
-    //TODO: in the previous test gather could be treated as filename and it will be Ok
+    // TODO: in the previous test gather could be treated as filename and it will be Ok
     EXPECT_TRUE(parser.parse({"run", "--common"}));
     EXPECT_TRUE(parser.parse({"--common", "run", "-d"}));
 }
@@ -427,16 +427,16 @@ TEST(Matcher, PositionalAndNamed) {
 
 TEST(Matcher, NestedAlternatives) {
     auto alt_nested_1 =
-        std::make_shared<OneOf>()
-            ->addAlternative(std::make_shared<LiteralString>("alt11")->addUnlock(std::make_shared<NamedOption>("--opt11")))
-            ->addAlternative(std::make_shared<LiteralString>("alt12")->addUnlock(std::make_shared<NamedOption>("--opt12")));
+        std::make_shared<OneOfPositional>()
+            ->addAlternative2(std::make_shared<LiteralString>("alt11")->addUnlock(std::make_shared<NamedOption>("--opt11")))
+            ->addAlternative2(std::make_shared<LiteralString>("alt12")->addUnlock(std::make_shared<NamedOption>("--opt12")));
     auto alt_nested_2 =
-        std::make_shared<OneOf>()
-            ->addAlternative(std::make_shared<LiteralString>("alt21")->addUnlock(std::make_shared<NamedOption>("--opt21")))
-            ->addAlternative(std::make_shared<LiteralString>("alt22")->addUnlock(std::make_shared<NamedOption>("--opt22")));
-    auto opts = std::make_shared<OneOf>()
-                    ->addAlternative(std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1))
-                    ->addAlternative(std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2));
+        std::make_shared<OneOfPositional>()
+            ->addAlternative2(std::make_shared<LiteralString>("alt21")->addUnlock(std::make_shared<NamedOption>("--opt21")))
+            ->addAlternative2(std::make_shared<LiteralString>("alt22")->addUnlock(std::make_shared<NamedOption>("--opt22")));
+    auto opts = std::make_shared<OneOfPositional>()
+                    ->addAlternative2(std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1))
+                    ->addAlternative2(std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2));
 
     Matcher parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt11 --opt11"));
@@ -453,16 +453,16 @@ TEST(Matcher, NestedAlternatives) {
 
 TEST(Matcher, NestedAlternativesWithEqualNames) {
     auto alt_nested_1 =
-        std::make_shared<OneOf>()
-            ->addAlternative(std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1")))
-            ->addAlternative(std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2")));
+        std::make_shared<OneOfPositional>()
+            ->addAlternative2(std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1")))
+            ->addAlternative2(std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2")));
     auto alt_nested_2 =
-        std::make_shared<OneOf>()
-            ->addAlternative(std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1")))
-            ->addAlternative(std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2")));
-    auto opts = std::make_shared<OneOf>()
-                    ->addAlternative(std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1))
-                    ->addAlternative(std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2));
+        std::make_shared<OneOfPositional>()
+            ->addAlternative2(std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1")))
+            ->addAlternative2(std::make_shared<LiteralString>("alt2")->addUnlock(std::make_shared<NamedOption>("--opt2")));
+    auto opts = std::make_shared<OneOfPositional>()
+                    ->addAlternative2(std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1))
+                    ->addAlternative2(std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2));
 
     Matcher parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt1 --opt1"));

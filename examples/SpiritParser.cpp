@@ -28,7 +28,7 @@ alt2.addCompatible(repack)
 
 int main(int argc, char* argv[]) {
     /*auto helpOption = std::make_shared<NamedOption>("--help", "-h");
-    auto hypercubeOptions = std::make_shared<OneOf>(
+    auto hypercubeOptions = std::make_shared<OneOfPositional>(
         helpOption,
         std::make_shared<NamedOption>("run")->
             addUnlock(std::make_shared<NamedOption>("--dim", "-d"))->

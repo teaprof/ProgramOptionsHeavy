@@ -16,7 +16,8 @@ class NamedOption;
 class AbstractNamedOptionWithValue;
 class AbstractPositionalOption;
 class AbstractPositionalOptionWithValue;
-class OneOfAbstract;
+class OneOfPositional;
+class OneOfNamed;
 class OptionsGroup2;  // TODO rename
 
 class BaseValueSemantics;
@@ -25,7 +26,7 @@ class ValueSemantics;
 
 class AbstractOptionVisitor {
    public:
-    virtual ~AbstractOptionVisitor() {};
+    virtual ~AbstractOptionVisitor(){};
     virtual void visit(std::shared_ptr<AbstractOption>) = 0;
     virtual void visit(std::shared_ptr<AbstractPositionalOption>) = 0;
     virtual void visit(std::shared_ptr<NamedOption>) = 0;
@@ -33,7 +34,8 @@ class AbstractOptionVisitor {
     virtual void visit(std::shared_ptr<AbstractNamedOptionWithValue>) = 0;
     virtual void visit(std::shared_ptr<AbstractPositionalOptionWithValue>) = 0;
     virtual void visit(std::shared_ptr<OptionsGroup2>) = 0;
-    virtual void visit(std::shared_ptr<OneOfAbstract>) = 0;
+    virtual void visit(std::shared_ptr<OneOfPositional>) = 0;
+    virtual void visit(std::shared_ptr<OneOfNamed>) = 0;
 };
 
 class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
@@ -61,7 +63,7 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
     std::vector<std::shared_ptr<AbstractOption>> unlocks_;
 };
 
-class NamedOption : public AbstractOption {
+class NamedOption : public AbstractOption {  // rename, should it be AbstractNamedOption??
    public:
     NamedOption() {}
     NamedOption(const std::string& undecorated_long_name);
@@ -130,7 +132,7 @@ class LiteralString : public AbstractPositionalOption {
 class AbstractNamedOptionWithValue : public NamedOption, public AbstractOptionWithValue {
    public:
     AbstractNamedOptionWithValue() {}
-    AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : NamedOption(undecorated_long_name) {};
+    AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : NamedOption(undecorated_long_name){};
     AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name)
         : NamedOption(undecorated_long_name, undecorated_short_name) {}
 
@@ -151,9 +153,9 @@ template <class T>
 class NamedOptionWithValue : public AbstractNamedOptionWithValue, public OptionWithValue<T> {
    public:
     NamedOptionWithValue() {}
-    NamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOptionWithValue(undecorated_long_name) {};
+    NamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOptionWithValue(undecorated_long_name){};
     NamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name)
-        : AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name) {};
+        : AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name){};
 
     const BaseValueSemantics& baseValueSemantics() const override { return OptionWithValue<T>::valueSemantics(); }
     BaseValueSemantics& baseValueSemantics() override { return OptionWithValue<T>::valueSemantics(); }
@@ -179,31 +181,36 @@ class OptionsGroup2 : public AbstractOption {
     void accept(AbstractOptionVisitor& visitor) override;
 };
 
-class OneOfAbstract : public AbstractOption { // TODO: diamond inheritance
-    public:
-    virtual std::shared_ptr<AbstractOption> alternative(size_t idx) = 0;
-    virtual size_t alternativesSize() = 0;
-    void accept(AbstractOptionVisitor& visitor) override;
+class OneOfPositional : public AbstractPositionalOption {
+   public:
+    std::vector<std::shared_ptr<AbstractPositionalOption>> alternatives;
+    OneOfPositional() {}
+    OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1, std::shared_ptr<AbstractPositionalOption> alt2);
+    OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1,
+                    std::shared_ptr<AbstractPositionalOption> alt2,
+                    std::shared_ptr<AbstractPositionalOption> alt3);
+
+    std::shared_ptr<AbstractPositionalOption> alternative(size_t idx) { return alternatives[idx]; }
+    size_t alternativesSize() { return alternatives.size(); }
+
+    std::shared_ptr<OneOfPositional> addAlternative(std::shared_ptr<AbstractPositionalOption> opt);
+    std::shared_ptr<OneOfPositional> addAlternative2(std::shared_ptr<AbstractOption> opt);
+    void accept(AbstractOptionVisitor& visitor);
 };
 
-template<class AlternativeType>
-class OneOf : public AlternativeType, public OneOfAbstract {
+class OneOfNamed : public NamedOption {
    public:
-    std::vector<std::shared_ptr<AlternativeType>> alternatives;
-    OneOf() {}
-    OneOf(std::shared_ptr<AlternativeType> alt1, std::shared_ptr<AlternativeType> alt2);
-    OneOf(std::shared_ptr<AlternativeType> alt1, std::shared_ptr<AlternativeType> alt2, std::shared_ptr<AlternativeType> alt3);
+    std::vector<std::shared_ptr<NamedOption>> alternatives;
+    OneOfNamed() {}
+    OneOfNamed(std::shared_ptr<NamedOption> alt1, std::shared_ptr<NamedOption> alt2);
+    OneOfNamed(std::shared_ptr<NamedOption> alt1, std::shared_ptr<NamedOption> alt2, std::shared_ptr<NamedOption> alt3);
 
-    std::shared_ptr<AbstractOption> alternative(size_t idx) override {
-        return alternatives[idx];
-    }
-    size_t alternativesSize() override {
-        return alternatives.size();
-    }
+    std::shared_ptr<NamedOption> alternative(size_t idx) { return alternatives[idx]; }
+    size_t alternativesSize() { return alternatives.size(); }
 
-
-    std::shared_ptr<OneOf> addAlternative(std::shared_ptr<AlternativeType> opt);
-    void accept(AbstractOptionVisitor& visitor) override;
+    std::shared_ptr<OneOfNamed> addAlternative(std::shared_ptr<NamedOption> opt);
+    std::shared_ptr<OneOfNamed> addAlternative2(std::shared_ptr<AbstractOption> opt);
+    void accept(AbstractOptionVisitor& visitor);
 };
 
 inline AbstractOption::AbstractOption() : required_{false} {
@@ -280,25 +287,52 @@ inline std::string NamedOption::displayName() const {  // TODO where is it used?
     return std::string("-") + undecorated_long_name_.value();
 }
 
-template<class AlternativeType>
-inline OneOf<AlternativeType>::OneOf(std::shared_ptr<AlternativeType> alt1, std::shared_ptr<AlternativeType> alt2) {
-    alternatives.push_back(alt1);
-    alternatives.push_back(alt2);
+inline OneOfPositional::OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1,
+                                        std::shared_ptr<AbstractPositionalOption> alt2) {
+    addAlternative(alt1);
+    addAlternative(alt2);
 }
 
-template<class AlternativeType>
-inline OneOf<AlternativeType>::OneOf(std::shared_ptr<AlternativeType> alt1,
-                    std::shared_ptr<AlternativeType> alt2,
-                    std::shared_ptr<AlternativeType> alt3) {
-    alternatives.push_back(alt1);
-    alternatives.push_back(alt2);
-    alternatives.push_back(alt3);
+inline OneOfPositional::OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1,
+                                        std::shared_ptr<AbstractPositionalOption> alt2,
+                                        std::shared_ptr<AbstractPositionalOption> alt3) {
+    addAlternative(alt1);
+    addAlternative(alt2);
+    addAlternative(alt3);
 }
 
-template<class AlternativeType>
-std::shared_ptr<OneOf<AlternativeType>> OneOf<AlternativeType>::addAlternative(std::shared_ptr<AlternativeType> opt) {
+inline std::shared_ptr<OneOfPositional> OneOfPositional::addAlternative(std::shared_ptr<AbstractPositionalOption> opt) {
     alternatives.push_back(opt);
-    return std::static_pointer_cast<OneOf>(shared_from_this());
+    return std::static_pointer_cast<OneOfPositional>(shared_from_this());
+}
+inline std::shared_ptr<OneOfPositional> OneOfPositional::addAlternative2(std::shared_ptr<AbstractOption> opt) {
+    auto p = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
+    assert(p != nullptr);
+    alternatives.push_back(p);
+    return std::static_pointer_cast<OneOfPositional>(shared_from_this());
+}
+inline OneOfNamed::OneOfNamed(std::shared_ptr<NamedOption> alt1, std::shared_ptr<NamedOption> alt2) {
+    addAlternative(alt1);
+    addAlternative(alt2);
+}
+
+inline OneOfNamed::OneOfNamed(std::shared_ptr<NamedOption> alt1,
+                              std::shared_ptr<NamedOption> alt2,
+                              std::shared_ptr<NamedOption> alt3) {
+    addAlternative(alt1);
+    addAlternative(alt2);
+    addAlternative(alt3);
+}
+
+inline std::shared_ptr<OneOfNamed> OneOfNamed::addAlternative(std::shared_ptr<NamedOption> opt) {
+    alternatives.push_back(opt);
+    return std::static_pointer_cast<OneOfNamed>(shared_from_this());
+}
+inline std::shared_ptr<OneOfNamed> OneOfNamed::addAlternative2(std::shared_ptr<AbstractOption> opt) {
+    auto p = std::dynamic_pointer_cast<NamedOption>(opt);
+    assert(p != nullptr);
+    alternatives.push_back(p);
+    return std::static_pointer_cast<OneOfNamed>(shared_from_this());
 }
 
 inline void AbstractOption::accept(AbstractOptionVisitor& visitor) {
@@ -328,11 +362,15 @@ inline void OptionsGroup2::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<NamedCommand>(shared_from_this()));
 }*/
 
-inline void OneOfAbstract::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<OneOfAbstract>(shared_from_this()));
+inline void OneOfPositional::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<OneOfPositional>(shared_from_this()));
 }
 
-inline bool isPositional(std::shared_ptr<AbstractOption> opt) {
+inline void OneOfNamed::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::static_pointer_cast<OneOfNamed>(shared_from_this()));
+}
+
+inline bool isPositional(std::shared_ptr<AbstractOption> opt) {  /// todo: 2del
     return std::dynamic_pointer_cast<AbstractPositionalOption>(opt) != nullptr ||
            std::dynamic_pointer_cast<LiteralString>(opt) != nullptr;
 }
