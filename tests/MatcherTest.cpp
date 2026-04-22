@@ -105,7 +105,7 @@ TEST_F(MatcherFixture, Test2) {
     EXPECT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     EXPECT_TRUE(parser.parse({"run"}));
     EXPECT_TRUE(parser.parse({"gather", "-g"}));
-    EXPECT_THROW(parser.parse({"run", "gather", "-g"}), OnlyOneChoiseIsAllowed);
+    EXPECT_THROW(parser.parse({"run", "gather", "-g"}), TooManyPositionalOptions);
     EXPECT_TRUE(parser.parse({"run", "--common"}));
     EXPECT_TRUE(parser.parse({"--common", "run", "-d"}));
 }
@@ -198,27 +198,30 @@ TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
     ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
     ASSERT_EQ(parser.storage[opt].valueAs<int>(0), 20);
     EXPECT_EQ(d, 20);
-    EXPECT_TRUE(parser.parse("20,30"));
+    EXPECT_TRUE(parser.parse("20 30"));
     ASSERT_TRUE(parser.storage.contains(opt));
     ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
     EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
     EXPECT_EQ(parser.storage[opt].rawValues(1, 0), "30");
     EXPECT_EQ(parser.storage[opt].rawValues(0), "30");
     EXPECT_EQ(d, 30);
-    ASSERT_THROW(parser.parse("20,30,40"), TooManyPositionalOptions);
+    ASSERT_THROW(parser.parse("20 30 40"), TooManyPositionalOptions);
 }
 
 TEST(Matcher, MultipleValuesOfNamedOptionExact) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    int d{0};
+    Matcher parser(opt);
+    parser.storage.setExternalStorage(opt, &d);
+
+    ASSERT_THROW(parser.parse("--opt1"), ExpectedValue);
+
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
     opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::EXACT, 2);
 
-    Matcher parser(opt);
-    int d{0};
     opt->valueSemantics().setExternalStorage(d);
-    parser.storage.setExternalStorage(opt, &d);
-    parser.parse({});
+    EXPECT_NO_THROW(parser.parse({}));
     EXPECT_EQ(d, 10);
     EXPECT_TRUE(parser.parse("--opt1 20,30"));
     ASSERT_TRUE(parser.storage.contains(opt));
@@ -229,22 +232,27 @@ TEST(Matcher, MultipleValuesOfNamedOptionExact) {
     EXPECT_EQ(d, 30);
     ASSERT_THROW(parser.parse("--opt1 20,30 --opt1 40,40 --opt1 20,20"), MaxOptionOccurenceIsExceeded);
     ASSERT_THROW(parser.parse("--opt1 20"), ExpectedExactNumberOfValues);
-    ASSERT_THROW(parser.parse("--opt1"),
-                 ExpectedValue);  /// todo: ExpectedValue vs TooFewValuesForOption
 }
 
 TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    Matcher parser(opt);
+    int d{0};
+    opt->valueSemantics().setExternalStorage(d);
+    parser.storage.setExternalStorage(opt, &d);
+
+    ASSERT_THROW(parser.parse("--opt1"), ExpectedValue);
+    opt->setValueRequired(false);
+    ASSERT_TRUE(parser.parse("--opt1"));
+    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 0);
+
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
     opt->setValueRequired(true);
     opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
 
-    Matcher parser(opt);
-    int d{0};
-    opt->valueSemantics().setExternalStorage(d);
-    parser.storage.setExternalStorage(opt, &d);
-    parser.parse({});
+    EXPECT_NO_THROW(parser.parse({}));
     EXPECT_EQ(d, 10);
     ASSERT_TRUE(parser.parse("--opt1 20,30"));
     ASSERT_TRUE(parser.storage.contains(opt));
@@ -270,11 +278,6 @@ TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
 
     ASSERT_THROW(parser.parse("--opt1 20,30 filename"), TooManyPositionalOptions);
 
-    ASSERT_THROW(parser.parse("--opt1"), ExpectedValue);
-    opt->setValueRequired(false);
-    ASSERT_TRUE(parser.parse("--opt1"));
-    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
-    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 0);
     ASSERT_TRUE(parser.parse("--opt1 20,30"));
     ASSERT_TRUE(parser.storage.contains(opt));
     ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
@@ -339,7 +342,8 @@ TEST(Matcher, MultipleValuesOfPositionalOption) {
     EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
     EXPECT_EQ(parser.storage[opt].rawValues(1), "30");
     EXPECT_EQ(d, 30);
-    EXPECT_TRUE(parser.parse("20,30,40"));
+    EXPECT_THROW(parser.parse("20,30,40"), TooManyValuesForOption);
+    EXPECT_TRUE(parser.parse("20,30 40"));
     ASSERT_TRUE(parser.storage.contains(opt));
     ASSERT_EQ(parser.storage[opt].occurrenceCount(), 2);
     ASSERT_EQ(parser.storage[opt].occurrenceSize(0), 2);
@@ -349,7 +353,7 @@ TEST(Matcher, MultipleValuesOfPositionalOption) {
     EXPECT_EQ(parser.storage[opt].rawValues(1, 0), "40");
     EXPECT_EQ(parser.storage[opt].rawValues(0), "40");
     EXPECT_EQ(d, 40);
-    ASSERT_THROW(parser.parse("20,30,40 50 60"), TooManyPositionalOptions);
+    ASSERT_THROW(parser.parse("20,30 50 60"), TooManyPositionalOptions);
 }
 
 TEST(Matcher, TwoPositionalOptions) {

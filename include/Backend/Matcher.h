@@ -47,7 +47,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 /* nothing to do */;
         }
         match = true;
-        value = grammar_parser_.getValue(opt);  // todo: try to read as many values as possible
+        value = grammar_parser_.getValueOpt(opt);  // todo: try to read as many values as possible
         unlocks = opt->unlocks();               // todo: avoid copying of the vector
     }
     void visit(std::shared_ptr<LiteralString> opt) override {
@@ -112,7 +112,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 /* nothing to do*/;
         }
         if (match) {
-            value = grammar_parser_.getValue(opt);
+            value = grammar_parser_.getValueOpt(opt);
             unlocks = opt->unlocks();  // todo: avoid copying of a vector
         };
     }
@@ -163,7 +163,9 @@ class BaseMatcher {
     std::set<std::shared_ptr<AbstractOption>> already_joined_;
     std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
     std::shared_ptr<AbstractOption> options_;
-    size_t last_positional_option_idx_{0};
+    size_t cur_positional_option_idx_{0};
+
+    //std::vector<std::vector<std::shared_ptr<AbstractOption>>> mutual_exclusive_options_;
 
    public:
     KeyValueStorage storage;
@@ -179,35 +181,50 @@ class BaseMatcher {
         already_joined_.clear();
         storage.clear();
         opts_counter_.clear();
-        last_positional_option_idx_ = 0;
+        cur_positional_option_idx_ = 0;
         joinOptionsTo({options_}, remaining_options_);
     }
 
-    std::shared_ptr<AbstractOption> eatNextPositionalOption(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
-        for (size_t idx = last_positional_option_idx_; idx < remaining_options_.size(); idx++) {
-            auto opt = remaining_options_[idx];
-            auto p = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
-            if (p == nullptr) {
-                continue;
+    std::shared_ptr<AbstractPositionalOption> eatNextPositionalOption(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
+        auto next_positional_option = [&](size_t idx)->auto {
+            std::shared_ptr<AbstractPositionalOption> p;
+            while(idx < remaining_options_.size()) {
+                auto opt = remaining_options_[idx];
+                p = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
+                if (p != nullptr) {
+                    break;
+                }
+                idx++;
             }
-            if (!canAcceptNewOccurrence(opt)) {
-                continue;
-            }
-            opt->accept(matcher);
-            if (matcher.match) {
-                last_positional_option_idx_ = idx;
-                return opt;
-            };
+            return idx;
+        };
+        cur_positional_option_idx_ = next_positional_option(cur_positional_option_idx_);        
+        if(cur_positional_option_idx_ == remaining_options_.size()) {
+            throw TooManyPositionalOptions("");
         }
-        throw TooManyPositionalOptions("");
+        auto opt = remaining_options_[cur_positional_option_idx_];
+        if (!canAcceptNewOccurrence(opt)) {
+            cur_positional_option_idx_++;
+            cur_positional_option_idx_ = next_positional_option(cur_positional_option_idx_);        
+            if(cur_positional_option_idx_ == remaining_options_.size()) {
+                throw TooManyPositionalOptions("");
+            }
+            opt = remaining_options_[cur_positional_option_idx_];
+        }
+        opt->accept(matcher);
+        if (matcher.match) {
+            auto res = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
+            assert(res);
+            return res;
+        };
         return nullptr;
     }
 
     std::shared_ptr<AbstractOption> eatNextNamedOption(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
         for (auto opt : remaining_options_) {
-            if (!canAcceptNewOccurrence(opt)) {
+            /*if (!canAcceptNewOccurrence(opt)) {
                 continue;
-            }
+            }*/
             opt->accept(matcher);
             if (matcher.match) {
                 return opt;
@@ -221,7 +238,7 @@ class BaseMatcher {
         // If DOUBLE_DASH then all next options will be treated as positionals
         if (args.current_result.token_type == ArgGrammarParser::TokenTypes::DOUBLE_DASH) {
             matcher.setPositionalOnlyFlag(true);
-            last_positional_option_idx_++;
+            cur_positional_option_idx_++;
             return nullptr;
         }
         std::shared_ptr<AbstractOption> res = nullptr;
@@ -288,20 +305,24 @@ class BaseMatcher {
             matcher.value = std::nullopt;
             return;
         }
-        args.getNextOption();
-        bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
-        if (arg_is_value) {
-            setOptionValue(opt, args.getValue(nullptr));
-            return;
-        };
-        args.ungetOption();
+        if(!args.eof()) {
+            args.getNextOption();
+            bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
+            if (arg_is_value) {
+                std::optional<std::string> value_opt = args.getValueOpt(nullptr);
+                assert(value_opt.has_value());
+                setOptionValue(opt, *value_opt);
+                return;
+            };
+            args.ungetOption();
+        }
         // Try to apply default value
         bool has_default_value = opt->baseValueSemantics().hasDefaultValue();
         if (has_default_value) {
             setDefaultValue(opt);
             return;
         }
-        throw ExpectedValue(nullptr);
+        throw ExpectedValue();
     }
 
     void parseNext(ArgGrammarParser& args) {
@@ -389,13 +410,16 @@ class BaseMatcher {
             size_t actual = storage[opt].lastOccurrenceSize();
             size_t expected = opt->nValues();
             if (actual < expected) {
+                if(actual == 0) {
+                    throw ExpectedValue();
+                }
                 throw TooFewValuesForOption();  // todo print message
             }
         }
         if (opt->valueRequired()) {
             size_t actual = storage[opt].lastOccurrenceSize();
             if (actual == 0) {
-                throw ExpectedValue(nullptr);
+                throw ExpectedValue();
             }
         }
     }
@@ -461,16 +485,23 @@ class Matcher : public BaseMatcher {
    private:
     void checkUnusedRequiredOptions() {
         // check that all required options are used
+        bool too_few_pos_opts{false};
+        bool required_opt_is_not_set{false};
         for (auto p : remaining_options_) {
             if (p->required() && optionEncountered(p) == 0) {
                 auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p);
-                if (q) {
-                    throw TooFewPositionalOptions();  /// TODO print how many
-                                                      /// pos options are
-                                                      /// expected
+                if (!q) {
+                    too_few_pos_opts = true;
                 }
-                throw RequiredOptionIsNotSet(q);
+                required_opt_is_not_set = true;
             }
+        }
+        if(required_opt_is_not_set) {
+            throw RequiredOptionIsNotSet(nullptr);
+        }
+        if(too_few_pos_opts) {
+            /// TODO print how many pos options are expected
+            throw TooFewPositionalOptions();
         }
     }
 

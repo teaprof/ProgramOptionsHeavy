@@ -218,32 +218,35 @@ class ArgGrammarParser {
         return "";  // to suppress warning "no return value"
     }
 
-    std::string getValue(std::shared_ptr<AbstractOption> opt) {  /// todo: opt is only used to print an error message
+    std::optional<std::string> getValueOpt(std::shared_ptr<AbstractOption> opt) {  /// todo: opt is only used to print an error message
         switch (current_result.token_type) {
             case TokenTypes::SHORT_OPTION_WITHOUT_VALUE: {
-                throw ExpectedValue(opt);
+                //throw ExpectedValue(opt);
+                return std::nullopt;
             }
             case TokenTypes::LONG_OPTION:
             case TokenTypes::SHORT_OPTION: {
                 if (eof()) {
-                    throw ExpectedValue(opt);
+                    return std::nullopt;
+                    //throw ExpectedValue(opt);
                 }
                 ArgLexer::Result lex_result = ArgLexer::lex(args_[idx_++], match_only_positional);
                 if (lex_result.type == ArgLexer::VALUE) {
                     return lex_result.value;
                 }
-                // return args_[idx++]; // force next arg as value
-                throw ExpectedValue(opt);
+                return std::nullopt;
+                //throw ExpectedValue(opt);
             }
             case TokenTypes::DOUBLE_DASH: {
-                throw ExpectedValue(opt);
+                return std::nullopt;
+                //throw ExpectedValue(opt);
             }
             case TokenTypes::VALUE:
             case TokenTypes::SHORT_OPTION_EQ_VALUE:
             case TokenTypes::LONG_OPTION_EQ_VALUE:
                 return current_result.value;
         }
-        return "";  // to suppress warning "no return value"
+        return std::nullopt;  // to suppress warning "no return value"
     }
     size_t getNextIndex() const {
         // return arg index that will be parsed on next call of getNextOption()

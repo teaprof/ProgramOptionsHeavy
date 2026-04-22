@@ -289,16 +289,16 @@ inline std::string NamedOption::displayName() const {  // TODO where is it used?
 
 inline OneOfPositional::OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1,
                                         std::shared_ptr<AbstractPositionalOption> alt2) {
-    addAlternative(alt1);
-    addAlternative(alt2);
+    alternatives.push_back(alt1);
+    alternatives.push_back(alt2);
 }
 
 inline OneOfPositional::OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1,
                                         std::shared_ptr<AbstractPositionalOption> alt2,
                                         std::shared_ptr<AbstractPositionalOption> alt3) {
-    addAlternative(alt1);
-    addAlternative(alt2);
-    addAlternative(alt3);
+    alternatives.push_back(alt1);
+    alternatives.push_back(alt2);
+    alternatives.push_back(alt3);
 }
 
 inline std::shared_ptr<OneOfPositional> OneOfPositional::addAlternative(std::shared_ptr<AbstractPositionalOption> opt) {
@@ -311,17 +311,18 @@ inline std::shared_ptr<OneOfPositional> OneOfPositional::addAlternative2(std::sh
     alternatives.push_back(p);
     return std::static_pointer_cast<OneOfPositional>(shared_from_this());
 }
+
 inline OneOfNamed::OneOfNamed(std::shared_ptr<NamedOption> alt1, std::shared_ptr<NamedOption> alt2) {
-    addAlternative(alt1);
-    addAlternative(alt2);
+    alternatives.push_back(alt1);
+    alternatives.push_back(alt2);
 }
 
 inline OneOfNamed::OneOfNamed(std::shared_ptr<NamedOption> alt1,
                               std::shared_ptr<NamedOption> alt2,
                               std::shared_ptr<NamedOption> alt3) {
-    addAlternative(alt1);
-    addAlternative(alt2);
-    addAlternative(alt3);
+    alternatives.push_back(alt1);
+    alternatives.push_back(alt2);
+    alternatives.push_back(alt3);
 }
 
 inline std::shared_ptr<OneOfNamed> OneOfNamed::addAlternative(std::shared_ptr<NamedOption> opt) {

@@ -46,11 +46,6 @@ class RequiredOptionIsNotSet : public BaseOptionError {
         : BaseOptionError(opt) {}  // std::runtime_error("required option is not set") {}
 };
 
-class ExpectedValue : public BaseOptionError {
-   public:
-    ExpectedValue(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
-};
-
 class InvalidValueType : public BaseOptionError {
    public:
     InvalidValueType(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected)
@@ -105,16 +100,22 @@ class IncorrectAlternative : public std::logic_error {
    public:
     IncorrectAlternative(std::shared_ptr<AbstractOption> opt) : std::logic_error("incorrect alternative") {}
 };
-class IncorrectLiteralString : public ExpectedValue {
+class IncorrectLiteralString : public BaseOptionError {
    public:
     IncorrectLiteralString(std::shared_ptr<LiteralString> expected, std::string received)
-        : ExpectedValue(expected), literal_string{expected} {}
+        : BaseOptionError(expected), literal_string{expected} {}
     std::shared_ptr<LiteralString> literal_string;
 };
 class TooFewValuesForOption : public BaseOptionError {
    public:
     TooFewValuesForOption() : BaseOptionError(nullptr) {}  // too few values for options, expected at least N or exact N
 };
+
+class ExpectedValue : public TooFewValuesForOption {
+   public:
+    ExpectedValue() : TooFewValuesForOption() {}
+};
+
 class ExpectedExactNumberOfValues : public BaseOptionError {
    public:
     ExpectedExactNumberOfValues() : BaseOptionError(nullptr) {}  // too few values for options, expected at least N or exact N
