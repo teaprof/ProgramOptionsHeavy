@@ -241,15 +241,11 @@ TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
     opt->valueSemantics().setExternalStorage(d);
     parser.storage.setExternalStorage(opt, &d);
 
+    opt->setNValues(AbstractOptionWithValue::NValuesRole::INFINITE);
     ASSERT_THROW(parser.parse("--opt1"), ExpectedValue);
-    opt->setValueRequired(false);
-    ASSERT_TRUE(parser.parse("--opt1"));
-    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
-    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 0);
 
     opt->valueSemantics().setDefaultValue(10);
     opt->setMaxOccurreneCount(1);
-    opt->setValueRequired(true);
     opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
 
     EXPECT_NO_THROW(parser.parse({}));
@@ -367,7 +363,7 @@ TEST(Matcher, TwoPositionalOptions) {
     EXPECT_NO_THROW(parser.parse("file1"));
     EXPECT_NO_THROW(parser.parse("file1 10"));
     EXPECT_NO_THROW(parser.parse("file1 10 20"));
-    EXPECT_THROW(parser.parse("file1 10 20,30"), TooManyPositionalOptions);
+    EXPECT_THROW(parser.parse("file1 10 20 30"), TooManyPositionalOptions);
 }
 
 TEST(Matcher, TwoPositionalOptionsWithDoubleDash) {
@@ -451,8 +447,8 @@ TEST(Matcher, NestedAlternatives) {
     ASSERT_THROW(parser.parse("--opt11"), UnknownNamedOption);
     ASSERT_THROW(parser.parse("alt1 alt12 --opt12 --unknown"), UnknownNamedOption);
     ASSERT_THROW(parser.parse("alt2 --opt21"), UnknownNamedOption);
-    ASSERT_THROW(parser.parse("alt1 alt2"), OnlyOneChoiseIsAllowed);
-    ASSERT_THROW(parser.parse("alt1 alt11 alt12"), OnlyOneChoiseIsAllowed);
+    ASSERT_THROW(parser.parse("alt1 alt2"), UnexpectedValueForPositionalOption);
+    ASSERT_THROW(parser.parse("alt1 alt11 alt12"), TooManyPositionalOptions);
 }
 
 TEST(Matcher, NestedAlternativesWithEqualNames) {

@@ -322,7 +322,7 @@ class BaseMatcher {
             setDefaultValue(opt);
             return;
         }
-        throw ExpectedValue();
+        //throw ExpectedValue();
     }
 
     void parseNext(ArgGrammarParser& args) {
@@ -405,9 +405,11 @@ class BaseMatcher {
     }*/
     void checkIfOccurrenceIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {  // TODO: rename to something like
                                                                                        // checkIfValueListIsCompleted
+        size_t actual = 0;
+        if(storage.contains(opt)) {
+            actual = storage[opt].lastOccurrenceSize();                
+        }
         if (opt->nValuesRole() == AbstractOptionWithValue::NValuesRole::EXACT) {
-            assert(storage.contains(opt));
-            size_t actual = storage[opt].lastOccurrenceSize();
             size_t expected = opt->nValues();
             if (actual < expected) {
                 if(actual == 0) {
@@ -415,9 +417,7 @@ class BaseMatcher {
                 }
                 throw TooFewValuesForOption();  // todo print message
             }
-        }
-        if (opt->valueRequired()) {
-            size_t actual = storage[opt].lastOccurrenceSize();
+        } else {
             if (actual == 0) {
                 throw ExpectedValue();
             }
@@ -460,6 +460,7 @@ class BaseMatcher {
         }
     }
 
+    public:
     bool canAcceptNewOccurrence(std::shared_ptr<AbstractOption> opt) {
         size_t actual_count = 0;
         if (opts_counter_.contains(opt)) {

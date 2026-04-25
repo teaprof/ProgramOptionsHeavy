@@ -141,7 +141,9 @@ class Completer : public BaseMatcher {
 
         NameCompleter visitor(results, regexstr);
         for (auto& opt : this->remaining_options_) {
-            opt->accept(visitor);
+            if(canAcceptNewOccurrence(opt)) {
+                opt->accept(visitor);
+            };
         }
         return results;
     }

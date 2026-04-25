@@ -98,8 +98,6 @@ class AbstractOptionWithValue {
         UPTO,      // todo: 0..upto or 1..upto
         INFINITE,  // todo: 0..inf or 1..inf
     };
-    bool valueRequired() const { return value_required_; }
-    bool setValueRequired(bool value_required) { return value_required_ = value_required; }
     void setNValues(NValuesRole role, size_t count = 1) {
         nvalues_role_ = role;
         nvalues_ = count;
@@ -110,7 +108,6 @@ class AbstractOptionWithValue {
    private:
     NValuesRole nvalues_role_{NValuesRole::EXACT};
     size_t nvalues_{1};
-    bool value_required_{false};
 };
 
 class AbstractPositionalOption : public AbstractOption {
@@ -359,10 +356,6 @@ inline void OptionsGroup2::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::dynamic_pointer_cast<OptionsGroup2>(shared_from_this()));
 }
 
-/*inline void NamedCommand::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::static_pointer_cast<NamedCommand>(shared_from_this()));
-}*/
-
 inline void OneOfPositional::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<OneOfPositional>(shared_from_this()));
 }
@@ -371,9 +364,9 @@ inline void OneOfNamed::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::static_pointer_cast<OneOfNamed>(shared_from_this()));
 }
 
-inline bool isPositional(std::shared_ptr<AbstractOption> opt) {  /// todo: 2del
+/*inline bool isPositional(std::shared_ptr<AbstractOption> opt) {  /// todo: 2del
     return std::dynamic_pointer_cast<AbstractPositionalOption>(opt) != nullptr ||
            std::dynamic_pointer_cast<LiteralString>(opt) != nullptr;
-}
+}*/
 
 #endif
