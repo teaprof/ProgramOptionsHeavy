@@ -160,8 +160,6 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue, public OptionW
 
 class AbstractPositionalOptionWithValue : public AbstractPositionalOption, public AbstractOptionWithValue {
    public:
-    // TODO: How multiple occurences can be distingueshed from multiple values
-    // in one occurence?
     void accept(AbstractOptionVisitor& visitor) override;
 };
 

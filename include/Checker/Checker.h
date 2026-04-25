@@ -21,7 +21,7 @@ class Checker {
     Checker() {}
     void operator()(std::shared_ptr<AbstractOption> opt) {
         Combinator combinator(opt);
-        Unochecker unocheker;
+        UnoChecker unocheker;
         PairwiseChecker pairwise_checker;
         for (auto& branch : combinator.branches) {
             for (auto& opt : branch) {

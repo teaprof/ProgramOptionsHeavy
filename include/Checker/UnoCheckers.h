@@ -10,6 +10,7 @@ class DefaultValueChecker {  /// TODO rename
                              // - if the default value satisfies regex
                              // - if the default value is contained in Unlocks
                              // - the same for implicit value
+                             // TODO: if exact n values are required then the default value should support arrays
    public:
     static void checkDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt) {
         if (opt->baseValueSemantics().hasDefaultValue()) {
@@ -17,7 +18,7 @@ class DefaultValueChecker {  /// TODO rename
     }
 };
 
-class Unochecker : public AbstractOptionVisitor {
+class UnoChecker : public AbstractOptionVisitor {
     void visit(std::shared_ptr<AbstractOption> opt) {
         // nothing to do
     }

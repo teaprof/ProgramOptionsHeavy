@@ -7,7 +7,6 @@
 class NamesCollisionChecker {
    public:
     static bool checkNamesCollision(std::shared_ptr<AbstractOption> first, std::shared_ptr<AbstractOption> second) {
-        /// TODO: rename to checkNamesCollision
         auto first_named = std::dynamic_pointer_cast<NamedOption>(first);
         auto second_named = std::dynamic_pointer_cast<NamedOption>(second);
         if (first_named && second_named) {

@@ -264,36 +264,6 @@ class BaseMatcher {
         if (res) {
             return res;
         }
-
-        // Process parsing error
-        // Search this option among used options:
-
-        /*for (auto opt : used_options_) {
-            opt->accept(matcher);
-            if (matcher.match) {
-                throw MaxOptionOccurenceIsExceeded(opt);
-            };
-        }*/
-
-        // check for correct use of the positional options
-        /*if (args.current_result.token_type == ArgGrammarParser::VALUE) {
-            // TODO it could be LiteralString
-            if (matcher.checked_positional_options.empty()) {
-                // no positional option have been expected
-                throw TooManyPositionalOptions(args.getRawOptionName());
-            }
-            if (matcher.checked_positional_options.size() == 1) {
-                // positional option was possible, but it doesn't match
-                const auto& opt = matcher.checked_positional_options.front();
-                if (auto p = std::dynamic_pointer_cast<LiteralString>(opt)) {
-                    throw IncorrectLiteralString(p, args.current_result.value);
-                }
-                throw UnexpectedValueForPositionalOption(args.getRawOptionName());
-            }
-            // If OneOfPositional was encountered more than one positional option can
-            // be checked
-            throw UnexpectedValueForPositionalOption(args.getRawOptionName());
-        }*/
         throw UnknownNamedOption(args.getRawOptionName());
         return nullptr;
     }
@@ -336,7 +306,7 @@ class BaseMatcher {
 
             if (auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
                 eatValueIfCan(args, matcher, p);
-                checkIfOccurrenceIsCompleted(p);
+                ensureValueListIsCompleted(p);
             };
 
             if (increaseOptionOccurrenceCounter(opt)) {
@@ -351,7 +321,6 @@ class BaseMatcher {
                 throw OptionDoesntAcceptValue();
             }
         };
-        // TODO: check maybe next option is correct but occurred more than allowed number of times
     }
 
     void parse(ArgGrammarParser args) {  // TODO:  rename (Parser is another class)
@@ -396,15 +365,7 @@ class BaseMatcher {
         }
         return false;
     }
-    /*void addValueToCurrentOccurrence(std::shared_ptr<AbstractOptionWithValue> opt,
-                                     const std::string& value,
-                                     std::vector<std::shared_ptr<AbstractOption>>& unlocked_by_value) {
-        //TODO: remove this function since value list can be specified using comman
-        std::any val = opt->baseValueSemantics().semanticParse(value);
-        storage.addValueToCurrentOccurence(opt, value, val);
-    }*/
-    void checkIfOccurrenceIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {  // TODO: rename to something like
-                                                                                       // checkIfValueListIsCompleted
+    void ensureValueListIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {
         size_t actual = 0;
         if(storage.contains(opt)) {
             actual = storage[opt].lastOccurrenceSize();                
@@ -424,7 +385,6 @@ class BaseMatcher {
         }
     }
     void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt) {
-        // TODO: if n values are required then the default value should support arrays
         std::any v = opt->baseValueSemantics().setToDefault();
         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
         joinOptionsTo(unlocked_by_value, remaining_options_);
