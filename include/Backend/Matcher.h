@@ -257,7 +257,7 @@ class BaseMatcher {
             case ArgGrammarParser::TokenTypes::VALUE:
                 res = eatNextPositionalOption(args, matcher);
                 if (res == 0) {
-                    throw UnexpectedValueForPositionalOption("");
+                    throw UnexpectedValueForPositionalOption(args.current_result.value);
                 }
                 break;
         }
@@ -361,7 +361,7 @@ class BaseMatcher {
             if (auto p = std::dynamic_pointer_cast<OneOfPositional>(opt)) {
                 throw OnlyOneChoiseIsAllowed(p);  // todo: make separate checker for OneOfPositional
             }
-            throw MaxOptionOccurenceIsExceeded(opt);
+            throw MaxOptionOccurrenceIsExceeded(opt);
         }
         return false;
     }
@@ -374,13 +374,13 @@ class BaseMatcher {
             size_t expected = opt->nValues();
             if (actual < expected) {
                 if(actual == 0) {
-                    throw ExpectedValue();
+                    throw ExpectedValue(opt);
                 }
-                throw TooFewValuesForOption();  // todo print message
+                throw TooFewValuesForOption(opt);  // todo print message
             }
         } else {
             if (actual == 0) {
-                throw ExpectedValue();
+                throw ExpectedValue(opt);
             }
         }
     }
@@ -397,11 +397,11 @@ class BaseMatcher {
         switch (opt->nValuesRole()) {
             case AbstractOptionWithValue::NValuesRole::EXACT:
                 if (opt->nValues() != tokens.size()) {
-                    throw ExpectedExactNumberOfValues();
+                    throw ExpectedExactNumberOfValues(opt);
                 }
             case AbstractOptionWithValue::NValuesRole::UPTO:
                 if (tokens.size() > opt->nValues()) {
-                    throw TooManyValuesForOption();
+                    throw TooManyValuesForOption(opt);
                 }
             case AbstractOptionWithValue::NValuesRole::INFINITE:
                 /* nothing to do*/

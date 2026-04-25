@@ -100,7 +100,7 @@ class Completer : public BaseMatcher {
             while (args.getNextIndex() + 1 < args.size()) {
                 BaseMatcher::parseNext(args);
             }
-        } catch (BaseOptionError& err) {
+        } catch (BaseError& err) {
             // in case of error return empty results
             return results;
         }
@@ -112,9 +112,6 @@ class Completer : public BaseMatcher {
             }
             assert(args.eof());
         } catch (const UnexpectedValueForPositionalOption& err) {
-            regexstr = args.current_result.value + ".*";
-        } catch (const IncorrectLiteralString& err) {
-            // return {err.literal_string_->str()};
             regexstr = args.current_result.value + ".*";
         } catch (const ExpectedValue& err) {
             return {};
@@ -135,7 +132,6 @@ class Completer : public BaseMatcher {
         } catch (const BaseOptionError& err) {
         } catch (const std::runtime_error& err) {
         } catch (...) {
-            // std::cerr<<__LINE__<<std::endl;
             assert(false);
         }
 

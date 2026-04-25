@@ -7,20 +7,27 @@
 
 #include "Option.h"
 
-class BaseOptionError : public std::runtime_error {
+class BaseError : public std::runtime_error {
    public:
-    BaseOptionError(std::shared_ptr<AbstractOption> opt) : std::runtime_error(BaseOptionError::description(opt)), opt_{opt} {}
-    static std::string description(std::shared_ptr<AbstractOption> opt) {
+    BaseError(const std::string& str) : std::runtime_error(description(str)) {}
+    static std::string description(const std::string& str) {
+        return std::string("Option error: ") + str;
+    }
+   private:
+};
+
+class BaseOptionError : public BaseError {
+   public:
+    BaseOptionError(const std::string& message, std::shared_ptr<AbstractOption> opt) : BaseError(description(message, opt)), opt_{opt} {}
+    static std::string description(const std::string& message, std::shared_ptr<AbstractOption> opt) {
         std::stringstream str;
-        str << "Option error: ";
+        str << "Option error: "<<message<<" ";
         str << BaseOptionError::displayName(opt);
         return str.str();
     }
+
     static std::string displayName(std::shared_ptr<AbstractOption> opt) {
-        /*if(auto p = std::dynamic_pointer_cast<NamedCommand>(opt)) {
-            return p->displayName();
-        }*/
-        return "";
+        return ""; // TODO: implement
     }
 
     std::shared_ptr<AbstractOption> opt() { return opt_; }
@@ -29,131 +36,124 @@ class BaseOptionError : public std::runtime_error {
     std::shared_ptr<AbstractOption> opt_;
 };
 
-class ExpectedOption : public BaseOptionError {
+// Options group 1 TODO: rename this
+class UnknownNamedOption : public BaseError {                                               
    public:
-    ExpectedOption() : BaseOptionError(nullptr) {}  //"Expected option") {}
+    UnknownNamedOption(std::string str) : BaseError(std::string("Unknown  named option: " + str)) {}
 };
 
-class UnknownNamedOption : public BaseOptionError {  /// TODO: make abstract base class to avoid
-                                                     /// direct inheritance from std::runtime_error
+class MaxOptionOccurrenceIsExceeded : public BaseOptionError {
    public:
-    UnknownNamedOption(std::string str) : BaseOptionError(nullptr) {}  // std::runtime_error("Unknown option") {}
+    MaxOptionOccurrenceIsExceeded(std::shared_ptr<AbstractOption> opt) : BaseOptionError("max option occurrence is exceeded", opt) {}
 };
 
+class OptionDoesntAcceptValue : public BaseOptionError { // TODO: NOT USED IN TESTS
+   public:
+    OptionDoesntAcceptValue() : BaseOptionError("option doesn't accept value", nullptr) {}
+};
+
+class OnlyOneChoiseIsAllowed : public BaseOptionError { // TODO: check how this is used
+                                                        // TODO: NOT USED IN TESTS
+   public:
+    OnlyOneChoiseIsAllowed(std::shared_ptr<OneOfPositional> opt)
+        : BaseOptionError("only one choice is allowed", std::dynamic_pointer_cast<AbstractOption>(opt)) {}
+};
+
+
+// Options group 2 TODO: rename this
+
+class BaseOptionWithValueError : public BaseError {
+   public:
+    BaseOptionWithValueError(const std::string& message, std::shared_ptr<AbstractOptionWithValue> opt) : BaseError(description(message, opt)), opt_{opt} {}
+    static std::string description(const std::string& message, std::shared_ptr<AbstractOptionWithValue> opt) {
+        std::stringstream str;
+        str << "Option error: "<<message<<" ";
+        str << displayName(opt);
+        return str.str();
+    }
+
+    static std::string displayName(std::shared_ptr<AbstractOptionWithValue> opt) {
+        return ""; // TODO: implement
+    }
+
+    std::shared_ptr<AbstractOptionWithValue> opt() { return opt_; }
+
+   private:
+    std::shared_ptr<AbstractOptionWithValue> opt_;
+};
+
+class TooFewValuesForOption : public BaseOptionWithValueError { // TODO: NOT USED IN TESTS
+   public:
+    TooFewValuesForOption(std::shared_ptr<AbstractOptionWithValue> opt) : 
+    BaseOptionWithValueError("too few values for option", opt) {} 
+};
+
+class ExpectedValue : public TooFewValuesForOption {
+   public:
+    ExpectedValue(std::shared_ptr<AbstractOptionWithValue> opt) : TooFewValuesForOption(opt) {}
+};
+
+class ExpectedExactNumberOfValues : public BaseOptionWithValueError {
+   public:
+    ExpectedExactNumberOfValues(std::shared_ptr<AbstractOptionWithValue> opt) : 
+    BaseOptionWithValueError("expected exact number of values", opt) {}  // too few values for options, expected at least N or exact N
+};
+
+class TooManyValuesForOption : public BaseOptionWithValueError {
+   public:
+    TooManyValuesForOption(std::shared_ptr<AbstractOptionWithValue> opt) : 
+    BaseOptionWithValueError("too many values for option", opt) {} 
+};
+
+class UnexpectedValueForPositionalOption : public BaseError {
+   public:
+    UnexpectedValueForPositionalOption(const std::string& value)
+        : BaseError(std::string("unexpected value for positional option: ") + value) {} 
+};
+
+// POSITIONAL OPTIONS
+
+class TooFewPositionalOptions : public BaseError { // TODO: NOT USED IN TESTS
+   public:
+    TooFewPositionalOptions() : BaseError("too few positional options") {} 
+};
+
+class TooManyPositionalOptions : public BaseError {
+   public:
+    TooManyPositionalOptions(const std::string& str)
+        : BaseError(std::string("too many positional options: ") + str) {} 
+};
+
+// Exceptions thrown while during checks after all arguments were parsed
 class RequiredOptionIsNotSet : public BaseOptionError {
    public:
     RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt)
-        : BaseOptionError(opt) {}  // std::runtime_error("required option is not set") {}
+        : BaseOptionError("required option is not set", opt) {}
 };
 
+
+// Exceptions used by ValueSemantics
 class InvalidValueType : public BaseOptionError {
    public:
     InvalidValueType(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected)
-        : BaseOptionError(opt) {}
+        : BaseOptionError("invalid value type", opt) {} // TODO: use received and expected
 };
 
-class InvalidOptionValue : public BaseOptionError {
+class InvalidOptionValue : public BaseOptionError { // TODO: check where it is used and improve implementation
    public:
     InvalidOptionValue(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected)
-        : BaseOptionError(opt) {}
+        : BaseOptionError("invalid value type", opt) {}
 };
 
 class ValueIsOutOfRange : public BaseOptionError {
    public:
     ValueIsOutOfRange(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected)
-        : BaseOptionError(opt) {}
+        : BaseOptionError("value is out of range", opt) {}
 };
 
 class ValueMustMatchRegex : public BaseOptionError {
    public:
-    ValueMustMatchRegex(std::shared_ptr<AbstractOption> opt, const std::string& regex) : BaseOptionError(opt){};
-};
-
-class MaxOptionOccurenceIsExceeded : public BaseOptionError {
-   public:
-    MaxOptionOccurenceIsExceeded(std::shared_ptr<AbstractOption> opt) : BaseOptionError(opt) {}
-};
-
-class UnexpectedValue : public BaseOptionError {
-   public:
-    UnexpectedValue(const std::string& str)
-        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
-};
-
-class OptionDoesntAcceptValue : public BaseOptionError {
-   public:
-    OptionDoesntAcceptValue() : BaseOptionError(nullptr) {}
-};
-
-class OnlyOneChoiseIsAllowed : public BaseOptionError {
-   public:
-    OnlyOneChoiseIsAllowed(std::shared_ptr<OneOfPositional> opt)
-        : BaseOptionError(std::dynamic_pointer_cast<AbstractOption>(opt)) {}
-};
-
-class MultipleOccurenceOnlyForLastPosopt : public std::logic_error {  /// TODO: may be unused
-   public:
-    MultipleOccurenceOnlyForLastPosopt(std::shared_ptr<AbstractPositionalOption> opt) : std::logic_error("123") {}
-};
-
-class IncorrectAlternative : public std::logic_error {
-   public:
-    IncorrectAlternative(std::shared_ptr<AbstractOption> opt) : std::logic_error("incorrect alternative") {}
-};
-class IncorrectLiteralString : public BaseOptionError {
-   public:
-    IncorrectLiteralString(std::shared_ptr<LiteralString> expected, std::string received)
-        : BaseOptionError(expected), literal_string{expected} {}
-    std::shared_ptr<LiteralString> literal_string;
-};
-class TooFewValuesForOption : public BaseOptionError {
-   public:
-    TooFewValuesForOption() : BaseOptionError(nullptr) {}  // too few values for options, expected at least N or exact N
-};
-
-class ExpectedValue : public TooFewValuesForOption {
-   public:
-    ExpectedValue() : TooFewValuesForOption() {}
-};
-
-class ExpectedExactNumberOfValues : public BaseOptionError {
-   public:
-    ExpectedExactNumberOfValues() : BaseOptionError(nullptr) {}  // too few values for options, expected at least N or exact N
-};
-class TooManyValuesForOption : public BaseOptionError {
-   public:
-    TooManyValuesForOption() : BaseOptionError(nullptr) {}  // too few values for options, expected at least N or exact N
-};
-
-class UnexpectedValueForPositionalOption : public BaseOptionError {
-   public:
-    UnexpectedValueForPositionalOption(const std::string& str)
-        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
-};
-
-// POSITIONAL OPTIONS
-
-class TooFewPositionalOptions : public BaseOptionError {
-   public:
-    TooFewPositionalOptions() : BaseOptionError(nullptr) {}  //::runtime_error("too few positional options are specified") {}
-};
-
-class TooManyPositionalOptions : public BaseOptionError {
-    // conflicts with TooManyOccurrencesOfPositionalOptions, UnexpectedPositionalOption
-   public:
-    TooManyPositionalOptions(const std::string& str)
-        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
-};
-
-class TooManyOccurrencesOfPositionalOptions : public BaseOptionError {
-    TooManyOccurrencesOfPositionalOptions(const std::string& str)
-        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
-};
-
-class UnexpectedPositionalOption : public BaseOptionError {
-   public:
-    UnexpectedPositionalOption(const std::string& str)
-        : BaseOptionError(nullptr) {}  //::runtime_error("too many positional options are specified: {str}") {}
+    ValueMustMatchRegex(std::shared_ptr<AbstractOption> opt, const std::string& regex) : BaseOptionError("value must match regex", opt){};
 };
 
 /*

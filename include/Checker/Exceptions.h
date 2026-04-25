@@ -25,4 +25,11 @@ class DuplicateOptionName : public CheckerException {
     // {}
     DuplicateOptionName() : CheckerException("Duplicate option name detected") {}
 };
+
+class MultipleOccurenceOnlyForLastPosopt : public CheckerException {  /// TODO: may be unused
+   public:
+    MultipleOccurenceOnlyForLastPosopt(std::shared_ptr<AbstractPositionalOption> opt) : 
+    CheckerException("123") {} //TODO: implement
+};
+
 #endif  // CHECKER_EXCEPTIONS_H

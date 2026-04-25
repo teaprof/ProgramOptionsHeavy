@@ -90,7 +90,7 @@ TEST_F(MatcherFixtureSimple, Test1) {
     EXPECT_EQ(v, 10);
     EXPECT_THROW(parser.parse("--opt1 --opt2 22"), ValueIsOutOfRange);
     EXPECT_EQ(v, 10);
-    EXPECT_THROW(parser.parse("--opt1 --opt1"), MaxOptionOccurenceIsExceeded);
+    EXPECT_THROW(parser.parse("--opt1 --opt1"), MaxOptionOccurrenceIsExceeded);
     EXPECT_EQ(v, 10);
 }
 
@@ -171,7 +171,7 @@ TEST(Matcher, MultipleOccurrenceOfNamedOption) {
     EXPECT_EQ(parser.storage[opt].rawValues(1, 0), "30");
     EXPECT_EQ(parser.storage[opt].rawValues(0), "30");
     EXPECT_EQ(d, 30);
-    ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1 40"), MaxOptionOccurenceIsExceeded);
+    ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1 40"), MaxOptionOccurrenceIsExceeded);
 }
 
 TEST(Matcher, MultipleOccurrenceOfPositionalOption) {
@@ -230,7 +230,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionExact) {
     EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
     EXPECT_EQ(parser.storage[opt].rawValues(0, 1), "30");
     EXPECT_EQ(d, 30);
-    ASSERT_THROW(parser.parse("--opt1 20,30 --opt1 40,40 --opt1 20,20"), MaxOptionOccurenceIsExceeded);
+    ASSERT_THROW(parser.parse("--opt1 20,30 --opt1 40,40 --opt1 20,20"), MaxOptionOccurrenceIsExceeded);
     ASSERT_THROW(parser.parse("--opt1 20"), ExpectedExactNumberOfValues);
 }
 
@@ -264,7 +264,7 @@ TEST(Matcher, MultipleValuesOfNamedOptionUpTo) {
     EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "31");
     EXPECT_EQ(parser.storage[opt].rawValues(0), "31");
     EXPECT_EQ(d, 31);
-    ASSERT_THROW(parser.parse("--opt1 20 --opt1 30"), MaxOptionOccurenceIsExceeded);
+    ASSERT_THROW(parser.parse("--opt1 20 --opt1 30"), MaxOptionOccurrenceIsExceeded);
     // parse command finished with exception but parser storage should be
     // initialized with successfully parsed values
     /*ASSERT_TRUE(parser.storage.contains(opt));
