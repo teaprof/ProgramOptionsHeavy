@@ -108,3 +108,13 @@ TEST(ArgGrammarParser, DoubleDash) {
     parser2.getNextOption();
     EXPECT_EQ(parser2.current_result.token_type, ArgGrammarParser::VALUE);
 }
+
+TEST(ArgGrammarParser, MatchOnlyPositional) {
+    ArgGrammarParser parser1("--somefilename"); 
+    EXPECT_FALSE(parser1.eof());
+    parser1.match_only_positional = true;
+    parser1.getNextOption();
+    EXPECT_EQ(parser1.current_result.token_type, ArgGrammarParser::VALUE);
+    EXPECT_EQ(parser1.getValueOpt().value(), "--somefilename"); 
+    EXPECT_TRUE(parser1.eof());
+}
