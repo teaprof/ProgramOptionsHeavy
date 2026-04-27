@@ -22,7 +22,7 @@ alt2.addCompatible(repack)
 
 
 */
-#include <Backend/Matcher.h>
+#include <Backend/Parser.h>
 #include <Backend/Option.h>
 #include <Backend/Printer.h>
 
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     Printer printer;
     hypercubeOptions->accept(printer);
 
-    Matcher parser(hypercubeOptions);
+    Parser2 parser(hypercubeOptions);
     std::cout<<parser.parse({"run", "--dim"})<<std::endl;*/
 
     return 0;

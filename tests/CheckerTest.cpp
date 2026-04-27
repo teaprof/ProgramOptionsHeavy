@@ -138,7 +138,7 @@ TEST(CheckerTest, OneOfAlternatives3) {
     auto opt3 = std::make_shared<LiteralString>("clean");
     opt3->addUnlock(std::make_shared<NamedOption>("--opt1"));
     auto option = std::make_shared<AbstractOption>()
-                      ->addUnlock(std::make_shared<NamedOption>("--flag1"))
+                      ->addUnlock(std::make_shared<NamedOption>("--opt1"))
                       ->addUnlock(std::make_shared<OneOfPositional>(opt1, opt2, opt3));
     Checker checker;
     EXPECT_THROW(checker(option), DuplicateOptionName);

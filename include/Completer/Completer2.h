@@ -1,7 +1,7 @@
 #ifndef COMPLETER_COMPLETER2_H
 #define COMPLETER_COMPLETER2_H
 
-#include <Backend/Matcher.h>
+#include <Backend/Parser.h>
 #include <Backend/Option.h>
 
 #include <iostream>
@@ -74,9 +74,9 @@ class NameCompleter : public AbstractOptionVisitor {
     }
 };
 
-class Completer : public BaseMatcher {
+class Completer : public BaseParser {
    public:
-    Completer(std::shared_ptr<AbstractOption> opt) : BaseMatcher(opt) {}
+    Completer(std::shared_ptr<AbstractOption> opt) : BaseParser(opt) {}
 
     std::vector<std::string> getCompletionVariants(ArgGrammarParser args) {
         std::vector<std::string> results;
@@ -98,7 +98,7 @@ class Completer : public BaseMatcher {
         // still consumed if the previous one requires the value
         try {
             while (args.getNextIndex() + 1 < args.size()) {
-                BaseMatcher::parseNext(args);
+                BaseParser::parseNext(args);
             }
         } catch (BaseError& err) {
             // in case of error return empty results
@@ -108,7 +108,7 @@ class Completer : public BaseMatcher {
         // Parse the last argument
         try {
             if (!args.eof()) {
-                BaseMatcher::parseNext(args);
+                BaseParser::parseNext(args);
             }
             assert(args.eof());
         } catch (const UnexpectedValueForPositionalOption& err) {
@@ -117,6 +117,12 @@ class Completer : public BaseMatcher {
             return {};
         } catch (const UnknownNamedOption& err) {
             switch (args.current_result.token_type) {
+                case ArgGrammarParser::DOUBLE_DASH: {
+                    // should not be reached since double dash should always be processed by the parser without error
+                    std::stringstream str;
+                    str<<"this line should not be reached "<< __FILE__<<" : "<<__LINE__;
+                    throw std::logic_error(str.str());
+                }
                 case ArgGrammarParser::SHORT_OPTION:
                 case ArgGrammarParser::SHORT_OPTION_EQ_VALUE:
                 case ArgGrammarParser::SHORT_OPTION_WITHOUT_VALUE:

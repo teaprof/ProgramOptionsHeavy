@@ -7,6 +7,46 @@
 
 #include "Option.h"
 
+
+/* 
+* Base classes: 
+    class BaseError : public std::runtime_error
+    class BaseOptionError : public BaseError
+
+* Exceptions that are raised during parsing command line
+n-  class UnknownNamedOption : public BaseError
+np  class MaxOptionOccurrenceIsExceeded : public BaseOptionError
+n-  class OptionDoesntAcceptValue : public BaseOptionError // TODO: NOT USED IN TESTS
+    class OnlyOneChoiseIsAllowed : public BaseOptionError // TODO: check how this is used
+* Exceptions raised during checks after all arguments were parsed
+np  class RequiredOptionIsNotSet : public BaseOptionError
+
+* Exceptions raised when number of values passed for a certain option is incorrect
+    class BaseOptionWithValueError : public BaseError
+np  class TooFewValuesForOption : public BaseOptionWithValueError // TODO: NOT USED IN TESTS
+n-  class ExpectedValue : public TooFewValuesForOption
+np  class ExpectedExactNumberOfValues : public BaseOptionWithValueError
+np  class TooManyValuesForOption : public BaseOptionWithValueError
+-p  class UnexpectedValueForPositionalOption : public BaseError  // TODO: may be remove this exception?
+
+* Exceptions raised when parsing positional options
+-p  class TooFewPositionalOptions : public BaseError // TODO: NOT USED IN TESTS
+-p  class TooManyPositionalOptions : public BaseError
+
+Legend:
+    n-: applicable only for named options
+    -p: applicable only for positional options
+    np: applicable both for positional and named options
+
+
+* Exceptions used by ValueSemantics
+    class InvalidValueType : public BaseOptionError
+    class ValueIsNotAllowed : public BaseOptionError // TODO: check where it is used and improve implementation
+    class ValueIsOutOfRange : public BaseOptionError 
+    class ValueMustMatchRegex : public BaseOptionError 
+*/
+
+
 class BaseError : public std::runtime_error {
    public:
     BaseError(const std::string& str) : std::runtime_error(description(str)) {}
@@ -36,7 +76,8 @@ class BaseOptionError : public BaseError {
     std::shared_ptr<AbstractOption> opt_;
 };
 
-// Options group 1 TODO: rename this
+// Exceptions that are raised during parsing command line
+
 class UnknownNamedOption : public BaseError {                                               
    public:
     UnknownNamedOption(std::string str) : BaseError(std::string("Unknown  named option: " + str)) {}
@@ -59,8 +100,15 @@ class OnlyOneChoiseIsAllowed : public BaseOptionError { // TODO: check how this 
         : BaseOptionError("only one choice is allowed", std::dynamic_pointer_cast<AbstractOption>(opt)) {}
 };
 
+// Exceptions raised during checks after all arguments were parsed
+class RequiredOptionIsNotSet : public BaseOptionError {
+   public:
+    RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt)
+        : BaseOptionError("required option is not set", opt) {}
+};
 
-// Options group 2 TODO: rename this
+
+// Exceptions raised when number of values passed for a certain option is incorrect
 
 class BaseOptionWithValueError : public BaseError {
    public:
@@ -111,7 +159,7 @@ class UnexpectedValueForPositionalOption : public BaseError {
         : BaseError(std::string("unexpected value for positional option: ") + value) {} 
 };
 
-// POSITIONAL OPTIONS
+// Exceptions raised when parsing positional options
 
 class TooFewPositionalOptions : public BaseError { // TODO: NOT USED IN TESTS
    public:
@@ -124,36 +172,34 @@ class TooManyPositionalOptions : public BaseError {
         : BaseError(std::string("too many positional options: ") + str) {} 
 };
 
-// Exceptions thrown while during checks after all arguments were parsed
-class RequiredOptionIsNotSet : public BaseOptionError {
-   public:
-    RequiredOptionIsNotSet(std::shared_ptr<AbstractOption> opt)
-        : BaseOptionError("required option is not set", opt) {}
-};
-
 
 // Exceptions used by ValueSemantics
-class InvalidValueType : public BaseOptionError {
+class InvaludValue : public BaseOptionError {
+    public:
+        InvaludValue(const std::string& message, std::shared_ptr<AbstractOption> opt) : BaseOptionError(message, opt) {}
+};
+
+class InvalidValueType : public InvaludValue {
    public:
     InvalidValueType(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected)
-        : BaseOptionError("invalid value type", opt) {} // TODO: use received and expected
+        : InvaludValue("invalid value type", opt) {} // TODO: use received and expected
 };
 
-class InvalidOptionValue : public BaseOptionError { // TODO: check where it is used and improve implementation
+class ValueIsNotAllowed : public InvaludValue { // TODO: check where it is used and improve implementation
    public:
-    InvalidOptionValue(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected)
-        : BaseOptionError("invalid value type", opt) {}
+    ValueIsNotAllowed(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected)
+        : InvaludValue("invalid value type", opt) {}
 };
 
-class ValueIsOutOfRange : public BaseOptionError {
+class ValueIsOutOfRange : public InvaludValue {
    public:
     ValueIsOutOfRange(std::shared_ptr<AbstractOption> opt, const std::string& received, const std::string& expected)
-        : BaseOptionError("value is out of range", opt) {}
+        : InvaludValue("value is out of range", opt) {}
 };
 
-class ValueMustMatchRegex : public BaseOptionError {
+class ValueMustMatchRegex : public InvaludValue {
    public:
-    ValueMustMatchRegex(std::shared_ptr<AbstractOption> opt, const std::string& regex) : BaseOptionError("value must match regex", opt){};
+    ValueMustMatchRegex(std::shared_ptr<AbstractOption> opt, const std::string& regex) : InvaludValue("value must match regex", opt){};
 };
 
 /*

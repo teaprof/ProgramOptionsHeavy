@@ -95,14 +95,14 @@ class ParserWithSubcommands : public AbstractOptionsParser {
                 };
                 selected_subcommand_->second->parse(argc, argv);
                 activated = true;*/
-        Matcher matcher(top_level_options);
+        Parser2 parser(top_level_options);
         std::vector<std::string> args;
         for (int n = 1; n < argc; n++) {  // skip the name of executable
             args.push_back(argv[n]);
         }
         activated = true;  // TODO wtf?
-        ArgGrammarParser parser(args);
-        return matcher.parse(parser);
+        ArgGrammarParser grammar_parser(args);
+        return parser.parse(grammar_parser);
     }
     void validate() override {}
     void update(const boost::program_options::variables_map& vm) override {}

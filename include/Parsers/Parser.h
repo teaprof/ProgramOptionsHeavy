@@ -1,7 +1,7 @@
 #ifndef PARSERS_PARSER_H
 #define PARSERS_PARSER_H
 
-#include <Backend/Matcher.h>
+#include <Backend/Parser.h>
 #include <Parsers/AbstractOptionsParser.h>
 #include <Parsers/OptionsGroup.h>
 
@@ -32,8 +32,8 @@ class Parser : public AbstractOptionsParser {
         for (int n = 0; n < argc; n++) {
             args.push_back(argv[n]);
         }
-        Matcher matcher(options);
-        matcher.parse(args);
+        Parser2 parser(options);
+        parser.parse(args);
         return true;
     }
     void validate() override {

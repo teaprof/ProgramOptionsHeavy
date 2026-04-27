@@ -19,7 +19,6 @@ class BaseValueSemantics {  // TODO rename to ValueParser and all variables of
                             // this type
    public:
     virtual std::any semanticParse(const std::string& value) = 0;  // TODO rename to parseAndSetValue
-    // TODO add setImplicitValue
 
     virtual bool hasDefaultValue() = 0;
     virtual bool hasImplicitValue() = 0;
@@ -49,7 +48,9 @@ class TypedValueSemantics : public BaseValueSemantics {
     void setImplicitValue(const T& v) { implicit_value_ = v; }
     bool hasImplicitValue() override { return implicit_value_.has_value(); }
     void setValue(const T& val) {
-        checkIfValueIsInList(val);
+        if (only_allowed_values_) {
+            ensureIfValueIsInList(val);
+        }
         value_ = val;
         if (external_ref_.has_value()) {
             external_ref_.value().get() = val;
@@ -89,12 +90,9 @@ class TypedValueSemantics : public BaseValueSemantics {
     std::optional<T> implicit_value_;
     std::map<T, std::vector<std::shared_ptr<AbstractOption>>> unlocks_;
 
-    void checkIfValueIsInList(const T& val) {
-        if (!only_allowed_values_) {
-            return;
-        }
+    void ensureIfValueIsInList(const T& val) {
         if (!static_cast<bool>(unlocks_.contains(val))) {
-            throw InvalidOptionValue(nullptr, "", "");
+            throw ValueIsNotAllowed(nullptr, "", "");
         }
     }
 };

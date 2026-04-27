@@ -217,29 +217,13 @@ class ArgGrammarParser {
         return "";  // to suppress warning "no return value"
     }
 
-    std::optional<std::string> getValueOpt(std::shared_ptr<AbstractOption> opt) {  /// todo: opt is only used to print an error message
+    std::optional<std::string> getValueOpt() {
         switch (current_result.token_type) {
-            case TokenTypes::SHORT_OPTION_WITHOUT_VALUE: {
-                //throw ExpectedValue(opt);
-                return std::nullopt;
-            }
+            case TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
             case TokenTypes::LONG_OPTION:
-            case TokenTypes::SHORT_OPTION: {
-                if (eof()) {
-                    return std::nullopt;
-                    //throw ExpectedValue(opt);
-                }
-                ArgLexer::Result lex_result = ArgLexer::lex(args_[idx_++], match_only_positional);
-                if (lex_result.type == ArgLexer::VALUE) {
-                    return lex_result.value;
-                }
+            case TokenTypes::SHORT_OPTION:
+            case TokenTypes::DOUBLE_DASH:
                 return std::nullopt;
-                //throw ExpectedValue(opt);
-            }
-            case TokenTypes::DOUBLE_DASH: {
-                return std::nullopt;
-                //throw ExpectedValue(opt);
-            }
             case TokenTypes::VALUE:
             case TokenTypes::SHORT_OPTION_EQ_VALUE:
             case TokenTypes::LONG_OPTION_EQ_VALUE:

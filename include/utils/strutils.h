@@ -1,7 +1,7 @@
 #ifndef UTILS_STRUTILS_H
 #define UTILS_STRUTILS_H
 
-#include <Grammar/Parser.h>  // for ArgLexer::short_options_pattern and ArgLexer::long_option_pattern
+#include <Lexer/Lexer.h>  // for ArgLexer::short_options_pattern and ArgLexer::long_option_pattern
 
 #include <cassert>
 #include <map>

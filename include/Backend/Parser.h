@@ -2,7 +2,7 @@
 #define BACKEND_MATCHER_H
 
 #include <Checker/Checker.h>
-#include <Grammar/Parser.h>
+#include <Lexer/Lexer.h>
 
 #include <cassert>
 #include <map>
@@ -47,7 +47,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 /* nothing to do */;
         }
         match = true;
-        value = grammar_parser_.getValueOpt(opt);  // todo: try to read as many values as possible
+        value = grammar_parser_.getValueOpt();
         unlocks = opt->unlocks();               // todo: avoid copying of the vector
     }
     void visit(std::shared_ptr<LiteralString> opt) override {
@@ -112,7 +112,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
                 /* nothing to do*/;
         }
         if (match) {
-            value = grammar_parser_.getValueOpt(opt);
+            value = grammar_parser_.getValueOpt();
             unlocks = opt->unlocks();  // todo: avoid copying of a vector
         };
     }
@@ -156,12 +156,13 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
     void setPositionalOnlyFlag(bool value) { grammar_parser_.match_only_positional = value; }
 };
 
-class BaseMatcher {
+class BaseParser {
    protected:
     std::vector<std::shared_ptr<AbstractOption>> remaining_options_;
     // std::vector<std::shared_ptr<AbstractOption>> used_options_;
     std::set<std::shared_ptr<AbstractOption>> already_joined_;
     std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
+    std::set<std::shared_ptr<AbstractOptionWithValue>> opts_with_implicit_value_;
     std::shared_ptr<AbstractOption> options_;
     size_t cur_positional_option_idx_{0};
 
@@ -170,7 +171,7 @@ class BaseMatcher {
    public:
     KeyValueStorage storage;
 
-    BaseMatcher(std::shared_ptr<AbstractOption> options) : options_{options} {
+    BaseParser(std::shared_ptr<AbstractOption> options) : options_{options} {
         // Checker checker;
         // options->accept(checker);
     }
@@ -279,7 +280,7 @@ class BaseMatcher {
             args.getNextOption();
             bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
             if (arg_is_value) {
-                std::optional<std::string> value_opt = args.getValueOpt(nullptr);
+                std::optional<std::string> value_opt = args.getValueOpt();
                 assert(value_opt.has_value());
                 setOptionValue(opt, *value_opt);
                 return;
@@ -292,7 +293,7 @@ class BaseMatcher {
             setDefaultValue(opt);
             return;
         }
-        //throw ExpectedValue();
+        throw ExpectedValue(opt);
     }
 
     void parseNext(ArgGrammarParser& args) {
@@ -323,9 +324,9 @@ class BaseMatcher {
         };
     }
 
-    void parse(ArgGrammarParser args) {  // TODO:  rename (Parser is another class)
+    void parse(ArgGrammarParser args) { 
         clear();
-        SingleOptionMatcher matcher(args);
+        //SingleOptionMatcher matcher(args); 
         while (!args.eof()) {
             parseNext(args);
         }
@@ -391,6 +392,13 @@ class BaseMatcher {
         storage.addValue(opt, "", v);
     }
 
+    void setImplicitValue(std::shared_ptr<AbstractOptionWithValue> opt) {
+        std::any v = opt->baseValueSemantics().setToImplicit();
+        std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
+        joinOptionsTo(unlocked_by_value, remaining_options_);
+        storage.addValue(opt, "", v);
+    }
+
     void setOptionValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
         bool first = true;
         std::vector<std::string> tokens = mysplit(value);
@@ -432,25 +440,36 @@ class BaseMatcher {
     }
 };
 
-class Matcher : public BaseMatcher {
+class Parser2 : public BaseParser {
    public:
-    Matcher(std::shared_ptr<AbstractOption> options) : BaseMatcher{options} {}
+    Parser2(std::shared_ptr<AbstractOption> options) : BaseParser{options} {}
 
     bool parse(ArgGrammarParser args) {
-        BaseMatcher::parse(args);
-        applyDefaultValues();
+        BaseParser::parse(args);
+        applyImplicitValues();
         checkUnusedRequiredOptions();
         return true;
     }
 
    private:
+    bool isOptionSpecifiedOrImplied(std::shared_ptr<AbstractOption> opt) {
+        if(optionEncountered(opt) > 0) {
+            return true;
+        }
+        if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
+            if(opts_with_implicit_value_.contains(p)) {
+                return true;
+            }
+        }
+        return false;
+    };
     void checkUnusedRequiredOptions() {
         // check that all required options are used
         bool too_few_pos_opts{false};
         bool required_opt_is_not_set{false};
-        for (auto p : remaining_options_) {
-            if (p->required() && optionEncountered(p) == 0) {
-                auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(p);
+        for (auto opt : remaining_options_) {
+            if (opt->required() && !isOptionSpecifiedOrImplied(opt)) {
+                auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
                 if (!q) {
                     too_few_pos_opts = true;
                 }
@@ -466,16 +485,17 @@ class Matcher : public BaseMatcher {
         }
     }
 
-    void applyDefaultValues() {
+    void applyImplicitValues() {
         // applies default values for options that were not encountered
         for (auto opt : remaining_options_) {
             if (optionEncountered(opt) > 0) {
                 continue;
             }
             if (auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
-                if (p->baseValueSemantics().hasDefaultValue()) {
-                    setDefaultValue(p);
-                    // todo: if default value unlocks some options these options should be proccessed
+                if (p->baseValueSemantics().hasImplicitValue()) {
+                    setImplicitValue(p);
+                    opts_with_implicit_value_.insert(p);
+                    // todo: if implicit value unlocks some options these options should be proccessed
                 } else {
                     if (opt->required()) {
                         throw RequiredOptionIsNotSet(opt);

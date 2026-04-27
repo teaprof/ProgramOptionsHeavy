@@ -107,5 +107,5 @@ TEST(ValueSematics, InvalidValue) {
     semantics.unlocks(0);
     semantics.unlocks(1).push_back(nullptr);
     semantics.setOnlyAllowedValues(true);
-    ASSERT_THROW(semantics.semanticParse("2"), InvalidOptionValue);
+    ASSERT_THROW(semantics.semanticParse("2"), ValueIsNotAllowed);
 }
