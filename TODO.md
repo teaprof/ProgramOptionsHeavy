@@ -64,7 +64,7 @@ opt1->tie(v, opt2val);
 ```
 
 0. Value semantic class:
-    + is used to check if the actual value can be accepted
+    + is used to check if the specified value can be accepted
 
 0. Option:
     + long and short names
@@ -73,15 +73,13 @@ opt1->tie(v, opt2val);
     + default value
     + is required
     + multiple_values vs multiple_occurrences
-    ? multiple_occurences: '--' stop symbol or custom stop symbol, multiple values are not allowed with "=": "--opt=1 2 3" is treated as "--opt=1", but "2" and "3" are the next positional arguments
-    - add support of comma: "--opt=1, 2, 3"
+    - add support of comma followed by space: "--opt=1, 2, 3"
     - add support of brackets: "--opt=[1, 2, 3]"
-    - implicit value (requires reconsidering of the parser and lexer)
     - what is allow_long_disguise (using single "-" for long options)?
     - like TCLAP: hideFromHelp(), visibleFromHelp()
     - revisit Exceptions
-    - ?double dash can be used to indicate the end of the values list: "--input file1.txt file2.txt -- outputfile.txt"
-    + all options after the double dash are treated as positional
+    + double dash stops filling the current occurence of the positional option
+    + double dash: all options after the double dash are treated as positional
     - check https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
     - use internal splitter for cmd line args: first join all args to a single string then split it back
 
@@ -96,19 +94,11 @@ Solution:
 
 1. Parser:
     - unknown options could be collected instead of throwing UnknownOption (like program_options::basic_option::unregistered)
-    - support of implicit value (only if no positional options are specified)
 
 2. Value storage
-    + value regex
-    - expected value type and range (or validator, generally)
-How it could be done? What is the best way? I don't want to associate values with options
-
-Value should store the following flags:
-    - std::vector<str>
-    - std::vector<std::variant<...>> value
-    - is_default
-    - is_implicit
-    - shared_ptr to option
+    + check if value satisfies regex
+    + multiple occurrences
+    + comma-separated values (multiple values for the occurrence)
 
 2. Examples of different way to initialize
 
@@ -136,8 +126,6 @@ Value should store the following flags:
 5. Different option prefixes ("-" and "--", "/", add support for "/?", "+")
 
 6. Cartesian product for object with multiplicity
-
-4. Support for "--" arg: Additionally, anything after -- will be parsed as a positional argument.
 
 4. Support for file names and dirs in autocompletion
 
