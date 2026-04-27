@@ -509,7 +509,7 @@ TEST(Parser2, TwoPositionalOptionsWithDoubleDash) {
     opt2->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
     auto opt = std::make_shared<OptionsGroup2>()->addUnlock(opt1)->addUnlock(opt2);
 
-    Parser2 parser(opt);  // todo: rename parser to matcher here and all other places
+    Parser2 parser(opt);
     ASSERT_TRUE(parser.parse("file1 file2 file3 -- 10"));
     ASSERT_EQ(parser.storage[opt1].occurrenceCount(), 3);
     ASSERT_EQ(parser.storage[opt1].occurrenceSize(0), 1);
@@ -524,22 +524,22 @@ TEST(Parser2, TwoPositionalOptionsWithDoubleDash) {
     ASSERT_EQ(parser.storage[opt2].rawValues(0, 0), "10");
 }
 
-/*TEST(Parser2, DoubleDashTerminatesNamedOptions) {
-    auto opt1 = std::make_shared<NamedOptionWithValue<int>>("--arg1");
-    auto opt2 = std::make_shared<NamedOptionWithValue<int>>("--arg2");
-    auto opt3 = std::make_shared<PositionalOptionWithValue<std::string>>();
-    auto opt = std::make_shared<OptionsGroup2>()->addUnlock(opt1)->addUnlock(opt2)->addUnlock(opt3);
+TEST(Parser2, DoubleDashTerminatesNamedOptions) {
+    auto named_opt_1 = std::make_shared<NamedOptionWithValue<int>>("--arg1");
+    auto named_opt_2 = std::make_shared<NamedOptionWithValue<int>>("--arg2");
+    auto pos_opt = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto opt = std::make_shared<OptionsGroup2>()->addUnlock(named_opt_1)->addUnlock(named_opt_2)->addUnlock(pos_opt);
 
-    Parser2 parser(opt);  // todo: rename parser to matcher here and all other places
+    Parser2 parser(opt);
     ASSERT_TRUE(parser.parse("--arg1 10 -- --arg2"));
-    ASSERT_EQ(parser.storage[opt1].occurrenceCount(), 1);
-    ASSERT_EQ(parser.storage[opt1].occurrenceSize(0), 1);
-    EXPECT_EQ(parser.storage[opt1].rawValues(0, 0), "10");
-    ASSERT_FALSE(parser.storage.contains(opt2));
-    ASSERT_EQ(parser.storage[opt3].occurrenceCount(), 1);
-    ASSERT_EQ(parser.storage[opt3].occurrenceSize(0), 1);
-    ASSERT_EQ(parser.storage[opt3].rawValues(0, 0), "--arg2");
-}*/
+    ASSERT_EQ(parser.storage[named_opt_1].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[named_opt_1].occurrenceSize(0), 1);
+    EXPECT_EQ(parser.storage[named_opt_1].rawValues(0, 0), "10");
+    ASSERT_FALSE(parser.storage.contains(named_opt_2));
+    ASSERT_EQ(parser.storage[pos_opt].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[pos_opt].occurrenceSize(0), 1);
+    ASSERT_EQ(parser.storage[pos_opt].rawValues(0, 0), "--arg2");
+}
 
 TEST(Parser2, PositionalAndNamed) {
     auto posopt = std::make_shared<PositionalOptionWithValue<std::string>>();
