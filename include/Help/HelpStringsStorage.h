@@ -2,12 +2,12 @@
 #define HELP_HELPSTRINGS_H
 
 #include <Backend/Option.h>
-#include <Help/TextualDescriptions.h>
+#include <Help/AST.h>
 
 #include <map>
 #include <sstream>
 
-class HelpStrings {
+class HelpStringsStorage {
    private:
     class HelpBuilder {  // TODO remove this
        public:
@@ -40,7 +40,7 @@ class HelpStrings {
         return group_descriptions.at(opt).name;
     }
 
-    void merge(const HelpStrings& other) {  // TODO may be unused
+    void merge(const HelpStringsStorage& other) {  // TODO may be unused
         // TODO merge program_description
 
         // some sanity checks:

@@ -7,7 +7,7 @@
 #include <Backend/Parser.h>
 #include <Checker/Checker.h>
 #include <Completer/Completer2.h>
-#include <Help/HelpStrings.h>
+#include <Help/HelpStringsStorage.h>
 #include <utils/strutils.h>
 
 class OptionsEasy {
@@ -69,7 +69,7 @@ class OptionsEasy {
         }
         help_.merge(other.help_); 
     }
-    const HelpStrings& help() { return help_; }
+    const HelpStringsStorage& help() { return help_; }
 
     void parse(std::vector<std::string> args) {
         Parser2 parser{root_};
@@ -86,7 +86,7 @@ class OptionsEasy {
     
 
    protected:
-    HelpStrings help_;
+    HelpStringsStorage help_;
     ValueStorage storage_;
     std::shared_ptr<AbstractOption> root_;
 

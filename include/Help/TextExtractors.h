@@ -1,8 +1,8 @@
 #ifndef HELP_TEXTEXTRACTORS_H
 #define HELP_TEXTEXTRACTORS_H
 
-#include <Help/HelpStrings.h>
-#include <Help/TextualDescriptions.h>
+#include <Help/HelpStringsStorage.h>
+#include <Help/AST.h>
 #include <OptionsHeavy/Parser.h>
 
 #include <map>
@@ -12,7 +12,7 @@
 class OptionTextExtractor : public AbstractOptionVisitor {
    public:
     OptionTextExtractor() {}
-    OptionTextExtractor(const HelpStrings& help) : help_(help) {}
+    OptionTextExtractor(const HelpStringsStorage& help) : help_(help) {}
     void visit(std::shared_ptr<AbstractOption> opt) {
         // assert(false);
     }
@@ -38,7 +38,7 @@ class OptionTextExtractor : public AbstractOptionVisitor {
     std::string str() const { return descr.keys + "\n" + descr.description; }
 
    private:
-    std::optional<std::reference_wrapper<const HelpStrings>> help_;
+    std::optional<std::reference_wrapper<const HelpStringsStorage>> help_;
     std::string displayName(std::shared_ptr<NamedOption> opt) {
         if (help_) {
             if (help_->get().key_strings.contains(opt)) {
@@ -76,26 +76,26 @@ class OptionTextExtractor : public AbstractOptionVisitor {
 
 class Extractor {
    public:
-    EntireDescription extract(HelpStrings& help, std::shared_ptr<AbstractOption> opt) {
-        EntireDescription res;
+    ProgramUsageMindMap extract(HelpStringsStorage& help, std::shared_ptr<AbstractOption> opt) {
+        ProgramUsageMindMap res;
         res.program_description = extractProgramDescription(help, opt);
         res.run_variants = extractRunVariants(help, opt);
         res.group_descriptions = extractGroupDescriptions(help, opt);
         res.parameter_descriptions = extractParameterDescriptions(help, opt);
         return res;
     }
-    virtual ProgramDescription extractProgramDescription(const HelpStrings& help, std::shared_ptr<AbstractOption> opt) {
+    virtual ProgramDescription extractProgramDescription(const HelpStringsStorage& help, std::shared_ptr<AbstractOption> opt) {
         return help.program_description;
     }
-    virtual RunVariantsDescription extractRunVariants(const HelpStrings& help, std::shared_ptr<AbstractOption> opt) = 0;
-    virtual std::vector<GroupDescription> extractGroupDescriptions(const HelpStrings& help, std::shared_ptr<AbstractOption> opt) {
+    virtual RunVariantsDescription extractRunVariants(const HelpStringsStorage& help, std::shared_ptr<AbstractOption> opt) = 0;
+    virtual std::vector<GroupDescription> extractGroupDescriptions(const HelpStringsStorage& help, std::shared_ptr<AbstractOption> opt) {
         std::vector<GroupDescription> res;
         for (const auto& it : help.group_descriptions) {
             res.push_back(it.second);
         }
         return res;
     }
-    virtual std::vector<ParameterDescription> extractParameterDescriptions(const HelpStrings& help,
+    virtual std::vector<ParameterDescription> extractParameterDescriptions(const HelpStringsStorage& help,
                                                                            std::shared_ptr<AbstractOption> opt) {
         return {};
     }
@@ -104,7 +104,7 @@ class Extractor {
 class SimpleExtractor : public Extractor {
    public:
     SimpleExtractor(const program_options_heavy::Parser& parser) : parser_{parser} {}
-    RunVariantsDescription extractRunVariants(const HelpStrings& help, std::shared_ptr<AbstractOption> opt) override {
+    RunVariantsDescription extractRunVariants(const HelpStringsStorage& help, std::shared_ptr<AbstractOption> opt) override {
         std::string exename = "123.exe";                            // TODO
         std::string brief = "run variant brief description";        // TODO
         std::string detailed = "run variant detailed description";  // TODO

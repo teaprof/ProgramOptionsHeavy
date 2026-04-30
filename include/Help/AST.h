@@ -37,12 +37,13 @@ class ProgramDescription {
     std::string detailed;
 };
 
-class EntireDescription {
+class ProgramUsageMindMap {
    public:
     ProgramDescription program_description;
     RunVariantsDescription run_variants;
     std::vector<GroupDescription> group_descriptions;
     std::vector<ParameterDescription> parameter_descriptions;
 };
+
 
 #endif
