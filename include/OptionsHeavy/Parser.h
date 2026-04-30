@@ -2,8 +2,8 @@
 #define PARSERS_PARSER_H
 
 #include <Backend/Parser.h>
-#include <Parsers/AbstractOptionsParser.h>
-#include <Parsers/OptionsGroup.h>
+#include <OptionsHeavy/AbstractOptionsParser.h>
+#include <OptionsHeavy/basic/OptionsGroup.h>
 
 #include <iostream>
 #include <locale>

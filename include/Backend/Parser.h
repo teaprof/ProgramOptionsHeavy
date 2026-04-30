@@ -187,7 +187,7 @@ class BaseParser {
     }
 
     std::shared_ptr<AbstractPositionalOption> eatNextPositionalOption(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
-        auto next_positional_option = [&](size_t idx)->auto {
+        auto find_next_positional = [&](size_t idx)->auto {
             std::shared_ptr<AbstractPositionalOption> p;
             while(idx < remaining_options_.size()) {
                 auto opt = remaining_options_[idx];
@@ -199,14 +199,14 @@ class BaseParser {
             }
             return idx;
         };
-        cur_positional_option_idx_ = next_positional_option(cur_positional_option_idx_);        
+        cur_positional_option_idx_ = find_next_positional(cur_positional_option_idx_);        
         if(cur_positional_option_idx_ == remaining_options_.size()) {
             throw TooManyPositionalOptions("");
         }
         auto opt = remaining_options_[cur_positional_option_idx_];
         if (!canAcceptNewOccurrence(opt)) {
             cur_positional_option_idx_++;
-            cur_positional_option_idx_ = next_positional_option(cur_positional_option_idx_);        
+            cur_positional_option_idx_ = find_next_positional(cur_positional_option_idx_);        
             if(cur_positional_option_idx_ == remaining_options_.size()) {
                 throw TooManyPositionalOptions("");
             }
@@ -223,9 +223,6 @@ class BaseParser {
 
     std::shared_ptr<AbstractOption> eatNextNamedOption(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
         for (auto opt : remaining_options_) {
-            /*if (!canAcceptNewOccurrence(opt)) {
-                continue;
-            }*/
             opt->accept(matcher);
             if (matcher.match) {
                 return opt;

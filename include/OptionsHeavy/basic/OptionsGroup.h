@@ -1,7 +1,7 @@
 #ifndef PARSERS_OPTIONSGROUP_H
 #define PARSERS_OPTIONSGROUP_H
 
-#include <Backend/Facade.h>
+#include <OptionsEasy/OptionsEasy.h>
 
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
@@ -9,7 +9,37 @@
 
 namespace program_options_heavy {
 
-class OptionsGroup : public OptionsFacade {
+class Option {
+    public:
+        Option(std::shared_ptr<AbstractOption> opt) : opt_{opt} {}
+
+        virtual void onNewOccurenceFinished() {
+            // nothing to do
+            // in inherited classes this function can throw any exception        
+        }
+        virtual void onParsingFinished() {
+            // nothing to do
+        }
+
+    private:
+        std::shared_ptr<AbstractOption> opt_;
+};
+
+template<class T>
+class TypedOption : public Option { // TODO: rename to NamedOptionWithValue but this name is already assigned to another class
+    public:
+        TypedOption(std::string undecorated_long_name, std::reference_wrapper<T> storage) :
+            Option(std::make_shared<NamedOptionWithValue<T>>(undecorated_long_name)), storage_{storage} {}
+
+        virtual void validate() {
+            // nothing to do
+            // in inherited classes this function can throw any exception        
+        }
+    private:
+        std::reference_wrapper<T> storage_;
+};
+
+class OptionsGroup : public OptionsEasy {
    public:
     OptionsGroup(std::string group_name) {
         setGroupName(tolower(group_name));

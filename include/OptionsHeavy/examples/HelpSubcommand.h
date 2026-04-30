@@ -1,8 +1,8 @@
 #ifndef PARSERS_HELPSUBCOMMAND_H
 #define PARSERS_HELPSUBCOMMAND_H
 
-#include <Parsers/BasicOptions.h>
-#include <Parsers/Parser.h>
+#include <OptionsHeavy/examples/BasicOptions.h>
+#include <OptionsHeavy/Parser.h>
 
 namespace program_options_heavy {
 

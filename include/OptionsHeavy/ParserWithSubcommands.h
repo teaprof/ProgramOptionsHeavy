@@ -1,9 +1,9 @@
 #ifndef PARSERS_PARSERWITHSUBCOMMANDS_H
 #define PARSERS_PARSERWITHSUBCOMMANDS_H
 
-#include <Parsers/AbstractOptionsParser.h>
-#include <Parsers/OptionsGroup.h>
-#include <Parsers/Parser.h>
+#include <OptionsHeavy/AbstractOptionsParser.h>
+#include <OptionsHeavy/basic/OptionsGroup.h>
+#include <OptionsHeavy/Parser.h>
 
 namespace program_options_heavy {
 

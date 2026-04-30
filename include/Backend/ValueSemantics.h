@@ -217,8 +217,8 @@ class ValueSemantics<std::string> : public TypedValueSemantics<std::string> {
     }
 
    private:
-    std::optional<std::regex> regex_;
-    std::optional<std::string> regex_hint_;
+    std::optional<std::regex> regex_;       // regex 
+    std::optional<std::string> regex_hint_; // human readable regex hint
 };
 
 template <>

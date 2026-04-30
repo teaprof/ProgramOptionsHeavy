@@ -1,0 +1,1 @@
+add_executable(options_easy_ex_1 ./Examples/OptionsEasy/ex_1.cpp)

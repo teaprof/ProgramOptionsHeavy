@@ -78,6 +78,8 @@ opt1->tie(v, opt2val);
     - what is allow_long_disguise (using single "-" for long options)?
     - like TCLAP: hideFromHelp(), visibleFromHelp()
     - revisit Exceptions
+    - hidden and visible names for position options    
+    - different completers: for Literals, for file names and pathes
     + double dash stops filling the current occurence of the positional option
     + double dash: all options after the double dash are treated as positional
     - check https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
@@ -86,10 +88,10 @@ opt1->tie(v, opt2val);
 
 Solve equation:
     n1 + n2 + ... + nk = actual_number_of_args
-Solution:
+Solution (good when all positional arguments are known a-priori):
     First, find min(n1+n2+..+nk) and max(n1+n2+..+nk). 
-    If not min <= act_number_of_args <= max, than no solution exists
-    If act_number_of_args == min or == max than solution is found (it corresponds to arg_min or arg_max).
+    If not min <= n_args <= max, than no solution exists
+    If n_args == min or n_args == max than solution is found (it corresponds to arg_min or arg_max).
     Otherwise, solution exists if only one i exists such that min n_i < max_ni.
 
 1. Parser:
