@@ -83,6 +83,8 @@ class OptionsEasy {
         Checker checker;
         checker(root_);
     }
+
+    std::shared_ptr<AbstractOption> opt() { return root_; };
     
 
    protected:

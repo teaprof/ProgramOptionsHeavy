@@ -37,7 +37,7 @@ class ProgramDescription {
     std::string detailed;
 };
 
-class ProgramUsageMindMap {
+class ProgramUsageMindMap { // TODO: rename this
    public:
     ProgramDescription program_description;
     RunVariantsDescription run_variants;

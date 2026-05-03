@@ -15,6 +15,8 @@ class Combinator2 : public AbstractOptionVisitor {
     std::shared_ptr<Node> front{nullptr};
     std::vector<std::shared_ptr<Node>> ends;
 
+    virtual ~Combinator2(){};
+
     void pushBack(std::shared_ptr<AbstractOption> opt) {
         if (++level > 1000) {
             throw RecursionDetected();
@@ -48,8 +50,7 @@ class Combinator2 : public AbstractOptionVisitor {
             ends.insert(ends.end(), c.ends.begin(), c.ends.end());
         }
     }
-
-    virtual ~Combinator2(){};
+    
     virtual void visit(std::shared_ptr<AbstractOption> opt) {
         pushBack(opt);
         for (const auto& it : opt->unlocks()) {
@@ -66,24 +67,24 @@ class Combinator2 : public AbstractOptionVisitor {
         visit(std::dynamic_pointer_cast<AbstractOption>(opt));
     }
     virtual void visit(std::shared_ptr<OptionsGroup2> opt) { visit(std::dynamic_pointer_cast<AbstractOption>(opt)); }
-    virtual void visit(std::shared_ptr<OneOfPositional> OneOfPositional) {
+    virtual void visit(std::shared_ptr<OneOfPositional> oneOfPositional) {
         std::vector<Combinator2> combinators;
-        assert(OneOfPositional->alternativesSize() != 0);  // todo: throw Alternatives is empty
-        visit(std::dynamic_pointer_cast<AbstractOption>(OneOfPositional));
-        for (size_t idx = 0; idx < OneOfPositional->alternativesSize(); idx++) {
-            std::shared_ptr<AbstractOption> it = OneOfPositional->alternative(idx);
+        assert(oneOfPositional->alternativesSize() != 0);  // todo: throw Alternatives is empty
+        visit(std::dynamic_pointer_cast<AbstractOption>(oneOfPositional));
+        for (size_t idx = 0; idx < oneOfPositional->alternativesSize(); idx++) {
+            std::shared_ptr<AbstractOption> it = oneOfPositional->alternative(idx);
             Combinator2 c;
             it->accept(c);
             combinators.push_back(std::move(c));
         }
         pushBack(combinators);
     }
-    virtual void visit(std::shared_ptr<OneOfNamed> OneOfPositional) {
+    virtual void visit(std::shared_ptr<OneOfNamed> oneOfPositional) {
         std::vector<Combinator2> combinators;
-        assert(OneOfPositional->alternativesSize() != 0);  // todo: throw Alternatives is empty
-        visit(std::dynamic_pointer_cast<AbstractOption>(OneOfPositional));
-        for (size_t idx = 0; idx < OneOfPositional->alternativesSize(); idx++) {
-            std::shared_ptr<AbstractOption> it = OneOfPositional->alternative(idx);
+        assert(oneOfPositional->alternativesSize() != 0);  // todo: throw Alternatives is empty
+        visit(std::dynamic_pointer_cast<AbstractOption>(oneOfPositional));
+        for (size_t idx = 0; idx < oneOfPositional->alternativesSize(); idx++) {
+            std::shared_ptr<AbstractOption> it = oneOfPositional->alternative(idx);
             Combinator2 c;
             it->accept(c);
             combinators.push_back(std::move(c));

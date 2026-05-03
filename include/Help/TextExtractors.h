@@ -103,13 +103,15 @@ class Extractor {
 
 class SimpleExtractor : public Extractor {
    public:
-    SimpleExtractor(const program_options_heavy::Parser& parser) : parser_{parser} {}
+    //SimpleExtractor(const program_options_heavy::Parser& parser) : parser_{parser} {}
+    SimpleExtractor() = default;
     RunVariantsDescription extractRunVariants(const HelpStringsStorage& help, std::shared_ptr<AbstractOption> opt) override {
         std::string exename = "123.exe";                            // TODO
         std::string brief = "run variant brief description";        // TODO
         std::string detailed = "run variant detailed description";  // TODO
         std::vector<std::string> args;
-        for (const auto& grp : parser_.groups()) {
+        for (const auto& grp : opt->unlocks()) {
+            if(opt->unlock)
             args.push_back(help.getGroupName(grp->options));
         }
         RunVariantDescription descr{exename, brief, detailed, args};
@@ -119,7 +121,7 @@ class SimpleExtractor : public Extractor {
     }
 
    private:
-    program_options_heavy::Parser parser_;
+    //program_options_heavy::Parser parser_;
 };
 
 #endif
