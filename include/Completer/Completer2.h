@@ -57,7 +57,7 @@ class NameCompleter : public AbstractOptionVisitor {
     }
     void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override { visit(std::static_pointer_cast<NamedOption>(opt)); }
     void visit(std::shared_ptr<AbstractPositionalOption> /*unused*/) override { /* not implemented yet */ }
-    void visit(std::shared_ptr<OptionsGroup2> opt) override {
+    void visit(std::shared_ptr<OptionsGroup> opt) override {
         for (const auto& p : opt->unlocks()) {
             p->accept(*this);
         }

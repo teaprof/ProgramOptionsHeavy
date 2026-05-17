@@ -9,41 +9,28 @@
 
 namespace program_options_heavy {
 
-class Option {
+class BaseDynamicOption {
     public:
-        Option(std::shared_ptr<AbstractOption> opt) : opt_{opt} {}
+        BaseDynamicOption() = default;
+        virtual void onNewOccurenceFinished(std::vector<std::any>& values) = 0;
+        virtual void onParseFinished() = 0;
+        virtual void validate() = 0; // can raise exception if values for this option are incorrect
 
-        virtual void onNewOccurenceFinished() {
-            // nothing to do
-            // in inherited classes this function can throw any exception        
-        }
-        virtual void onParsingFinished() {
-            // nothing to do
-        }
-
-    private:
-        std::shared_ptr<AbstractOption> opt_;
+        virtual std::shared_ptr<AbstractOption> opt() = 0;
+    protected:
+        std::string help_string_;
 };
 
-template<class T>
-class TypedOption : public Option { // TODO: rename to NamedOptionWithValue but this name is already assigned to another class
+class DynamicOptionWithValue : public BaseDynamicOption {
     public:
-        TypedOption(std::string undecorated_long_name, std::reference_wrapper<T> storage) :
-            Option(std::make_shared<NamedOptionWithValue<T>>(undecorated_long_name)), storage_{storage} {}
-
-        virtual void validate() {
-            // nothing to do
-            // in inherited classes this function can throw any exception        
-        }
-    private:
-        std::reference_wrapper<T> storage_;
+        DynamicOptionWithValue() = default;
 };
 
-class OptionsGroup : public OptionsEasy {
+class DynamicOptionsGroup : public OptionsEasy {
    public:
-    OptionsGroup(std::string group_name) {
+    DynamicOptionsGroup(std::string group_name) {
         setGroupName(tolower(group_name));
-        options = std::make_shared<OptionsGroup2>();
+        options = std::make_shared<OptionsGroup>();
     }
 
     template <class... Args>
@@ -82,7 +69,7 @@ class OptionsGroup : public OptionsEasy {
         }
         return "";
     }
-    std::shared_ptr<OptionsGroup2> options;
+    std::shared_ptr<OptionsGroup> options;
 
    private:
     std::string group_name_;

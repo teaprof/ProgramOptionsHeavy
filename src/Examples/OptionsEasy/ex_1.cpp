@@ -7,7 +7,7 @@ int main(int argc, char* argv[]) {
     options_easy.makeOption<int>("dim", dim, "dimension");    
     HelpStringsStorage help_storage = options_easy.help();    
     SimpleExtractor extractor;
-    ProgramUsageMindMap mindmap = extractor.extract(help_storage, options_easy.opt());
+    HelpData mindmap = extractor.extract(help_storage, options_easy.opt());
 
     return 0;
 }

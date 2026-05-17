@@ -2,7 +2,7 @@
 #define HELP_HELPSTRINGS_H
 
 #include <Backend/Option.h>
-#include <Help/AST.h>
+#include <Help/HelpData.h>
 
 #include <map>
 #include <sstream>
@@ -27,8 +27,10 @@ class HelpStringsStorage {
    public:
     // TODO: add possibility to replace option names with preformatted string
     HelpBuilder operator<<(std::shared_ptr<AbstractOption> opt) { return HelpBuilder(help_strings[opt]); }
-    void setGroupName(std::shared_ptr<OptionsGroup2> opt, const std::string& str) { group_descriptions[opt].name = str; }
-    std::string getGroupName(std::shared_ptr<OptionsGroup2> opt) const {
+
+    void setGroupName(std::shared_ptr<OptionsGroup> opt, const std::string& str) { group_descriptions[opt].name = str; }
+
+    std::string getGroupName(std::shared_ptr<OptionsGroup> opt) const {
         if (!group_descriptions.contains(opt)) {
             return "grp";
             /*static size_t ccc = 0;
@@ -61,7 +63,7 @@ class HelpStringsStorage {
     }
 
     ProgramDescription program_description;
-    std::map<std::shared_ptr<OptionsGroup2>, GroupDescription> group_descriptions;
+    std::map<std::shared_ptr<OptionsGroup>, GroupDescription> group_descriptions;
     std::map<std::shared_ptr<AbstractOption>, std::string> help_strings;
     std::map<std::shared_ptr<AbstractOption>, std::string> key_strings;
 };

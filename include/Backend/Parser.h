@@ -120,7 +120,7 @@ class SingleOptionMatcher : public AbstractOptionVisitor {
         // should not never visit abstract object
         assert(false);
     }
-    void visit(std::shared_ptr<OptionsGroup2> opt) override {
+    void visit(std::shared_ptr<OptionsGroup> opt) override {
         assert(false);
         match = true;
         value = std::nullopt;
@@ -342,7 +342,7 @@ class BaseParser {
     void joinOptionsTo(const std::vector<std::shared_ptr<AbstractOption>>& src_options,
                        std::vector<std::shared_ptr<AbstractOption>>& dst_options) {
         for (auto it : src_options) {
-            if (auto p = std::dynamic_pointer_cast<OptionsGroup2>(it)) {
+            if (auto p = std::dynamic_pointer_cast<OptionsGroup>(it)) {
                 joinOptionsTo(p->unlocks(),
                               dst_options);  // todo: avoid copying of a vector
             } else {

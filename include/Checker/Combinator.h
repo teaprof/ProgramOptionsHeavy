@@ -66,7 +66,7 @@ class Combinator2 : public AbstractOptionVisitor {
     virtual void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) {
         visit(std::dynamic_pointer_cast<AbstractOption>(opt));
     }
-    virtual void visit(std::shared_ptr<OptionsGroup2> opt) { visit(std::dynamic_pointer_cast<AbstractOption>(opt)); }
+    virtual void visit(std::shared_ptr<OptionsGroup> opt) { visit(std::dynamic_pointer_cast<AbstractOption>(opt)); }
     virtual void visit(std::shared_ptr<OneOfPositional> oneOfPositional) {
         std::vector<Combinator2> combinators;
         assert(oneOfPositional->alternativesSize() != 0);  // todo: throw Alternatives is empty

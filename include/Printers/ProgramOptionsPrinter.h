@@ -40,7 +40,7 @@ class ProgramOptionsPrinter {
         }
         return str.str();
     }
-    static std::shared_ptr<Section> print(OptionsGroup& grp) {
+    static std::shared_ptr<Section> print(DynamicOptionsGroup& grp) {
         auto res = std::make_shared<Section>();
         res->title = grp.groupName();
         res->addParagraph(grp.description());

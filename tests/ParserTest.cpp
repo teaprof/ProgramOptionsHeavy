@@ -73,7 +73,7 @@ class MatcherFixtureSimple : public ::testing::Test {
     std::shared_ptr<NamedOptionWithValue<int>> opt2_;
     std::shared_ptr<PositionalOptionWithValue<std::string>> opt3_;
     void SetUp() override {
-        root_opt_ = std::make_shared<OptionsGroup2>();
+        root_opt_ = std::make_shared<OptionsGroup>();
         opt1_ = std::make_shared<NamedOption>("--opt1", "-1");
         opt2_ = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
         opt3_ = std::make_shared<PositionalOptionWithValue<std::string>>();
@@ -98,7 +98,7 @@ class MatcherFixture : public ::testing::Test {
     std::shared_ptr<OneOfPositional> command_;
     void SetUp() override {
         common_option_ = std::make_shared<NamedOption>("--common", "-c");
-        root_opt_ = std::make_shared<OptionsGroup2>();
+        root_opt_ = std::make_shared<OptionsGroup>();
         root_opt_->addUnlock(common_option_);
         auto run_options = std::make_shared<LiteralString>("run");
         run_options->addUnlock(std::make_shared<NamedOption>("--dim", "-d"));
@@ -124,7 +124,7 @@ class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
     std::shared_ptr<PositionalOptionWithValue<std::string>> command_;
 
     void SetUp() override {
-        root_opt_ = std::make_shared<OptionsGroup2>();
+        root_opt_ = std::make_shared<OptionsGroup>();
 
         common_option_ = std::make_shared<NamedOption>("--common", "-c");
         root_opt_->addUnlock(common_option_);
@@ -491,7 +491,7 @@ TEST(Parser2, TwoPositionalOptions) {
     auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
     opt2->setMaxOccurreneCount(2);
-    auto opt = std::make_shared<OptionsGroup2>()->addUnlock(opt1)->addUnlock(opt2);
+    auto opt = std::make_shared<OptionsGroup>()->addUnlock(opt1)->addUnlock(opt2);
 
     Parser2 parser(opt);
     ASSERT_TRUE(parser.parse({}));
@@ -507,7 +507,7 @@ TEST(Parser2, TwoPositionalOptionsWithDoubleDash) {
     opt1->setMaxOccurreneCount(10);
     opt1->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 10);
     opt2->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
-    auto opt = std::make_shared<OptionsGroup2>()->addUnlock(opt1)->addUnlock(opt2);
+    auto opt = std::make_shared<OptionsGroup>()->addUnlock(opt1)->addUnlock(opt2);
 
     Parser2 parser(opt);
     ASSERT_TRUE(parser.parse("file1 file2 file3 -- 10"));
@@ -528,7 +528,7 @@ TEST(Parser2, DoubleDashTerminatesNamedOptions) {
     auto named_opt_1 = std::make_shared<NamedOptionWithValue<int>>("--arg1");
     auto named_opt_2 = std::make_shared<NamedOptionWithValue<int>>("--arg2");
     auto pos_opt = std::make_shared<PositionalOptionWithValue<std::string>>();
-    auto opt = std::make_shared<OptionsGroup2>()->addUnlock(named_opt_1)->addUnlock(named_opt_2)->addUnlock(pos_opt);
+    auto opt = std::make_shared<OptionsGroup>()->addUnlock(named_opt_1)->addUnlock(named_opt_2)->addUnlock(pos_opt);
 
     Parser2 parser(opt);
     ASSERT_TRUE(parser.parse("--arg1 10 -- --arg2"));
@@ -547,7 +547,7 @@ TEST(Parser2, PositionalAndNamed) {
     posopt->setMaxOccurreneCount(2);
     namedopt->setMaxOccurreneCount(2);
 
-    auto opts = std::make_shared<OptionsGroup2>()->addUnlock(posopt)->addUnlock(namedopt);
+    auto opts = std::make_shared<OptionsGroup>()->addUnlock(posopt)->addUnlock(namedopt);
 
     Parser2 parser(opts);
     ASSERT_TRUE(parser.parse(""));

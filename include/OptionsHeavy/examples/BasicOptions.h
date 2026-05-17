@@ -11,9 +11,9 @@
 
 namespace program_options_heavy {
 
-class HelpOptions : public OptionsGroup {
+class HelpOptions : public DynamicOptionsGroup {
    public:
-    HelpOptions() : OptionsGroup("Help options") {
+    HelpOptions() : DynamicOptionsGroup("Help options") {
         namespace po = boost::program_options;
         // addPartialVisible("help", po::bool_switch(&need_help), "produce this
         // help");
@@ -28,9 +28,9 @@ class HelpOptions : public OptionsGroup {
     bool need_help_;
 };
 
-class MultithreadOptions : public OptionsGroup {
+class MultithreadOptions : public DynamicOptionsGroup {
    public:
-    MultithreadOptions() : OptionsGroup("multithreading options") {
+    MultithreadOptions() : DynamicOptionsGroup("multithreading options") {
         namespace po = boost::program_options;
         concurency_ = std::thread::hardware_concurrency();
         std::stringstream str;

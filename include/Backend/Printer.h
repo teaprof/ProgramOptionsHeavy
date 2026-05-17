@@ -68,8 +68,8 @@ class Printer : public AbstractOptionVisitor {
         prn_ << "AbstractPositionalOptionWithValue" << "\n";
         printUnlocks(opt);
     }
-    void visit(std::shared_ptr<OptionsGroup2> opt) override {
-        prn_ << "OptionsGroup2" << "\n";
+    void visit(std::shared_ptr<OptionsGroup> opt) override {
+        prn_ << "OptionsGroup" << "\n";
         printUnlocks(opt);
     }
     void visit(std::shared_ptr<OneOfPositional> opt) override {

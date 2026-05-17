@@ -6,12 +6,12 @@ class Completer2Fixture : public ::testing::Test {
    protected:
     std::shared_ptr<LiteralString> exename_with_options_;
     void SetUp() override {
-        auto run_options = std::make_shared<OptionsGroup2>();
+        auto run_options = std::make_shared<OptionsGroup>();
         run_options->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--dim", "-d"));
-        auto gather_options = std::make_shared<OptionsGroup2>();
+        auto gather_options = std::make_shared<OptionsGroup>();
         gather_options->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--gather", "-g"));
 
-        auto common_options = std::make_shared<OptionsGroup2>();
+        auto common_options = std::make_shared<OptionsGroup>();
         common_options->addUnlock(std::make_shared<NamedOption>("--common", "-c"));
         common_options->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--value", "-v"));
 

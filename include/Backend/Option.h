@@ -18,7 +18,7 @@ class AbstractPositionalOption;
 class AbstractPositionalOptionWithValue;
 class OneOfPositional;
 class OneOfNamed;
-class OptionsGroup2;  // TODO rename
+class OptionsGroup;  // TODO rename
 
 class BaseValueSemantics;
 template <class T>
@@ -33,7 +33,7 @@ class AbstractOptionVisitor {
     virtual void visit(std::shared_ptr<LiteralString>) = 0;
     virtual void visit(std::shared_ptr<AbstractNamedOptionWithValue>) = 0;
     virtual void visit(std::shared_ptr<AbstractPositionalOptionWithValue>) = 0;
-    virtual void visit(std::shared_ptr<OptionsGroup2>) = 0;
+    virtual void visit(std::shared_ptr<OptionsGroup>) = 0;
     virtual void visit(std::shared_ptr<OneOfPositional>) = 0;
     virtual void visit(std::shared_ptr<OneOfNamed>) = 0;
 };
@@ -170,7 +170,7 @@ class PositionalOptionWithValue : public AbstractPositionalOptionWithValue, publ
     BaseValueSemantics& baseValueSemantics() override { return OptionWithValue<T>::valueSemantics(); }
 };
 
-class OptionsGroup2 : public AbstractOption {
+class OptionsGroup : public AbstractOption {
     /// TODO what does `required_` mean in this case?
    public:
     void accept(AbstractOptionVisitor& visitor) override;
@@ -350,8 +350,8 @@ inline void AbstractPositionalOption::accept(AbstractOptionVisitor& visitor) {
 inline void AbstractPositionalOptionWithValue::accept(AbstractOptionVisitor& visitor) {
     visitor.visit(std::dynamic_pointer_cast<AbstractPositionalOptionWithValue>(shared_from_this()));
 }
-inline void OptionsGroup2::accept(AbstractOptionVisitor& visitor) {
-    visitor.visit(std::dynamic_pointer_cast<OptionsGroup2>(shared_from_this()));
+inline void OptionsGroup::accept(AbstractOptionVisitor& visitor) {
+    visitor.visit(std::dynamic_pointer_cast<OptionsGroup>(shared_from_this()));
 }
 
 inline void OneOfPositional::accept(AbstractOptionVisitor& visitor) {

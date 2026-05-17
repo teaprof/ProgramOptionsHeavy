@@ -2,7 +2,7 @@
 #define HELP_TEXTEXTRACTORS_H
 
 #include <Help/HelpStringsStorage.h>
-#include <Help/AST.h>
+#include <Help/HelpData.h>
 #include <OptionsHeavy/Parser.h>
 
 #include <map>
@@ -27,7 +27,7 @@ class OptionTextExtractor : public AbstractOptionVisitor {
     void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) {
         descr = ParameterDescription{{"some positional option = value"}, helpString(opt)};  // TODO implement this
     }
-    void visit(std::shared_ptr<OptionsGroup2> opt) { descr = ParameterDescription{groupName(opt), helpString(opt)}; }
+    void visit(std::shared_ptr<OptionsGroup> opt) { descr = ParameterDescription{groupName(opt), helpString(opt)}; }
     void visit(std::shared_ptr<OneOfPositional> opt) {
         descr = ParameterDescription{{"one of"}, helpString(opt)};  // TODO implement this
     }
@@ -64,7 +64,7 @@ class OptionTextExtractor : public AbstractOptionVisitor {
         }
         return "";
     }
-    std::string groupName(std::shared_ptr<OptionsGroup2> opt) {
+    std::string groupName(std::shared_ptr<OptionsGroup> opt) {
         if (help_) {
             if (help_->get().group_descriptions.contains(opt)) {
                 return help_->get().group_descriptions.at(opt).name;
@@ -76,8 +76,8 @@ class OptionTextExtractor : public AbstractOptionVisitor {
 
 class Extractor {
    public:
-    ProgramUsageMindMap extract(HelpStringsStorage& help, std::shared_ptr<AbstractOption> opt) {
-        ProgramUsageMindMap res;
+    HelpData extract(HelpStringsStorage& help, std::shared_ptr<AbstractOption> opt) {
+        HelpData res;
         res.program_description = extractProgramDescription(help, opt);
         res.run_variants = extractRunVariants(help, opt);
         res.group_descriptions = extractGroupDescriptions(help, opt);
@@ -111,8 +111,8 @@ class SimpleExtractor : public Extractor {
         std::string detailed = "run variant detailed description";  // TODO
         std::vector<std::string> args;
         for (const auto& grp : opt->unlocks()) {
-            if(opt->unlock)
-            args.push_back(help.getGroupName(grp->options));
+            //if(opt->unlock)
+            //args.push_back(help.getGroupName(grp->options));
         }
         RunVariantDescription descr{exename, brief, detailed, args};
         RunVariantsDescription res;

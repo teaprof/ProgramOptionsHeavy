@@ -1,7 +1,7 @@
 #include <ProgramOptionsHeavy.h>
 #include <gtest/gtest.h>
 
-using program_options_heavy::OptionsGroup;
+using program_options_heavy::DynamicOptionsGroup;
 using program_options_heavy::ParserWithSubcommands;
 using program_options_heavy::printers::PrettyPrinter;
 using program_options_heavy::printers::ProgramSubcommandsPrinter;
@@ -9,18 +9,18 @@ using program_options_heavy::printers::ProgramSubcommandsPrinter;
 TEST(PROGRAMMODEOPTIONS, PARSE) {
     namespace po = boost::program_options;
     ParserWithSubcommands subcommands_parser("programname");
-    auto run_options = std::make_shared<OptionsGroup>("run group");
+    auto run_options = std::make_shared<DynamicOptionsGroup>("run group");
     size_t dim;
     // runOptions->addPartialVisible("dim,d",
     // po::value<size_t>(&dim)->default_value(2), "hypercube dimension");
     run_options->addPartial("dim,d", std::ref(dim), "hypercube dimension");
-    auto gather_options = std::make_shared<OptionsGroup>("gather group");
+    auto gather_options = std::make_shared<DynamicOptionsGroup>("gather group");
     size_t gather_opt;
     // gatherOptions->addPartialVisible("gather,g",
     // po::value<size_t>(&gather_opt)->default_value(2), "some option for
     // gathering");
     gather_options->addPartial("gather,g", std::ref(gather_opt), "some option for gathering");
-    auto common_options = std::make_shared<OptionsGroup>("common group");
+    auto common_options = std::make_shared<DynamicOptionsGroup>("common group");
     size_t common_value;
     // commonOptions->addPartialVisible("common,c",
     // po::value<size_t>(&common_value)->default_value(2), "common value");

@@ -22,9 +22,9 @@ class Parser : public AbstractOptionsParser {
    public:
     Parser(const std::string& exename = "") : AbstractOptionsParser(exename) {}
     Parser(int argc, const char* argv[]) : AbstractOptionsParser(argc, argv) {}
-    virtual void addGroup(std::shared_ptr<OptionsGroup> options) { groups_.push_back(options); }
+    virtual void addGroup(std::shared_ptr<DynamicOptionsGroup> options) { groups_.push_back(options); }
     bool parse(int argc, const char* argv[]) override {
-        auto options = std::make_shared<OptionsGroup2>();
+        auto options = std::make_shared<OptionsGroup>();
         for (auto grp : groups_) {
             options->addUnlock(grp->options);
         }
@@ -41,10 +41,10 @@ class Parser : public AbstractOptionsParser {
             it->validate();*/
     }
     void update(const boost::program_options::variables_map& vm) override {}
-    std::vector<std::shared_ptr<OptionsGroup>> groups() const { return groups_; }
+    std::vector<std::shared_ptr<DynamicOptionsGroup>> groups() const { return groups_; }
 
    private:
-    std::vector<std::shared_ptr<OptionsGroup>> groups_;
+    std::vector<std::shared_ptr<DynamicOptionsGroup>> groups_;
 };
 
 } /* namespace program_options_heavy */

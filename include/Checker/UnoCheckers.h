@@ -37,7 +37,7 @@ class UnoChecker : public AbstractOptionVisitor {
         DefaultValueChecker::checkDefaultValue(opt);
     }
     void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) { DefaultValueChecker::checkDefaultValue(opt); }
-    void visit(std::shared_ptr<OptionsGroup2> opt) {
+    void visit(std::shared_ptr<OptionsGroup> opt) {
         // nothing to do
     }
     void visit(std::shared_ptr<OneOfPositional> opt) {

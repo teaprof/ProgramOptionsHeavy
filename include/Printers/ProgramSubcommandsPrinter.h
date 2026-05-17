@@ -73,7 +73,7 @@ class ProgramSubcommandsPrinter {
         }
         return res;
     }
-    static std::shared_ptr<Section> print(OptionsGroup& grp) { return ProgramOptionsPrinter::print(grp); }
+    static std::shared_ptr<Section> print(DynamicOptionsGroup& grp) { return ProgramOptionsPrinter::print(grp); }
     std::set<std::string> options_groups_printed_already;
 };
 
