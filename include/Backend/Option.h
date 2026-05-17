@@ -18,7 +18,7 @@ class AbstractPositionalOption;
 class AbstractPositionalOptionWithValue;
 class OneOfPositional;
 class OneOfNamed;
-class OptionsGroup;  // TODO rename
+class OptionsGroup;
 
 class BaseValueSemantics;
 template <class T>

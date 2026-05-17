@@ -1,7 +1,7 @@
 #ifndef BACKEND_MATCHER_H
 #define BACKEND_MATCHER_H
 
-#include <Checker/Checker.h>
+//#include <Checker/Checker.h>
 #include <Lexer/Lexer.h>
 
 #include <cassert>
@@ -15,158 +15,18 @@
 
 #include "Exceptions.h"
 #include "Option.h"
+#include "OptionMatcher.h"
 #include "ValueSemantics.h"
 #include "ValueStorage.h"
-
-class SingleOptionMatcher : public AbstractOptionVisitor {
-   private:
-    ArgGrammarParser& grammar_parser_;
-
-   public:
-    bool match;
-    std::optional<std::string> value;
-    std::vector<std::shared_ptr<AbstractOption>> unlocks;
-    SingleOptionMatcher(ArgGrammarParser& args) : grammar_parser_{args} {}
-
-    void visit(std::shared_ptr<AbstractOption> opt) override {
-        // should not never visit abstract object
-        assert(false);
-    }
-    void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
-        match = false;
-        unlocks.clear();
-        switch (grammar_parser_.current_result.token_type) {
-            case ArgGrammarParser::TokenTypes::LONG_OPTION:
-            case ArgGrammarParser::TokenTypes::LONG_OPTION_EQ_VALUE:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION_EQ_VALUE:
-            case ArgGrammarParser::TokenTypes::DOUBLE_DASH:
-                return;
-            case ArgGrammarParser::TokenTypes::VALUE:
-                /* nothing to do */;
-        }
-        match = true;
-        value = grammar_parser_.getValueOpt();
-        unlocks = opt->unlocks();               // todo: avoid copying of the vector
-    }
-    void visit(std::shared_ptr<LiteralString> opt) override {
-        unlocks.clear();
-        match = false;
-        switch (grammar_parser_.current_result.token_type) {
-            case ArgGrammarParser::TokenTypes::LONG_OPTION:
-            case ArgGrammarParser::TokenTypes::LONG_OPTION_EQ_VALUE:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION_EQ_VALUE:
-            case ArgGrammarParser::TokenTypes::DOUBLE_DASH:
-                break;
-            case ArgGrammarParser::TokenTypes::VALUE:
-                match = opt->str() == grammar_parser_.current_result.value;
-                break;
-        }
-        if (match) {
-            value = std::nullopt;
-            unlocks = opt->unlocks();  // todo: avoid copying of a vector
-        };
-    }
-    void visit(std::shared_ptr<NamedOption> opt) override {
-        unlocks.clear();
-        match = false;
-        switch (grammar_parser_.current_result.token_type) {
-            case ArgGrammarParser::TokenTypes::LONG_OPTION:
-            case ArgGrammarParser::TokenTypes::LONG_OPTION_EQ_VALUE:
-                match = opt->longName().has_value() && opt->longName().value() == grammar_parser_.current_result.long_option_name;
-                break;
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION_EQ_VALUE:
-                match =
-                    opt->shortName().has_value() && opt->shortName().value() == grammar_parser_.current_result.short_option_name;
-                break;
-            case ArgGrammarParser::TokenTypes::DOUBLE_DASH:
-            case ArgGrammarParser::TokenTypes::VALUE:
-                break;
-        }
-        if (match) {
-            value = std::nullopt;
-            unlocks = opt->unlocks();  // todo: avoid copying of a vector
-        };
-    }
-    void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
-        unlocks.clear();
-        match = false;
-        switch (grammar_parser_.current_result.token_type) {
-            case ArgGrammarParser::TokenTypes::LONG_OPTION:
-            case ArgGrammarParser::TokenTypes::LONG_OPTION_EQ_VALUE:
-                match = opt->longName().has_value() && opt->longName().value() == grammar_parser_.current_result.long_option_name;
-                break;
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
-            case ArgGrammarParser::TokenTypes::SHORT_OPTION_EQ_VALUE:
-                match =
-                    opt->shortName().has_value() && opt->shortName().value() == grammar_parser_.current_result.short_option_name;
-                break;
-            case ArgGrammarParser::TokenTypes::DOUBLE_DASH:
-            case ArgGrammarParser::TokenTypes::VALUE:
-                /* nothing to do*/;
-        }
-        if (match) {
-            value = grammar_parser_.getValueOpt();
-            unlocks = opt->unlocks();  // todo: avoid copying of a vector
-        };
-    }
-    void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
-        // should not never visit abstract object
-        assert(false);
-    }
-    void visit(std::shared_ptr<OptionsGroup> opt) override {
-        assert(false);
-        match = true;
-        value = std::nullopt;
-        unlocks = opt->unlocks();  // todo: avoid copying of a vector
-    }
-    void visit(std::shared_ptr<OneOfPositional> opt) override {
-        match = false;
-        unlocks.clear();
-        for (size_t n = 0; n < opt->alternativesSize(); n++) {
-            auto alt = opt->alternative(n);
-            alt->accept(*this);
-            if (match) {
-                value = std::nullopt;
-                unlocks = opt->alternative(n)->unlocks();  // todo: avoid copying of a vector
-                return;
-            }
-        }
-    }
-    void visit(std::shared_ptr<OneOfNamed> opt) override {
-        match = false;
-        unlocks.clear();
-        for (size_t n = 0; n < opt->alternativesSize(); n++) {
-            auto alt = opt->alternative(n);
-            alt->accept(*this);
-            if (match) {
-                value = std::nullopt;
-                unlocks = opt->alternative(n)->unlocks();  // todo: avoid copying of a vector
-                return;
-            }
-        }
-    }
-
-    void setPositionalOnlyFlag(bool value) { grammar_parser_.match_only_positional = value; }
-};
 
 class BaseParser {
    protected:
     std::vector<std::shared_ptr<AbstractOption>> remaining_options_;
-    // std::vector<std::shared_ptr<AbstractOption>> used_options_;
     std::set<std::shared_ptr<AbstractOption>> already_joined_;
     std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
     std::set<std::shared_ptr<AbstractOptionWithValue>> opts_with_implicit_value_;
     std::shared_ptr<AbstractOption> options_;
     size_t cur_positional_option_idx_{0};
-
-    //std::vector<std::vector<std::shared_ptr<AbstractOption>>> mutual_exclusive_options_;
 
    public:
     KeyValueStorage storage;
@@ -186,7 +46,7 @@ class BaseParser {
         joinOptionsTo({options_}, remaining_options_);
     }
 
-    std::shared_ptr<AbstractPositionalOption> eatNextPositionalOption(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
+    std::shared_ptr<AbstractPositionalOption> eatNextPositionalOption(ArgGrammarParser& args, OptionMatcher& matcher) {
         auto find_next_positional = [&](size_t idx)->auto {
             std::shared_ptr<AbstractPositionalOption> p;
             while(idx < remaining_options_.size()) {
@@ -221,7 +81,7 @@ class BaseParser {
         return nullptr;
     }
 
-    std::shared_ptr<AbstractOption> eatNextNamedOption(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
+    std::shared_ptr<AbstractOption> eatNextNamedOption(ArgGrammarParser& args, OptionMatcher& matcher) {
         for (auto opt : remaining_options_) {
             opt->accept(matcher);
             if (matcher.match) {
@@ -231,7 +91,7 @@ class BaseParser {
         return nullptr;
     }
 
-    std::shared_ptr<AbstractOption> eatNextOption(ArgGrammarParser& args, SingleOptionMatcher& matcher) {
+    std::shared_ptr<AbstractOption> eatNextOption(ArgGrammarParser& args, OptionMatcher& matcher) {
         args.getNextOption();
         // If DOUBLE_DASH then all next options will be treated as positionals
         if (args.current_result.token_type == ArgGrammarParser::TokenTypes::DOUBLE_DASH) {
@@ -266,7 +126,7 @@ class BaseParser {
         return nullptr;
     }
 
-    void eatValueIfCan(ArgGrammarParser& args, SingleOptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
+    void eatValueIfCan(ArgGrammarParser& args, OptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
         // first, try to eat matcher.value
         if (matcher.value.has_value()) {
             setOptionValue(opt, matcher.value.value());
@@ -294,7 +154,7 @@ class BaseParser {
     }
 
     void parseNext(ArgGrammarParser& args) {
-        SingleOptionMatcher matcher(args);
+        OptionMatcher matcher(args);
         auto opt = eatNextOption(args, matcher);
         if (opt) {
             if (!already_joined_.contains(opt)) {
@@ -323,7 +183,7 @@ class BaseParser {
 
     void parse(ArgGrammarParser args) { 
         clear();
-        //SingleOptionMatcher matcher(args); 
+        //OptionMatcher matcher(args); 
         while (!args.eof()) {
             parseNext(args);
         }
@@ -437,6 +297,8 @@ class BaseParser {
     }
 };
 
+
+/// TODO: what Parser can do that BaseParser cant? Rename Parser class to reflect this.
 class Parser : public BaseParser {
    public:
     Parser(std::shared_ptr<AbstractOption> options) : BaseParser{options} {}

@@ -97,7 +97,7 @@ class ArgLexer {
     }
 };
 
-class ArgGrammarParser {
+class ArgGrammarParser { // todo: rename to Lexer?? but see class above
     std::vector<std::string> args_;
     size_t idx_{0};
 
