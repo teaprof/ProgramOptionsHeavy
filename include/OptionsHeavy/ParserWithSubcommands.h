@@ -11,13 +11,13 @@ class ProgramSubcommandsPrinter;
 
 class ParserWithSubcommands : public AbstractOptionsParser {
    public:
-    using ValueT = std::shared_ptr<Parser>;
+    using ValueT = std::shared_ptr<DynamicParser>;
     using SubcommandsT = std::map<std::string, ValueT>;
 
     ParserWithSubcommands(const std::string& exename = "") : AbstractOptionsParser(exename) {}
     ParserWithSubcommands(int argc, const char* argv[]) : AbstractOptionsParser(argc, argv) {}
     SubcommandsT getSubcommands() { return subcommands_; }
-    std::shared_ptr<Parser> pushBack(const std::string& subcommand_name, std::shared_ptr<Parser> val) {
+    std::shared_ptr<DynamicParser> pushBack(const std::string& subcommand_name, std::shared_ptr<DynamicParser> val) {
         auto res = subcommands_.emplace(subcommand_name, val);
         if (!res.second) {
             throw std::runtime_error(
@@ -27,20 +27,20 @@ class ParserWithSubcommands : public AbstractOptionsParser {
         subcommands_order_.push_back(subcommands_.find(subcommand_name));
         return res.first->second;
     }
-    std::shared_ptr<Parser> operator[](const std::string& subcommand_name) {
+    std::shared_ptr<DynamicParser> operator[](const std::string& subcommand_name) {
         auto pos = subcommands_.find(subcommand_name);
         if (pos == subcommands_.end()) {
-            pos = subcommands_.emplace(subcommand_name, std::make_shared<Parser>(exename)).first;
+            pos = subcommands_.emplace(subcommand_name, std::make_shared<DynamicParser>(exename)).first;
             subcommands_order_.push_back(subcommands_.find(subcommand_name));
         }
         return pos->second;
     }
-    std::shared_ptr<Parser> at(const std::string& subcommand_name) {
+    std::shared_ptr<DynamicParser> at(const std::string& subcommand_name) {
         auto pos = subcommands_.find(subcommand_name);
         assert(pos != subcommands_.end());
         return pos->second;
     }
-    std::shared_ptr<Parser> defaultSubcommand() { return at(default_subcommand_name_); }
+    std::shared_ptr<DynamicParser> defaultSubcommand() { return at(default_subcommand_name_); }
     void setDefaultSubcommand(const std::string& subcommand_name, bool hide) {
         assert(subcommands_.contains(subcommand_name));
         default_subcommand_name_ = subcommand_name;
@@ -49,7 +49,7 @@ class ParserWithSubcommands : public AbstractOptionsParser {
                                                // empty string in the help message
     }
     const std::string& defaultSubcommandName() { return default_subcommand_name_; }
-    std::shared_ptr<Parser> selectedSubcommand() { return selected_subcommand_->second; }
+    std::shared_ptr<DynamicParser> selectedSubcommand() { return selected_subcommand_->second; }
     const std::string& selectedSubcommandName()  // TODO move to ParseResults class
     {
         return selected_subcommand_->first;
@@ -95,7 +95,7 @@ class ParserWithSubcommands : public AbstractOptionsParser {
                 };
                 selected_subcommand_->second->parse(argc, argv);
                 activated = true;*/
-        Parser2 parser(top_level_options);
+        Parser parser(top_level_options);
         std::vector<std::string> args;
         for (int n = 1; n < argc; n++) {  // skip the name of executable
             args.push_back(argv[n]);

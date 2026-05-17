@@ -437,9 +437,9 @@ class BaseParser {
     }
 };
 
-class Parser2 : public BaseParser {
+class Parser : public BaseParser {
    public:
-    Parser2(std::shared_ptr<AbstractOption> options) : BaseParser{options} {}
+    Parser(std::shared_ptr<AbstractOption> options) : BaseParser{options} {}
 
     bool parse(ArgGrammarParser args) {
         BaseParser::parse(args);

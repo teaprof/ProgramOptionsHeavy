@@ -49,7 +49,7 @@ class ProgramSubcommandsPrinter {
         } else {
             str << it->first << " ";
         }
-        const std::shared_ptr<Parser> opts = it->second;
+        const std::shared_ptr<DynamicParser> opts = it->second;
         for (auto group : opts->groups()) {
             str << "[" << group->groupName() << "] ";
         }
@@ -63,7 +63,7 @@ class ProgramSubcommandsPrinter {
         str << it->second->program_description;
         return str.str();
     }
-    std::vector<std::shared_ptr<Section>> print(Parser& parser) {
+    std::vector<std::shared_ptr<Section>> print(DynamicParser& parser) {
         std::vector<std::shared_ptr<Section>> res;
         for (auto it : parser.groups()) {
             if (!options_groups_printed_already.contains(it->groupName())) {

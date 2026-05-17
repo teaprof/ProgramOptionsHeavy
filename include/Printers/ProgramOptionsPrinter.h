@@ -11,7 +11,7 @@ namespace printers {
 
 class ProgramOptionsPrinter {
    public:
-    std::shared_ptr<Section> print(Parser& parser) const {
+    std::shared_ptr<Section> print(DynamicParser& parser) const {
         auto res = std::make_shared<Section>();
         auto usage = std::make_shared<Section>();
         usage->title = "Usage";
@@ -32,7 +32,7 @@ class ProgramOptionsPrinter {
         res->items.push_back(details);
         return res;
     }
-    static std::string shortHelp(Parser& parser) {
+    static std::string shortHelp(DynamicParser& parser) {
         std::stringstream str;
         str << parser.exename << " ";
         for (auto group : parser.groups()) {

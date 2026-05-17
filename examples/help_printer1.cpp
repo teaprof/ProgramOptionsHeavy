@@ -2,12 +2,12 @@
 
 using program_options_heavy::HelpOptions;
 using program_options_heavy::MultithreadOptions;
-using program_options_heavy::Parser;
+using program_options_heavy::DynamicParser;
 using program_options_heavy::printers::PrettyPrinter;
 using program_options_heavy::printers::ProgramOptionsPrinter;
 
 int main(int argc, const char* argv[]) {
-    Parser parser(argc, argv);
+    DynamicParser parser(argc, argv);
     auto help_options = std::make_shared<HelpOptions>();
     auto multithreading_options = std::make_shared<MultithreadOptions>();
     parser.addGroup(help_options);

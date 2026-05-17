@@ -18,40 +18,40 @@ TEST_F(MatcherFixture, Test2)
 TEST_F(MatcherFixtureWithUnlocksByValue, Test2)
     RequiredOptionIsNotSet
     TooManyPositionalOptions
-TEST(Parser2, OptionRequired)
+TEST(Parser, OptionRequired)
     RequiredOptionIsNotSet
-TEST(Parser2, DefaultValue)
+TEST(Parser, DefaultValue)
     none
-TEST(Parser2, MultipleOccurrenceOfNamedOption)
+TEST(Parser, MultipleOccurrenceOfNamedOption)
     MaxOptionOccurrenceIsExceeded
-TEST(Parser2, MultipleOccurrenceOfPositionalOption)
+TEST(Parser, MultipleOccurrenceOfPositionalOption)
     RequiredOptionIsNotSet
     TooManyPositionalOptions
-TEST(Parser2, MultipleValuesOfNamedOptionExact)
+TEST(Parser, MultipleValuesOfNamedOptionExact)
     MaxOptionOccurrenceIsExceeded
     ExpectedExactNumberOfValues
-TEST(Parser2, MultipleValuesOfNamedOptionUpTo)
+TEST(Parser, MultipleValuesOfNamedOptionUpTo)
     MaxOptionOccurrenceIsExceeded
     TooManyPositionalOptions
-TEST(Parser2, MultipleValuesOfNamedOptionInfinite)
+TEST(Parser, MultipleValuesOfNamedOptionInfinite)
     none
-TEST(Parser2, MultipleValuesOfPositionalOption)
+TEST(Parser, MultipleValuesOfPositionalOption)
     RequiredOptionIsNotSet
     TooManyValuesForOption
     TooManyPositionalOptions
-TEST(Parser2, TwoPositionalOptions)
+TEST(Parser, TwoPositionalOptions)
     TooManyPositionalOptions
-TEST(Parser2, TwoPositionalOptionsWithDoubleDash)
+TEST(Parser, TwoPositionalOptionsWithDoubleDash)
     none
-//TEST(Parser2, DoubleDashTerminatesNamedOptions)
+//TEST(Parser, DoubleDashTerminatesNamedOptions)
     none
-TEST(Parser2, PositionalAndNamed)
+TEST(Parser, PositionalAndNamed)
     TooManyPositionalOptions
-TEST(Parser2, NestedAlternatives)
+TEST(Parser, NestedAlternatives)
     UnknownNamedOption
     UnexpectedValueForPositionalOption
     TooManyPositionalOptions
-TEST(Parser2, NestedAlternativesWithEqualNames)
+TEST(Parser, NestedAlternativesWithEqualNames)
     none
 TEST(MatcherWithUnlocksByValue, NestedAlternatives)
     UnknownNamedOption
@@ -139,7 +139,7 @@ class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
 };
 
 TEST_F(MatcherFixtureSimple, Test1) {
-    Parser2 parser(root_opt_);
+    Parser parser(root_opt_);
     int int_value{0};
     opt2_->valueSemantics().setExternalStorage(int_value);
     parser.storage.setExternalStorage<int>(opt2_, &int_value);
@@ -164,12 +164,12 @@ TEST_F(MatcherFixtureSimple, Test1) {
 }
 
 TEST_F(MatcherFixture, Test1) {
-    Parser2 parser(root_opt_);
+    Parser parser(root_opt_);
     ASSERT_TRUE(parser.parse({}));
 }
 
 TEST_F(MatcherFixture, Test2) {
-    Parser2 parser(root_opt_);
+    Parser parser(root_opt_);
     command_->setRequired(true);
     ASSERT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     ASSERT_TRUE(parser.parse({"run"}));
@@ -180,7 +180,7 @@ TEST_F(MatcherFixture, Test2) {
 }
 
 TEST_F(MatcherFixtureWithUnlocksByValue, Test2) {
-    Parser2 parser(root_opt_);
+    Parser parser(root_opt_);
     command_->setRequired(true);
     ASSERT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     ASSERT_TRUE(parser.parse({"run"}));
@@ -191,20 +191,20 @@ TEST_F(MatcherFixtureWithUnlocksByValue, Test2) {
     ASSERT_TRUE(parser.parse({"--common", "run", "-d"}));
 }
 
-TEST(Parser2, OptionRequired) {
+TEST(Parser, OptionRequired) {
     auto opt = std::make_shared<NamedOption>("--opt1");
     opt->setRequired(true);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     ASSERT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     ASSERT_TRUE(parser.parse({"--opt1"}));
 }
 
-TEST(Parser2, DefaultValue) {
+TEST(Parser, DefaultValue) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     int int_value{0};
     opt->valueSemantics().setExternalStorage(int_value);
     parser.storage.setExternalStorage(opt, &int_value);
@@ -222,11 +222,11 @@ TEST(Parser2, DefaultValue) {
     ASSERT_THROW(parser.parse({}), RequiredOptionIsNotSet);
 }
 
-TEST(Parser2, Implicit) {
+TEST(Parser, Implicit) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setImplicitValue(10);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     int int_value{0};
     opt->valueSemantics().setExternalStorage(int_value);
     parser.storage.setExternalStorage(opt, &int_value);
@@ -246,13 +246,13 @@ TEST(Parser2, Implicit) {
     EXPECT_EQ(int_value, 10); // implicit value
 }
 
-TEST(Parser2, MultipleOccurrenceOfNamedOption) {
+TEST(Parser, MultipleOccurrenceOfNamedOption) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->valueSemantics().setImplicitValue(11);
     opt->setMaxOccurreneCount(2);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     int int_value{0};
     opt->valueSemantics().setExternalStorage(int_value);
     parser.storage.setExternalStorage(opt, &int_value);
@@ -293,11 +293,11 @@ TEST(Parser2, MultipleOccurrenceOfNamedOption) {
     ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1 40"), MaxOptionOccurrenceIsExceeded);
 }
 
-TEST(Parser2, MultipleOccurrenceOfPositionalOption) {
+TEST(Parser, MultipleOccurrenceOfPositionalOption) {
     auto opt = std::make_shared<PositionalOptionWithValue<int>>();
     opt->setMaxOccurreneCount(2);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     int int_value{0};
     opt->valueSemantics().setExternalStorage(int_value);
     parser.storage.setExternalStorage(opt, &int_value);
@@ -328,10 +328,10 @@ TEST(Parser2, MultipleOccurrenceOfPositionalOption) {
     ASSERT_THROW(parser.parse("20 30 40"), TooManyPositionalOptions);
 }
 
-TEST(Parser2, MultipleValuesOfNamedOptionExact) {
+TEST(Parser, MultipleValuesOfNamedOptionExact) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     int int_value{0};
-    Parser2 parser(opt);
+    Parser parser(opt);
     parser.storage.setExternalStorage(opt, &int_value);
 
     ASSERT_THROW(parser.parse("--opt1"), ExpectedValue);
@@ -355,9 +355,9 @@ TEST(Parser2, MultipleValuesOfNamedOptionExact) {
     ASSERT_THROW(parser.parse("--opt1 20,30 --opt1 40,40 --opt1"), MaxOptionOccurrenceIsExceeded);
 }
 
-TEST(Parser2, MultipleValuesOfNamedOptionUpTo) {
+TEST(Parser, MultipleValuesOfNamedOptionUpTo) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
-    Parser2 parser(opt);
+    Parser parser(opt);
     int int_value{0};
     opt->valueSemantics().setExternalStorage(int_value);
     parser.storage.setExternalStorage(opt, &int_value);
@@ -411,14 +411,14 @@ TEST(Parser2, MultipleValuesOfNamedOptionUpTo) {
     EXPECT_EQ(int_value, 30);
 }
 
-TEST(Parser2, MultipleValuesOfNamedOptionInfinite) {
+TEST(Parser, MultipleValuesOfNamedOptionInfinite) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
     opt->valueSemantics().setImplicitValue(11);
     opt->setMaxOccurreneCount(1);
     opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::INFINITE);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     int int_value{0};
     opt->valueSemantics().setExternalStorage(int_value);
     parser.storage.setExternalStorage(opt, &int_value);
@@ -439,12 +439,12 @@ TEST(Parser2, MultipleValuesOfNamedOptionInfinite) {
 }
 
 
-TEST(Parser2, MultipleValuesOfPositionalOption) {
+TEST(Parser, MultipleValuesOfPositionalOption) {
     auto opt = std::make_shared<PositionalOptionWithValue<int>>();
     opt->setMaxOccurreneCount(2);
     opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     int int_value{0};
     opt->valueSemantics().setExternalStorage(int_value);
     parser.storage.setExternalStorage(opt, &int_value);
@@ -487,13 +487,13 @@ TEST(Parser2, MultipleValuesOfPositionalOption) {
     ASSERT_THROW(parser.parse("20,30 50 60"), TooManyPositionalOptions);
 }
 
-TEST(Parser2, TwoPositionalOptions) {
+TEST(Parser, TwoPositionalOptions) {
     auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
     opt2->setMaxOccurreneCount(2);
     auto opt = std::make_shared<OptionsGroup>()->addUnlock(opt1)->addUnlock(opt2);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     ASSERT_TRUE(parser.parse({}));
     ASSERT_TRUE(parser.parse("file1"));
     ASSERT_TRUE(parser.parse("file1 10"));
@@ -501,7 +501,7 @@ TEST(Parser2, TwoPositionalOptions) {
     ASSERT_THROW(parser.parse("file1 10 20 30"), TooManyPositionalOptions);
 }
 
-TEST(Parser2, TwoPositionalOptionsWithDoubleDash) {
+TEST(Parser, TwoPositionalOptionsWithDoubleDash) {
     auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
     opt1->setMaxOccurreneCount(10);
@@ -509,7 +509,7 @@ TEST(Parser2, TwoPositionalOptionsWithDoubleDash) {
     opt2->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
     auto opt = std::make_shared<OptionsGroup>()->addUnlock(opt1)->addUnlock(opt2);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     ASSERT_TRUE(parser.parse("file1 file2 file3 -- 10"));
     ASSERT_EQ(parser.storage[opt1].occurrenceCount(), 3);
     ASSERT_EQ(parser.storage[opt1].occurrenceSize(0), 1);
@@ -524,13 +524,13 @@ TEST(Parser2, TwoPositionalOptionsWithDoubleDash) {
     ASSERT_EQ(parser.storage[opt2].rawValues(0, 0), "10");
 }
 
-TEST(Parser2, DoubleDashTerminatesNamedOptions) {
+TEST(Parser, DoubleDashTerminatesNamedOptions) {
     auto named_opt_1 = std::make_shared<NamedOptionWithValue<int>>("--arg1");
     auto named_opt_2 = std::make_shared<NamedOptionWithValue<int>>("--arg2");
     auto pos_opt = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto opt = std::make_shared<OptionsGroup>()->addUnlock(named_opt_1)->addUnlock(named_opt_2)->addUnlock(pos_opt);
 
-    Parser2 parser(opt);
+    Parser parser(opt);
     ASSERT_TRUE(parser.parse("--arg1 10 -- --arg2"));
     ASSERT_EQ(parser.storage[named_opt_1].occurrenceCount(), 1);
     ASSERT_EQ(parser.storage[named_opt_1].occurrenceSize(0), 1);
@@ -541,7 +541,7 @@ TEST(Parser2, DoubleDashTerminatesNamedOptions) {
     ASSERT_EQ(parser.storage[pos_opt].rawValues(0, 0), "--arg2");
 }
 
-TEST(Parser2, PositionalAndNamed) {
+TEST(Parser, PositionalAndNamed) {
     auto posopt = std::make_shared<PositionalOptionWithValue<std::string>>();
     auto namedopt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     posopt->setMaxOccurreneCount(2);
@@ -549,7 +549,7 @@ TEST(Parser2, PositionalAndNamed) {
 
     auto opts = std::make_shared<OptionsGroup>()->addUnlock(posopt)->addUnlock(namedopt);
 
-    Parser2 parser(opts);
+    Parser parser(opts);
     ASSERT_TRUE(parser.parse(""));
     ASSERT_TRUE(parser.parse("--opt1 10"));
     ASSERT_TRUE(parser.parse("--opt1 10 filename"));
@@ -561,7 +561,7 @@ TEST(Parser2, PositionalAndNamed) {
 }
 
 
-TEST(Parser2, NestedAlternatives) {
+TEST(Parser, NestedAlternatives) {
     auto alt_nested_1 =
         std::make_shared<OneOfPositional>()
             ->addAlternative2(std::make_shared<LiteralString>("alt11")->addUnlock(std::make_shared<NamedOption>("--opt11")))
@@ -574,7 +574,7 @@ TEST(Parser2, NestedAlternatives) {
                     ->addAlternative2(std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1))
                     ->addAlternative2(std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2));
 
-    Parser2 parser(opts);
+    Parser parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt11 --opt11"));
     ASSERT_NO_THROW(parser.parse("alt1 alt12 --opt12"));
     ASSERT_NO_THROW(parser.parse("alt2 alt21 --opt21"));
@@ -587,7 +587,7 @@ TEST(Parser2, NestedAlternatives) {
     ASSERT_THROW(parser.parse("alt1 alt11 alt12"), TooManyPositionalOptions);
 }
 
-TEST(Parser2, NestedAlternativesWithEqualNames) {
+TEST(Parser, NestedAlternativesWithEqualNames) {
     auto alt_nested_1 =
         std::make_shared<OneOfPositional>()
             ->addAlternative2(std::make_shared<LiteralString>("alt1")->addUnlock(std::make_shared<NamedOption>("--opt1")))
@@ -600,7 +600,7 @@ TEST(Parser2, NestedAlternativesWithEqualNames) {
                     ->addAlternative2(std::make_shared<LiteralString>("alt1")->addUnlock(alt_nested_1))
                     ->addAlternative2(std::make_shared<LiteralString>("alt2")->addUnlock(alt_nested_2));
 
-    Parser2 parser(opts);
+    Parser parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt1 --opt1"));
     ASSERT_NO_THROW(parser.parse("alt1 alt2 --opt2"));
     ASSERT_NO_THROW(parser.parse("alt2 alt1 --opt1"));
@@ -619,7 +619,7 @@ TEST(MatcherWithUnlocksByValue, NestedAlternatives) {
     opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
     opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
 
-    Parser2 parser(opts);
+    Parser parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt11 --opt11"));
     ASSERT_NO_THROW(parser.parse("alt1 alt12 --opt12"));
     ASSERT_NO_THROW(parser.parse("alt2 alt21 --opt21"));
@@ -643,7 +643,7 @@ TEST(MatcherWithUnlocksByValue, NestedAlternativesWithEqualNames) {
     opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
     opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
 
-    Parser2 parser(opts);
+    Parser parser(opts);
     ASSERT_NO_THROW(parser.parse("alt1 alt1 --opt1"));
     ASSERT_NO_THROW(parser.parse("alt1 alt2 --opt2"));
     ASSERT_NO_THROW(parser.parse("alt2 alt1 --opt1"));

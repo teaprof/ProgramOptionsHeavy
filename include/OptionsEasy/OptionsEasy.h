@@ -72,7 +72,7 @@ class OptionsEasy {
     const HelpStringsStorage& help() { return help_; }
 
     void parse(std::vector<std::string> args) {
-        Parser2 parser{root_};
+        Parser parser{root_};
     }
 
     std::vector<std::string> getCompletionVariants(std::vector<std::string> args) {

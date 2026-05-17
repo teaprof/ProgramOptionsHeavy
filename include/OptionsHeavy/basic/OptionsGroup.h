@@ -21,9 +21,24 @@ class BaseDynamicOption {
         std::string help_string_;
 };
 
-class DynamicOptionWithValue : public BaseDynamicOption {
+class DynamicPositionalOption : public BaseDynamicOption {
     public:
-        DynamicOptionWithValue() = default;
+        DynamicPositionalOption() = default;
+};
+
+class DynamicFlag : public BaseDynamicOption {
+    public:
+        DynamicFlag() = default;
+};
+
+class DynamicNamedOptionWithValue : public BaseDynamicOption {
+    public:
+        DynamicNamedOptionWithValue() = default;
+};
+
+class DynamicLiteralCommand : public BaseDynamicOption {
+    public:
+        DynamicLiteralCommand() = default;
 };
 
 class DynamicOptionsGroup : public OptionsEasy {

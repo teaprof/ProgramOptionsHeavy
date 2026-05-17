@@ -6,9 +6,9 @@
 
 namespace program_options_heavy {
 
-class HelpSubcommand : public Parser {
+class HelpSubcommand : public DynamicParser {
    public:
-    HelpSubcommand() : Parser() {
+    HelpSubcommand() : DynamicParser() {
         help_options = std::make_shared<program_options_heavy::HelpOptions>();
         addGroup(help_options);
         program_description = "--help - produce this help";
