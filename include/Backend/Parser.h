@@ -19,11 +19,54 @@
 #include "ValueSemantics.h"
 #include "ValueStorage.h"
 
-class BaseParser {
+class OptionsCounter {
+    public:
+
+    void clear() {
+        opts_counter_.clear();
+    }
+    /// how many times the specified option has been encountered in the already
+    /// parsed context
+    size_t optionEncountered(std::shared_ptr<AbstractOption> opt) {
+        size_t counter = 0;
+        if (opts_counter_.contains(opt)) {
+            counter = opts_counter_[opt];
+        }
+        return counter;
+    }
+    bool increaseOptionOccurrenceCounter(std::shared_ptr<AbstractOption> opt) {
+        size_t counter = ++opts_counter_[opt];
+        if (counter == opt->maxOccurrence()) {
+            return true;
+        }
+        if (counter > opt->maxOccurrence()) {
+            if (auto p = std::dynamic_pointer_cast<OneOfPositional>(opt)) {
+                throw OnlyOneChoiseIsAllowed(p);  // todo: make separate checker for OneOfPositional
+            }
+            throw MaxOptionOccurrenceIsExceeded(opt);
+        }
+        return false;
+    }
+
+    bool canAcceptNewOccurrence(std::shared_ptr<AbstractOption> opt) {
+        size_t actual_count = 0;
+        if (opts_counter_.contains(opt)) {
+            actual_count = opts_counter_[opt];
+        }
+        size_t max_count = opt->maxOccurrence();
+        bool can_accept = (actual_count < max_count);
+        return can_accept;
+    }
+
+
+    std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
+
+};
+
+class BaseParser : public OptionsCounter {
    protected:
     std::vector<std::shared_ptr<AbstractOption>> remaining_options_;
     std::set<std::shared_ptr<AbstractOption>> already_joined_;
-    std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
     std::set<std::shared_ptr<AbstractOptionWithValue>> opts_with_implicit_value_;
     std::shared_ptr<AbstractOption> options_;
     size_t cur_positional_option_idx_{0};
@@ -37,11 +80,11 @@ class BaseParser {
     }
 
     void clear() {
+        OptionsCounter::clear();
         remaining_options_.clear();
         // used_options_.clear();
         already_joined_.clear();
         storage.clear();
-        opts_counter_.clear();
         cur_positional_option_idx_ = 0;
         joinOptionsTo({options_}, remaining_options_);
     }
@@ -199,15 +242,6 @@ class BaseParser {
     }
 
    protected:
-    /// how many times the specified option has been encountered in the already
-    /// parsed context
-    size_t optionEncountered(std::shared_ptr<AbstractOption> opt) {
-        size_t counter = 0;
-        if (opts_counter_.contains(opt)) {
-            counter = opts_counter_[opt];
-        }
-        return counter;
-    }
     void joinOptionsTo(const std::vector<std::shared_ptr<AbstractOption>>& src_options,
                        std::vector<std::shared_ptr<AbstractOption>>& dst_options) {
         for (auto it : src_options) {
@@ -218,19 +252,6 @@ class BaseParser {
                 dst_options.push_back(it);
             }
         }
-    }
-    bool increaseOptionOccurrenceCounter(std::shared_ptr<AbstractOption> opt) {
-        size_t counter = ++opts_counter_[opt];
-        if (counter == opt->maxOccurrence()) {
-            return true;
-        }
-        if (counter > opt->maxOccurrence()) {
-            if (auto p = std::dynamic_pointer_cast<OneOfPositional>(opt)) {
-                throw OnlyOneChoiseIsAllowed(p);  // todo: make separate checker for OneOfPositional
-            }
-            throw MaxOptionOccurrenceIsExceeded(opt);
-        }
-        return false;
     }
     void ensureValueListIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {
         size_t actual = 0;
@@ -252,6 +273,7 @@ class BaseParser {
         }
     }
     void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt) {
+        // TODO: onDefaultValuedApplied
         std::any v = opt->baseValueSemantics().setToDefault();
         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
         joinOptionsTo(unlocked_by_value, remaining_options_);
@@ -259,6 +281,7 @@ class BaseParser {
     }
 
     void setImplicitValue(std::shared_ptr<AbstractOptionWithValue> opt) {
+        // TODO: onImplicitValueApplied
         std::any v = opt->baseValueSemantics().setToImplicit();
         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
         joinOptionsTo(unlocked_by_value, remaining_options_);
@@ -294,16 +317,6 @@ class BaseParser {
         }
     }
 
-    public:
-    bool canAcceptNewOccurrence(std::shared_ptr<AbstractOption> opt) {
-        size_t actual_count = 0;
-        if (opts_counter_.contains(opt)) {
-            actual_count = opts_counter_[opt];
-        }
-        size_t max_count = opt->maxOccurrence();
-        bool can_accept = (actual_count < max_count);
-        return can_accept;
-    }
 };
 
 
