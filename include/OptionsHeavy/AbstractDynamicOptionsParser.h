@@ -6,10 +6,10 @@
 
 namespace program_options_heavy {
 
-class AbstractOptionsParser {
+class AbstractDynamicOptionsParser {
    public:
-    AbstractOptionsParser(const std::string& exename) : exename{exename} {}
-    AbstractOptionsParser(int argc, const char* argv[]) {
+    AbstractDynamicOptionsParser(const std::string& exename) : exename{exename} {}
+    AbstractDynamicOptionsParser(int argc, const char* argv[]) {
         if (argc > 0) {
             std::filesystem::path path(argv[0]);
             exename = path.filename();

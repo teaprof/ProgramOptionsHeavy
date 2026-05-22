@@ -3,7 +3,7 @@
 
 #include <Help/HelpStringsStorage.h>
 #include <Help/HelpData.h>
-#include <OptionsHeavy/Parser.h>
+#include <OptionsHeavy/DynamicParser.h>
 
 #include <map>
 #include <optional>

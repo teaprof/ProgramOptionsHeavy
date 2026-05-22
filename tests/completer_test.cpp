@@ -1,4 +1,4 @@
-#include <OptionsHeavy/ParserWithSubcommands.h>
+#include <OptionsHeavy/DynamicParserWithSubcommands.h>
 #include <completer.h>
 #include <gtest/gtest.h>
 

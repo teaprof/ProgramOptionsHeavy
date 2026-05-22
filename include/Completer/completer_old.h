@@ -1,7 +1,7 @@
 #ifndef __COMPLETER_H__
 #define __COMPLETER_H__
 
-#include <OptionsHeavy/ParserWithSubcommands.h>
+#include <OptionsHeavy/DynamicParserWithSubcommands.h>
 
 #include <cstdlib>
 #include <optional>

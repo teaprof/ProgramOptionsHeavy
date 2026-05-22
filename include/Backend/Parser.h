@@ -167,13 +167,22 @@ class BaseParser {
                 ensureValueListIsCompleted(p);
             };
 
-            if (increaseOptionOccurrenceCounter(opt)) {
+            if (increaseOptionOccurrenceCounter(opt)) { // raises exception if option is exausted
                 // if the number of occurences of this option is exausted
                 // then remove this option from the list of remaining
                 // options
                 // std::erase(remaining_options_, opt);
                 // used_options_.push_back(opt);
+
+                // In present code we check options counters to check if the option
+                // cant be used any more. So we dont remove used options from the list of
+                // remaining options since.
+
+                // Ideally we should check if option is exhaused after the name of the option
+                // is parsed (i.e. in function eatNextPositionalOption, eatNextNamedOption)
             }
+            
+            // TODO: callback newOptionOccurrenceFinished
 
             if (matcher.value.has_value()) {
                 throw OptionDoesntAcceptValue();

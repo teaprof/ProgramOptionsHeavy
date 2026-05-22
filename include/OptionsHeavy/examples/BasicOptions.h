@@ -1,7 +1,7 @@
 #ifndef PARSERS_BASICOPTIONS_H
 #define PARSERS_BASICOPTIONS_H
 
-#include <OptionsHeavy/basic/OptionsGroup.h>
+#include <OptionsHeavy/basic/DynamicOption.h>
 #include <Printers/PrettyPrinter.h>
 
 #include <boost/optional.hpp>

@@ -1,21 +1,21 @@
-#ifndef PARSERS_PARSERWITHSUBCOMMANDS_H
+    #ifndef PARSERS_PARSERWITHSUBCOMMANDS_H
 #define PARSERS_PARSERWITHSUBCOMMANDS_H
 
-#include <OptionsHeavy/AbstractOptionsParser.h>
-#include <OptionsHeavy/basic/OptionsGroup.h>
-#include <OptionsHeavy/Parser.h>
+#include <OptionsHeavy/AbstractDynamicOptionsParser.h>
+#include <OptionsHeavy/basic/DynamicOption.h>
+#include <OptionsHeavy/DynamicParser.h>
 
 namespace program_options_heavy {
 
 class ProgramSubcommandsPrinter;
 
-class ParserWithSubcommands : public AbstractOptionsParser {
+class ParserWithSubcommands : public AbstractDynamicOptionsParser {
    public:
     using ValueT = std::shared_ptr<DynamicParser>;
     using SubcommandsT = std::map<std::string, ValueT>;
 
-    ParserWithSubcommands(const std::string& exename = "") : AbstractOptionsParser(exename) {}
-    ParserWithSubcommands(int argc, const char* argv[]) : AbstractOptionsParser(argc, argv) {}
+    ParserWithSubcommands(const std::string& exename = "") : AbstractDynamicOptionsParser(exename) {}
+    ParserWithSubcommands(int argc, const char* argv[]) : AbstractDynamicOptionsParser(argc, argv) {}
     SubcommandsT getSubcommands() { return subcommands_; }
     std::shared_ptr<DynamicParser> pushBack(const std::string& subcommand_name, std::shared_ptr<DynamicParser> val) {
         auto res = subcommands_.emplace(subcommand_name, val);
