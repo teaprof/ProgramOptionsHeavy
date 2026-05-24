@@ -4,7 +4,7 @@
 
 namespace po = boost::program_options;
 using program_options_heavy::Completer;
-using program_options_heavy::DynamicOptionsGroup;
+using program_options_heavy::HeavyOptionsGroup;
 using program_options_heavy::ParserWithSubcommands;
 
 class CompleterFixture : public ::testing::Test {
@@ -12,14 +12,14 @@ class CompleterFixture : public ::testing::Test {
     std::shared_ptr<ParserWithSubcommands> commands_parser;
     void SetUp() override {
         commands_parser = std::make_shared<ParserWithSubcommands>("exename");
-        auto runOptions = std::make_shared<DynamicOptionsGroup>("run group");
+        auto runOptions = std::make_shared<HeavyOptionsGroup>("run group");
         size_t dim;
         runOptions->addPartialVisible("dim,d", po::value<size_t>(&dim)->default_value(2)->required(), "hypercube dimension");
-        auto gatherOptions = std::make_shared<DynamicOptionsGroup>("gather group");
+        auto gatherOptions = std::make_shared<HeavyOptionsGroup>("gather group");
         size_t gather_opt;
         gatherOptions->addPartialVisible("gather,g", po::value<size_t>(&gather_opt)->default_value(2),
                                          "some option for gathering");
-        auto commonOptions = std::make_shared<DynamicOptionsGroup>("common group");
+        auto commonOptions = std::make_shared<HeavyOptionsGroup>("common group");
         size_t common_value;
         commonOptions->addPartialVisible("common,c", po::value<size_t>(&common_value)->default_value(2), "common value");
         commonOptions->addPartialVisible(",v", po::value<size_t>(&common_value)->default_value(2), "common value");

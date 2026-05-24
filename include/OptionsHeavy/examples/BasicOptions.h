@@ -1,7 +1,7 @@
 #ifndef PARSERS_BASICOPTIONS_H
 #define PARSERS_BASICOPTIONS_H
 
-#include <OptionsHeavy/basic/DynamicOption.h>
+#include <OptionsHeavy/basic/HeavyOption.h>
 #include <Printers/PrettyPrinter.h>
 
 #include <boost/optional.hpp>
@@ -11,9 +11,9 @@
 
 namespace program_options_heavy {
 
-class HelpOptions : public DynamicOptionsGroup {
+class HelpOptions : public HeavyOptionsGroup {
    public:
-    HelpOptions() : DynamicOptionsGroup("Help options") {
+    HelpOptions() : HeavyOptionsGroup("Help options") {
         namespace po = boost::program_options;
         // addPartialVisible("help", po::bool_switch(&need_help), "produce this
         // help");
@@ -28,9 +28,9 @@ class HelpOptions : public DynamicOptionsGroup {
     bool need_help_;
 };
 
-class MultithreadOptions : public DynamicOptionsGroup {
+class MultithreadOptions : public HeavyOptionsGroup {
    public:
-    MultithreadOptions() : DynamicOptionsGroup("multithreading options") {
+    MultithreadOptions() : HeavyOptionsGroup("multithreading options") {
         namespace po = boost::program_options;
         concurency_ = std::thread::hardware_concurrency();
         std::stringstream str;

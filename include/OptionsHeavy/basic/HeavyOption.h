@@ -9,9 +9,9 @@
 
 namespace program_options_heavy {
 
-class BaseDynamicOption {
+class HeavyOptionBase {
     public:
-        BaseDynamicOption() = default;
+        HeavyOptionBase() = default;
         virtual void onNewOccurenceFinished(std::vector<std::any>& values) = 0;
         virtual void onParseFinished() = 0;
         virtual void validate() = 0; // can raise exception if values for this option are incorrect
@@ -21,29 +21,29 @@ class BaseDynamicOption {
         std::string help_string_;
 };
 
-class DynamicPositionalOption : public BaseDynamicOption {
+class HeavyPositionalOption : public HeavyOptionBase {
     public:
-        DynamicPositionalOption() = default;
+        HeavyPositionalOption() = default;
 };
 
-class DynamicFlag : public BaseDynamicOption {
+class HeavyFlag : public HeavyOptionBase {
     public:
-        DynamicFlag() = default;
+        HeavyFlag() = default;
 };
 
-class DynamicNamedOptionWithValue : public BaseDynamicOption {
+class HeavyNamedOptionWithValue : public HeavyOptionBase {
     public:
-        DynamicNamedOptionWithValue() = default;
+        HeavyNamedOptionWithValue() = default;
 };
 
-class DynamicLiteralCommand : public BaseDynamicOption {
+class HeavyLiteralCommand : public HeavyOptionBase {
     public:
-        DynamicLiteralCommand() = default;
+        HeavyLiteralCommand() = default;
 };
 
-class DynamicOptionsGroup : public OptionsEasy {
+class HeavyOptionsGroup : public OptionsEasy { // TODO: why OptionsEay?
    public:
-    DynamicOptionsGroup(std::string group_name) {
+    HeavyOptionsGroup(std::string group_name) {
         setGroupName(tolower(group_name));
         options = std::make_shared<OptionsGroup>();
     }

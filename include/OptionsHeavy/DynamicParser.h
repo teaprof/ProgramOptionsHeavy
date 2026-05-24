@@ -3,7 +3,7 @@
 
 #include <Backend/Parser.h>
 #include <OptionsHeavy/AbstractDynamicOptionsParser.h>
-#include <OptionsHeavy/basic/DynamicOption.h>
+#include <OptionsHeavy/basic/HeavyOption.h>
 
 #include <iostream>
 #include <locale>
@@ -22,7 +22,7 @@ class DynamicParser : public AbstractDynamicOptionsParser {
    public:
     DynamicParser(const std::string& exename = "") : AbstractDynamicOptionsParser(exename) {}
     DynamicParser(int argc, const char* argv[]) : AbstractDynamicOptionsParser(argc, argv) {}
-    virtual void addGroup(std::shared_ptr<DynamicOptionsGroup> options) { groups_.push_back(options); }
+    virtual void addGroup(std::shared_ptr<HeavyOptionsGroup> options) { groups_.push_back(options); }
     bool parse(int argc, const char* argv[]) override {
         auto options = std::make_shared<OptionsGroup>();
         for (auto grp : groups_) {
@@ -41,10 +41,10 @@ class DynamicParser : public AbstractDynamicOptionsParser {
             it->validate();*/
     }
     void update(const boost::program_options::variables_map& vm) override {}
-    std::vector<std::shared_ptr<DynamicOptionsGroup>> groups() const { return groups_; }
+    std::vector<std::shared_ptr<HeavyOptionsGroup>> groups() const { return groups_; }
 
    private:
-    std::vector<std::shared_ptr<DynamicOptionsGroup>> groups_;
+    std::vector<std::shared_ptr<HeavyOptionsGroup>> groups_;
 };
 
 } /* namespace program_options_heavy */

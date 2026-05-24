@@ -2,7 +2,7 @@
 #define PARSERS_PARSERWITHSUBCOMMANDS_H
 
 #include <OptionsHeavy/AbstractDynamicOptionsParser.h>
-#include <OptionsHeavy/basic/DynamicOption.h>
+#include <OptionsHeavy/basic/HeavyOption.h>
 #include <OptionsHeavy/DynamicParser.h>
 
 namespace program_options_heavy {

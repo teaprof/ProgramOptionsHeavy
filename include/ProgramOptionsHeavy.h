@@ -4,7 +4,7 @@
 #include <OptionsHeavy/AbstractDynamicOptionsParser.h>
 #include <OptionsHeavy/examples/BasicOptions.h>
 #include <OptionsHeavy/examples/HelpSubcommand.h>
-#include <OptionsHeavy/basic/DynamicOption.h>
+#include <OptionsHeavy/basic/HeavyOption.h>
 #include <OptionsHeavy/DynamicParser.h>
 #include <OptionsHeavy/DynamicParserWithSubcommands.h>
 #include <Printers/PrettyPrinter.h>

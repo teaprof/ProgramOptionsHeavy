@@ -181,7 +181,7 @@ class CompleterOld {
         return all_names.front();
     }
     std::vector<std::string> getOptionNames(const boost::program_options::option_description& opt) {
-        /// \todo: move to DynamicOptionsGroup
+        /// \todo: move to HeavyOptionsGroup
         std::vector<std::string> res;
         const std::pair<const std::string*, size_t> long_names = opt.long_names();
         for (size_t n = 0; n < long_names.second; n++) {
