@@ -69,20 +69,24 @@ class OptionsValueStorage {
         storage.clear();
     }
 
+    virtual void onDefaultValueApplied(std::shared_ptr<AbstractOptionWithValue> opt) { /* nothing to do */}
+    virtual void onImplicitValueApplied(std::shared_ptr<AbstractOptionWithValue> opt) { /* nothing to do */}
+    virtual void onValueApplied(std::shared_ptr<AbstractOptionWithValue> opt) { /* nothing to do */}
+
     void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt) {
-        // TODO: onDefaultValuedApplied
         std::any v = opt->baseValueSemantics().setToDefault();
         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
         onNewOptionsUnlocked(unlocked_by_value);
         storage.addValue(opt, "", v);
+        onDefaultValueApplied(opt);
     }
 
     void setImplicitValue(std::shared_ptr<AbstractOptionWithValue> opt) {
-        // TODO: onImplicitValueApplied
         std::any v = opt->baseValueSemantics().setToImplicit();
         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
         onNewOptionsUnlocked(unlocked_by_value);
         storage.addValue(opt, "", v);
+        onImplicitValueApplied(opt);
     }
 
     void setOptionValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
@@ -112,6 +116,7 @@ class OptionsValueStorage {
                 storage.addValueToCurrentOccurence(opt, token, val);
             }
         }
+        onValueApplied(opt);
     }
     virtual void onNewOptionsUnlocked(const std::vector<std::shared_ptr<AbstractOption>>& src_options) = 0;
 };
