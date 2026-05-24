@@ -19,7 +19,7 @@
 #include "ValueSemantics.h"
 #include "ValueStorage.h"
 
-class OptionsCounter {
+class OptionsOccurrenceCounter {
     public:
 
     void clear() {
@@ -58,35 +58,112 @@ class OptionsCounter {
         return can_accept;
     }
 
-
     std::map<std::shared_ptr<AbstractOption>, size_t> opts_counter_;
-
 };
 
-class BaseParser : public OptionsCounter {
+class OptionsValueStorage {
+    public:
+    KeyValueStorage storage;
+
+    void clear() {
+        storage.clear();
+    }
+
+    void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt) {
+        // TODO: onDefaultValuedApplied
+        std::any v = opt->baseValueSemantics().setToDefault();
+        std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
+        onNewOptionsUnlocked(unlocked_by_value);
+        storage.addValue(opt, "", v);
+    }
+
+    void setImplicitValue(std::shared_ptr<AbstractOptionWithValue> opt) {
+        // TODO: onImplicitValueApplied
+        std::any v = opt->baseValueSemantics().setToImplicit();
+        std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
+        onNewOptionsUnlocked(unlocked_by_value);
+        storage.addValue(opt, "", v);
+    }
+
+    void setOptionValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
+        bool first = true;
+        std::vector<std::string> tokens = mysplit(value);
+        switch (opt->nValuesRole()) {
+            case AbstractOptionWithValue::NValuesRole::EXACT:
+                if (opt->nValues() != tokens.size()) {
+                    throw ExpectedExactNumberOfValues(opt);
+                }
+            case AbstractOptionWithValue::NValuesRole::UPTO:
+                if (tokens.size() > opt->nValues()) {
+                    throw TooManyValuesForOption(opt);
+                }
+            case AbstractOptionWithValue::NValuesRole::INFINITE:
+                /* nothing to do*/
+                break;
+        }
+        for (auto token : tokens) {
+            std::any val = opt->baseValueSemantics().semanticParse(token);
+            std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
+            onNewOptionsUnlocked(unlocked_by_value);
+            if (first) {
+                first = false;
+                storage.addValue(opt, token, val);
+            } else {
+                storage.addValueToCurrentOccurence(opt, token, val);
+            }
+        }
+    }
+    virtual void onNewOptionsUnlocked(const std::vector<std::shared_ptr<AbstractOption>>& src_options) = 0;
+};
+
+class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage {
    protected:
     std::vector<std::shared_ptr<AbstractOption>> remaining_options_;
     std::set<std::shared_ptr<AbstractOption>> already_joined_;
-    std::set<std::shared_ptr<AbstractOptionWithValue>> opts_with_implicit_value_;
     std::shared_ptr<AbstractOption> options_;
     size_t cur_positional_option_idx_{0};
 
    public:
-    KeyValueStorage storage;
 
-    BaseParser(std::shared_ptr<AbstractOption> options) : options_{options} {
+    OptionsEater(std::shared_ptr<AbstractOption> options) : options_{options} {
         // Checker checker;
         // options->accept(checker);
     }
 
     void clear() {
-        OptionsCounter::clear();
+        OptionsOccurrenceCounter::clear();
+        OptionsValueStorage::clear();
         remaining_options_.clear();
-        // used_options_.clear();
         already_joined_.clear();
-        storage.clear();
         cur_positional_option_idx_ = 0;
-        joinOptionsTo({options_}, remaining_options_);
+        onNewOptionsUnlocked({options_});
+    }
+
+    void eatValueIfCan(ArgGrammarParser& args, OptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
+        // first, try to eat matcher.value
+        if (matcher.value.has_value()) {
+            setOptionValue(opt, matcher.value.value());
+            matcher.value = std::nullopt;
+            return;
+        }
+        if(!args.eof()) {
+            args.getNextOption();
+            bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
+            if (arg_is_value) {
+                std::optional<std::string> value_opt = args.getValueOpt();
+                assert(value_opt.has_value());
+                setOptionValue(opt, *value_opt);
+                return;
+            };
+            args.ungetOption();
+        }
+        // Try to apply default value
+        bool has_default_value = opt->baseValueSemantics().hasDefaultValue();
+        if (has_default_value) {
+            setDefaultValue(opt);
+            return;
+        }
+        throw ExpectedValue(opt);
     }
 
     std::shared_ptr<AbstractPositionalOption> eatNextPositionalOption(ArgGrammarParser& args, OptionMatcher& matcher) {
@@ -169,39 +246,12 @@ class BaseParser : public OptionsCounter {
         return nullptr;
     }
 
-    void eatValueIfCan(ArgGrammarParser& args, OptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
-        // first, try to eat matcher.value
-        if (matcher.value.has_value()) {
-            setOptionValue(opt, matcher.value.value());
-            matcher.value = std::nullopt;
-            return;
-        }
-        if(!args.eof()) {
-            args.getNextOption();
-            bool arg_is_value = args.current_result.token_type == ArgGrammarParser::VALUE;
-            if (arg_is_value) {
-                std::optional<std::string> value_opt = args.getValueOpt();
-                assert(value_opt.has_value());
-                setOptionValue(opt, *value_opt);
-                return;
-            };
-            args.ungetOption();
-        }
-        // Try to apply default value
-        bool has_default_value = opt->baseValueSemantics().hasDefaultValue();
-        if (has_default_value) {
-            setDefaultValue(opt);
-            return;
-        }
-        throw ExpectedValue(opt);
-    }
-
     void parseNext(ArgGrammarParser& args) {
         OptionMatcher matcher(args);
         auto opt = eatNextOption(args, matcher);
         if (opt) {
             if (!already_joined_.contains(opt)) {
-                joinOptionsTo(matcher.unlocks, remaining_options_);
+                onNewOptionsUnlocked(matcher.unlocks);
                 already_joined_.insert(opt);
             }
 
@@ -212,17 +262,14 @@ class BaseParser : public OptionsCounter {
 
             if (increaseOptionOccurrenceCounter(opt)) { // raises exception if option is exausted
                 // if the number of occurences of this option is exausted
-                // then remove this option from the list of remaining
-                // options
-                // std::erase(remaining_options_, opt);
-                // used_options_.push_back(opt);
-
-                // In present code we check options counters to check if the option
-                // cant be used any more. So we dont remove used options from the list of
-                // remaining options since.
+                // then this option can be removed from the list of remaining
+                // options. But in the present code we check options counters to check 
+                // if the option cant be used any more. So we dont remove used options from the 
+                // list of remaining options since.
 
                 // Ideally we should check if option is exhaused after the name of the option
-                // is parsed (i.e. in function eatNextPositionalOption, eatNextNamedOption)
+                // is parsed (i.e. in function eatNextPositionalOption, eatNextNamedOption) and
+                // before parsing the option value
             }
             
             // TODO: callback newOptionOccurrenceFinished
@@ -242,14 +289,13 @@ class BaseParser : public OptionsCounter {
     }
 
    protected:
-    void joinOptionsTo(const std::vector<std::shared_ptr<AbstractOption>>& src_options,
-                       std::vector<std::shared_ptr<AbstractOption>>& dst_options) {
+    void onNewOptionsUnlocked(const std::vector<std::shared_ptr<AbstractOption>>& src_options) override {
         for (auto it : src_options) {
             if (auto p = std::dynamic_pointer_cast<OptionsGroup>(it)) {
-                joinOptionsTo(p->unlocks(),
-                              dst_options);  // todo: avoid copying of a vector
+                // TODO: why separate case for OptionsGroup
+                onNewOptionsUnlocked(p->unlocks());  // todo: avoid copying of a vector
             } else {
-                dst_options.push_back(it);
+                remaining_options_.push_back(it);
             }
         }
     }
@@ -272,67 +318,21 @@ class BaseParser : public OptionsCounter {
             }
         }
     }
-    void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt) {
-        // TODO: onDefaultValuedApplied
-        std::any v = opt->baseValueSemantics().setToDefault();
-        std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
-        joinOptionsTo(unlocked_by_value, remaining_options_);
-        storage.addValue(opt, "", v);
-    }
-
-    void setImplicitValue(std::shared_ptr<AbstractOptionWithValue> opt) {
-        // TODO: onImplicitValueApplied
-        std::any v = opt->baseValueSemantics().setToImplicit();
-        std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
-        joinOptionsTo(unlocked_by_value, remaining_options_);
-        storage.addValue(opt, "", v);
-    }
-
-    void setOptionValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
-        bool first = true;
-        std::vector<std::string> tokens = mysplit(value);
-        switch (opt->nValuesRole()) {
-            case AbstractOptionWithValue::NValuesRole::EXACT:
-                if (opt->nValues() != tokens.size()) {
-                    throw ExpectedExactNumberOfValues(opt);
-                }
-            case AbstractOptionWithValue::NValuesRole::UPTO:
-                if (tokens.size() > opt->nValues()) {
-                    throw TooManyValuesForOption(opt);
-                }
-            case AbstractOptionWithValue::NValuesRole::INFINITE:
-                /* nothing to do*/
-                break;
-        }
-        for (auto token : tokens) {
-            std::any val = opt->baseValueSemantics().semanticParse(token);
-            std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
-            joinOptionsTo(unlocked_by_value, remaining_options_);
-            if (first) {
-                first = false;
-                storage.addValue(opt, token, val);
-            } else {
-                storage.addValueToCurrentOccurence(opt, token, val);
-            }
-        }
-    }
-
 };
 
-
-/// TODO: what Parser can do that BaseParser cant? Rename Parser class to reflect this.
-class Parser : public BaseParser {
+class Parser : public OptionsEater {
    public:
-    Parser(std::shared_ptr<AbstractOption> options) : BaseParser{options} {}
+    Parser(std::shared_ptr<AbstractOption> options) : OptionsEater{options} {}
 
     bool parse(ArgGrammarParser args) {
-        BaseParser::parse(args);
+        OptionsEater::parse(args);
         applyImplicitValues();
         checkUnusedRequiredOptions();
         return true;
     }
 
    private:
+    std::set<std::shared_ptr<AbstractOptionWithValue>> opts_with_implicit_value_;
     bool isOptionSpecifiedOrImplied(std::shared_ptr<AbstractOption> opt) {
         if(optionEncountered(opt) > 0) {
             return true;

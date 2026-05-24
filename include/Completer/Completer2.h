@@ -74,9 +74,9 @@ class NameCompleter : public AbstractOptionVisitor {
     }
 };
 
-class Completer : public BaseParser {
+class Completer : public OptionsEater {
    public:
-    Completer(std::shared_ptr<AbstractOption> opt) : BaseParser(opt) {}
+    Completer(std::shared_ptr<AbstractOption> opt) : OptionsEater(opt) {}
 
     std::vector<std::string> getCompletionVariants(ArgGrammarParser args) {
         std::vector<std::string> results;
@@ -98,7 +98,7 @@ class Completer : public BaseParser {
         // still consumed if the previous one requires the value
         try {
             while (args.getNextIndex() + 1 < args.size()) {
-                BaseParser::parseNext(args);
+                OptionsEater::parseNext(args);
             }
         } catch (BaseError& err) {
             // in case of error return empty results
@@ -108,7 +108,7 @@ class Completer : public BaseParser {
         // Parse the last argument
         try {
             if (!args.eof()) {
-                BaseParser::parseNext(args);
+                OptionsEater::parseNext(args);
             }
             assert(args.eof());
         } catch (const UnexpectedValueForPositionalOption& err) {
