@@ -13,9 +13,7 @@
 
 #include "Exceptions.h"
 
-// class BaseValueStorage;
-
-class BaseValueSemantics {  // TODO rename to ValueParser and all variables of
+class AbstractValueSemantics {  // TODO rename to ValueParser and all variables of
                             // this type
    public:
     virtual std::any semanticParse(const std::string& value) = 0;  // TODO rename to parseAndSetValue
@@ -38,7 +36,7 @@ class BaseValueSemantics {  // TODO rename to ValueParser and all variables of
 };
 
 template <class T>
-class TypedValueSemantics : public BaseValueSemantics {
+class TypedValueSemantics : public AbstractValueSemantics {
    public:
     TypedValueSemantics() {}
     TypedValueSemantics(T& ref) : external_ref_{ref} {}

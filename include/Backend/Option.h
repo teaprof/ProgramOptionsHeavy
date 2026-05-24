@@ -20,9 +20,11 @@ class OneOfPositional;
 class OneOfNamed;
 class OptionsGroup;
 
-class BaseValueSemantics;
+class AbstractValueSemantics;
 template <class T>
 class ValueSemantics;
+
+// TODO: add all classes to namespace program_options_heavy 
 
 class AbstractOptionVisitor {
    public:
@@ -86,8 +88,8 @@ class NamedOption : public AbstractOption {  // rename, should it be AbstractNam
 class AbstractOptionWithValue {
    public:
     virtual ~AbstractOptionWithValue() {}
-    virtual const BaseValueSemantics& baseValueSemantics() const = 0;
-    virtual BaseValueSemantics& baseValueSemantics() = 0;
+    virtual const AbstractValueSemantics& baseValueSemantics() const = 0;
+    virtual AbstractValueSemantics& baseValueSemantics() = 0;
 
     // The number of values that the option can accept could be
     // - exactly N values;
@@ -98,6 +100,7 @@ class AbstractOptionWithValue {
         UPTO,      // todo: 0..upto or 1..upto
         INFINITE,  // todo: 0..inf or 1..inf
     };
+    // TODO: maybe move supporting of multivalues to ValueSemantics
     void setNValues(NValuesRole role, size_t count = 1) {
         nvalues_role_ = role;
         nvalues_ = count;
@@ -154,8 +157,8 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue, public OptionW
     NamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name)
         : AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name){};
 
-    const BaseValueSemantics& baseValueSemantics() const override { return OptionWithValue<T>::valueSemantics(); }
-    BaseValueSemantics& baseValueSemantics() override { return OptionWithValue<T>::valueSemantics(); }
+    const AbstractValueSemantics& baseValueSemantics() const override { return OptionWithValue<T>::valueSemantics(); }
+    AbstractValueSemantics& baseValueSemantics() override { return OptionWithValue<T>::valueSemantics(); }
 };
 
 class AbstractPositionalOptionWithValue : public AbstractPositionalOption, public AbstractOptionWithValue {
@@ -166,8 +169,9 @@ class AbstractPositionalOptionWithValue : public AbstractPositionalOption, publi
 template <class T>
 class PositionalOptionWithValue : public AbstractPositionalOptionWithValue, public OptionWithValue<T> {
    public:
-    const BaseValueSemantics& baseValueSemantics() const override { return OptionWithValue<T>::valueSemantics(); }
-    BaseValueSemantics& baseValueSemantics() override { return OptionWithValue<T>::valueSemantics(); }
+    // TODO: Positional option can't have default value, maybe use special ValueSemantics class without default value?
+    const AbstractValueSemantics& baseValueSemantics() const override { return OptionWithValue<T>::valueSemantics(); }
+    AbstractValueSemantics& baseValueSemantics() override { return OptionWithValue<T>::valueSemantics(); }
 };
 
 class OptionsGroup : public AbstractOption {

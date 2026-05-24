@@ -12,28 +12,74 @@ namespace program_options_heavy {
 class HeavyOptionBase {
     public:
         HeavyOptionBase() = default;
+
+        void setRequired(bool is_required) {}
+        void setMaxOccurreneCount(size_t count) {}
+
         virtual void onNewOccurenceFinished(std::vector<std::any>& values) = 0;
         virtual void onParseFinished() = 0;
-        virtual void validate() = 0; // can raise exception if values for this option are incorrect
+
+        void addUnlocks(HeavyOptionBase& opt) {
+            unlocks_.push_back(opt);
+        }
+
+        void setHelpString(const std::string& str) {
+            help_string_ = str;
+        }
 
         virtual std::shared_ptr<AbstractOption> opt() = 0;
+        virtual void generateOpt() = 0;
     protected:
+        bool is_encountered{false}; 
         std::string help_string_;
+        std::vector<std::reference_wrapper<HeavyOptionBase>> unlocks_;
 };
 
-class HeavyPositionalOption : public HeavyOptionBase {
+
+template<class ValueType>
+class HeavyNamedOptionWithValue : public HeavyOptionBase {
     public:
-        HeavyPositionalOption() = default;
+        HeavyNamedOptionWithValue() {
+            opt_ = std::make_shared<NamedOptionWithValue<ValueType>>();
+            opt_->valueSemantics().setExternalValueStorage(value);
+        }
+        void setDefaultValue(const ValueType& default_value) {
+            opt_->valueSemantics().setDefaultValue(default_value);
+        }
+        void setImplicitValue(const ValueType& implicit_value) {
+            opt_->valueSemantics().setImplicitValue(implicit_value);
+        }
+
+        void setNValues(AbstractOptionWithValue::NValuesRole role, size_t count = 1) {
+            opt_->setNValues(role, count);
+        }
+
+        virtual void onDefaultValueApplied(std::vector<std::any>& values) = 0;
+        virtual void onImplicitValueApplied(std::vector<std::any>& values) = 0;
+        virtual void validateValue() = 0; // can raise exception if values for this option are incorrect
+
+        void generateOpt() override {}
+        std::shared_ptr<AbstractOption> opt() { return opt_; }
+
+        ValueType value;
+    private:
+        std::shared_ptr<NamedOptionWithValue<ValueType>> opt_;
+};
+
+template<class ValueType>
+class HeavyPositionalOptionWithValue : public HeavyOptionBase {
+    public:
+        void setImplicitValue(std::any implicit_value) {}
+
+        void setNValues(AbstractOptionWithValue::NValuesRole role, size_t count = 1);
+
+        virtual void onImplicitValueApplied(std::vector<std::any>& values) = 0;
+        virtual void validateValue() = 0; // can raise exception if values for this option are incorrect
 };
 
 class HeavyFlag : public HeavyOptionBase {
     public:
         HeavyFlag() = default;
-};
-
-class HeavyNamedOptionWithValue : public HeavyOptionBase {
-    public:
-        HeavyNamedOptionWithValue() = default;
 };
 
 class HeavyLiteralCommand : public HeavyOptionBase {

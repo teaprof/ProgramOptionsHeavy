@@ -16,6 +16,7 @@ class Checker {
     // - if the default value satisfies regex
     // - if the default value is contained in Unlocks
     // - the same for implicit value
+    // - positional option can't have the default value
     // - hidden names of positional options differes from other names
    public:
     Checker() {}
