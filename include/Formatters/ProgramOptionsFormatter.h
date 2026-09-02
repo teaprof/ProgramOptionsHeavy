@@ -9,7 +9,7 @@ namespace program_options_heavy {
 
 namespace printers {
 
-class ProgramOptionsPrinter {
+class ProgramOptionsFormatter {
    public:
     std::shared_ptr<Section> print(DynamicParser& parser) const {
         auto res = std::make_shared<Section>();
@@ -32,6 +32,24 @@ class ProgramOptionsPrinter {
         res->items.push_back(details);
         return res;
     }
+    static std::shared_ptr<Section> print(HeavyOptionsGroup& grp) {
+        auto res = std::make_shared<Section>();
+        res->title = grp.groupName();
+        res->addParagraph(grp.description());
+        auto table = std::make_shared<Table>();
+        table->align_ = std::vector<int>{-1, -1}; // both columns align left
+        std::stringstream options_list;
+        for (const auto& opt : grp.options->unlocks()) {
+            OptionTextExtractor prn(grp.help());
+            opt->accept(prn);
+            table->addRow();            
+            table->addCellToRow(prn.descr.keys);
+            table->addCellToRow(prn.descr.description);
+        }
+        res->addTable(table);
+        return res;
+    }
+    private:
     static std::string shortHelp(DynamicParser& parser) {
         std::stringstream str;
         str << parser.exename << " ";
@@ -39,19 +57,6 @@ class ProgramOptionsPrinter {
             str << "[" << group->groupName() << "] ";
         }
         return str.str();
-    }
-    static std::shared_ptr<Section> print(HeavyOptionsGroup& grp) {
-        auto res = std::make_shared<Section>();
-        res->title = grp.groupName();
-        res->addParagraph(grp.description());
-        std::stringstream options_list;
-        for (const auto& opt : grp.options->unlocks()) {
-            OptionTextExtractor prn(grp.help());
-            opt->accept(prn);
-            options_list << prn.str() << "\n";
-        }
-        res->addParagraph(options_list.str());
-        return res;
     }
     std::set<std::string> options_groups_printed_already;
 };

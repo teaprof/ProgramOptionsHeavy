@@ -4,7 +4,7 @@
 using program_options_heavy::HeavyOptionsGroup;
 using program_options_heavy::ParserWithSubcommands;
 using program_options_heavy::printers::PrettyPrinter;
-using program_options_heavy::printers::ProgramSubcommandsPrinter;
+using program_options_heavy::printers::ProgramSubcommandsFormatter;
 
 TEST(PROGRAMMODEOPTIONS, PARSE) {
     namespace po = boost::program_options;

@@ -12,6 +12,9 @@
 
 class OptionsEasy {
    public:
+    OptionsEasy() {
+        root_ = std::make_shared<AbstractOption>();
+    }
     template <class T>
     std::shared_ptr<NamedOptionWithValue<T>> makeOption(const std::string& names,
                                                         const std::string& help_message) {

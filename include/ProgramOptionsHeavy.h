@@ -8,7 +8,7 @@
 #include <OptionsHeavy/DynamicParser.h>
 #include <OptionsHeavy/DynamicParserWithSubcommands.h>
 #include <Printers/PrettyPrinter.h>
-#include <Printers/ProgramOptionsPrinter.h>
-#include <Printers/ProgramSubcommandsPrinter.h>
+#include <Formatters/ProgramOptionsFormatter.h>
+#include <Formatters/ProgramSubcommandsFormatter.h>
 // #include <completer.h>
 #endif

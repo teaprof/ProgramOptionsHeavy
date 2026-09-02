@@ -4,7 +4,7 @@ using program_options_heavy::HelpOptions;
 using program_options_heavy::MultithreadOptions;
 using program_options_heavy::DynamicParser;
 using program_options_heavy::printers::PrettyPrinter;
-using program_options_heavy::printers::ProgramOptionsPrinter;
+using program_options_heavy::printers::ProgramOptionsFormatter;
 
 int main(int argc, const char* argv[]) {
     DynamicParser parser(argc, argv);
@@ -13,10 +13,10 @@ int main(int argc, const char* argv[]) {
     parser.addGroup(help_options);
     parser.addGroup(multithreading_options);
 
-    ProgramOptionsPrinter printer;
-    auto dom = printer.print(parser);
+    ProgramOptionsFormatter formatter;
+    auto dom = formatter.print(parser);
 
-    PrettyPrinter pprinter;
-    dom->accept(pprinter);
+    PrettyPrinter printer;
+    dom->accept(printer);
     return 0;
 }

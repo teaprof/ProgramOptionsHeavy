@@ -48,11 +48,11 @@ class OptionTextExtractor : public AbstractOptionVisitor {
         std::string res;
         std::string delimiter;
         if (opt->longName()) {
-            res = *opt->longName();
+            res = std::string("--") + *opt->longName();
             delimiter = ", ";
         };
         if (opt->shortName()) {
-            res += delimiter + *opt->shortName();
+            res += delimiter + std::string("-") +*opt->shortName();
         };
         return res;
     }

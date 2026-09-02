@@ -8,7 +8,7 @@ namespace program_options_heavy {
 
 namespace printers {
 
-class ProgramSubcommandsPrinter {
+class ProgramSubcommandsFormatter {
    public:
     std::shared_ptr<Section> print(ParserWithSubcommands& parser) {
         auto res = std::make_shared<Section>();
@@ -73,7 +73,7 @@ class ProgramSubcommandsPrinter {
         }
         return res;
     }
-    static std::shared_ptr<Section> print(HeavyOptionsGroup& grp) { return ProgramOptionsPrinter::print(grp); }
+    static std::shared_ptr<Section> print(HeavyOptionsGroup& grp) { return ProgramOptionsFormatter::print(grp); }
     std::set<std::string> options_groups_printed_already;
 };
 

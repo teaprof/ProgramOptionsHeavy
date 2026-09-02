@@ -4,7 +4,8 @@
 #include <Printers/Document.h>
 
 #include <iostream>
-#include <locale>
+#include <cassert>
+//#include <locale>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -30,6 +31,27 @@ class PrettyPrinter : public DocumentVisitor {
             item->accept(*this);
         }
         level_--;
+    }
+
+    void visit(const Table& table) override {
+        size_t ncols = table.ncols();
+        std::vector<size_t> widths(ncols);
+        for(size_t col = 0; col < ncols; col++) {
+            widths[col] = table.maxColumnWidth(col);
+        }
+        for(size_t row = 0; row < table.nrows(); row++) {
+            std::ostringstream oss;
+            for(size_t col = 0; col < ncols; col++) {
+                auto align = std::left;
+                if(table.align(col) == +1) {
+                    align = std::right;
+                }
+                oss << std::setw(widths[col]) << align << table.data(row, col);
+                if(col + 1 != ncols)
+                    oss << " ";
+            }
+            printText(level_, oss.str());
+        }
     }
 
     void print(const std::shared_ptr<AbstractItem> item) { item->accept(*this); }
