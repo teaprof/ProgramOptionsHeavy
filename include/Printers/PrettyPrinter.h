@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <iomanip>
 //#include <locale>
 #include <memory>
 #include <sstream>
@@ -16,12 +17,12 @@ namespace program_options_heavy {
 namespace printers {
 
 class PrettyPrinter : public DocumentVisitor {
-   public:
+   public:   
     void visit(const AbstractItem& item) override { assert(false); }
     void visit(const Paragraph& item) override { printText(level_, item.text); }
     void visit(const UnorderedList& lst) override {
         for (const auto& item : lst.items) {
-            printText(level_, std::string("*") + item);
+            printText(level_, std::string("* ") + item);
         }
     }
     void visit(const Section& item) override {

@@ -15,6 +15,10 @@ ALTERNATIVES:
     3.+ Check should check names collisions to ensure that p. 1 holds
     4.+ Check should check cross product if two or more alternative options are used
 
+
+PRINTERS:
+    This library doesn't support word wrap. All long lines are printed to the screen as is, without word wrap. If you need to fit the output to a specific screen width, use Markdown export and any custom color printing utility like `glow`.
+
 Use cases
 
 Commands (or Alternatives):

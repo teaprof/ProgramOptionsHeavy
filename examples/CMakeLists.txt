@@ -10,3 +10,5 @@ target_link_libraries(help_printer2 Boost::program_options)
 add_executable(SpiritParser SpiritParser.cpp)
 
 add_executable(printer printer.cpp)
+
+add_executable(sample_table sample_table.cpp)

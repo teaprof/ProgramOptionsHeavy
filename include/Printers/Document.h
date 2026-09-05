@@ -1,6 +1,7 @@
 #ifndef PRINTERS_DOCUMENT_H
 #define PRINTERS_DOCUMENT_H
 
+#include <cassert>
 #include <memory>
 #include <sstream>
 #include <vector>
@@ -103,6 +104,7 @@ class Section : public AbstractItem {
     std::vector<std::shared_ptr<AbstractItem>> items;
     void addParagraph(const std::string& str) { items.push_back(std::make_shared<Paragraph>(str)); }
     void addTable(std::shared_ptr<Table> table) { items.push_back(table); }
+    void addUnorderedList(std::shared_ptr<UnorderedList> ul) { items.push_back(ul); }
     void accept(DocumentVisitor& visitor) override { visitor.visit(*this); }
 };
 
