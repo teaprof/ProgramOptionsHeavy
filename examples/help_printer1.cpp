@@ -4,6 +4,7 @@ using program_options_heavy::HelpOptions;
 using program_options_heavy::MultithreadOptions;
 using program_options_heavy::DynamicParser;
 using program_options_heavy::printers::PrettyPrinter;
+using program_options_heavy::printers::MarkdownPrinter;
 using program_options_heavy::printers::ProgramOptionsFormatter;
 
 int main(int argc, const char* argv[]) {
@@ -16,7 +17,8 @@ int main(int argc, const char* argv[]) {
     ProgramOptionsFormatter formatter;
     auto dom = formatter.print(parser);
 
-    PrettyPrinter printer;
+    //PrettyPrinter printer;
+    MarkdownPrinter printer;
     dom->accept(printer);
     return 0;
 }

@@ -51,6 +51,7 @@ class UnorderedList : public AbstractItem {
 
 class Table : public AbstractItem {
     public:
+    bool borders{false}; // show or not to show borders
     std::vector<int> align_; // -1 for left, +1 for right
     std::vector<std::vector<std::string>> rows;
     void accept(DocumentVisitor& visitor) override { visitor.visit(*this); }

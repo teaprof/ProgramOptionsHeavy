@@ -73,7 +73,10 @@ class ProgramSubcommandsFormatter {
         }
         return res;
     }
-    static std::shared_ptr<Section> print(HeavyOptionsGroup& grp) { return ProgramOptionsFormatter::print(grp); }
+    static std::shared_ptr<Section> print(HeavyOptionsGroup& grp) { 
+        ProgramOptionsFormatter printer;
+        return printer.print(grp); 
+    }
     std::set<std::string> options_groups_printed_already;
 };
 
