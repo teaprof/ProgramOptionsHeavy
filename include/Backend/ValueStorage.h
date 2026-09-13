@@ -77,9 +77,63 @@ class ValueStorage {
     std::vector<std::vector<std::string>> raw_values_;
 };
 
+class KeyValueStorage;
+
+class SetStorageVisitor : public AbstractOptionVisitor {
+    public:    
+    SetStorageVisitor(KeyValueStorage& storage) : storage_{storage} {}
+    void visit(std::shared_ptr<AbstractOption> opt) override {
+        for(auto& unlock : opt->unlocks()) {
+            unlock->accept(*this);
+        }
+    }
+    void visit(std::shared_ptr<AbstractPositionalOption> opt) override {
+        visit(std::dynamic_pointer_cast<AbstractOption>(opt));
+    }
+    void visit(std::shared_ptr<NamedOption> opt) override {
+        visit(std::dynamic_pointer_cast<AbstractOption>(opt));
+    }
+    void visit(std::shared_ptr<LiteralString> opt) override {
+        visit(std::dynamic_pointer_cast<AbstractOption>(opt));
+    }
+    void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
+        opt->setValueStorage(storage_.getStorage(opt));
+    }
+    void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
+        opt->setValueStorage(storage_.getStorage(opt));
+        visit(std::dynamic_pointer_cast<AbstractOption>(opt));
+    }
+    void visit(std::shared_ptr<OptionsGroup> opt) override {
+        visit(std::dynamic_pointer_cast<AbstractOption>(opt));
+    }
+    void visit(std::shared_ptr<OneOfPositional> opt) override {
+        visit(std::dynamic_pointer_cast<AbstractOption>(opt));
+        for (size_t n = 0; n < opt->alternativesSize(); n++) {
+            auto alt = opt->alternative(n);
+            alt->accept(*this);
+        }
+    }
+    void visit(std::shared_ptr<OneOfNamed> opt) override {
+        visit(std::dynamic_pointer_cast<AbstractOption>(opt));
+        for (size_t n = 0; n < opt->alternativesSize(); n++) {
+            auto alt = opt->alternative(n);
+            alt->accept(*this);
+        }
+    }
+    private:
+        KeyValueStorage storage_;
+
+};
+
+
 /// key is an option name, value is object of type Value storage
 class KeyValueStorage {
    public:
+    void initializeOptionsStorages(std::shared_ptr<AbstractOption> option) {
+        SetStorageVisitor visitor(*this);
+        option->accept(visitor);
+    }
+
     void addValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value, const std::any value) {
         value_storage_[opt].add(raw_value, value);
         if (external_pointers_.contains(opt)) {
@@ -99,7 +153,10 @@ class KeyValueStorage {
         values_map_[opt]->is_defaulted = flag;
     }*/
     void clear() { value_storage_.clear(); }
-    bool contains(std::shared_ptr<AbstractOptionWithValue> opt) const { return value_storage_.contains(opt); }
+    bool contains(std::shared_ptr<AbstractOptionWithValue> opt) const { return value_storage_.contains(opt); } // TODO: contains(opt) and size() > 0
+    std::shared_ptr<ValueStorage> getStorage(const std::shared_ptr<AbstractOption> opt) {
+        return value_storage_[opt];
+    }
     template <class T>
     void setExternalStorage(std::shared_ptr<AbstractOptionWithValue> opt, T* val_ptr) {
         external_pointers_[opt] = val_ptr;

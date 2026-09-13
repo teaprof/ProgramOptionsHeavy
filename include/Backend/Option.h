@@ -19,6 +19,7 @@ class AbstractPositionalOptionWithValue;
 class OneOfPositional;
 class OneOfNamed;
 class OptionsGroup;
+class ValueStorage; 
 
 class AbstractValueSemantics;
 template <class T>
@@ -58,7 +59,6 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
     size_t maxOccurrence() const;
 
     virtual void accept(AbstractOptionVisitor& visitor);
-
    private:
     bool required_{false};
     size_t max_occurence_{1};
@@ -108,7 +108,21 @@ class AbstractOptionWithValue {
     NValuesRole nValuesRole() const { return nvalues_role_; }
     size_t nValues() const { return nvalues_; }
 
+    void setValueStorage(std::shared_ptr<ValueStorage> value_storage) {
+        //this function is called by Parser 
+        value_storage_ = value_storage;
+    }
+    std::shared_ptr<ValueStorage> valueStorage() {
+        return value_storage_;
+    }
+
    private:
+    /*! @brief: The pointer to the value storage which stores the values come from the last parsing process
+     *  @details: This variable is not used in this module but it is placed here for convinience access 
+     *  to parsed values if you have only pointer to AbstractOption class. This variable is set to the
+     *  actual storage during the parsing process.
+     */
+    std::shared_ptr<ValueStorage> value_storage_{nullptr}; 
     NValuesRole nvalues_role_{NValuesRole::EXACT};
     size_t nvalues_{1};
 };

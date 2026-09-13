@@ -69,6 +69,10 @@ class OptionsValueStorage {
         storage.clear();
     }
 
+    void initializeOptionsStorages(std::shared_ptr<AbstractOption> root) {
+        storage.initializeOptionsStorages(root);
+    }
+
     virtual void onDefaultValueApplied(std::shared_ptr<AbstractOptionWithValue> opt) { /* nothing to do */}
     virtual void onImplicitValueApplied(std::shared_ptr<AbstractOptionWithValue> opt) { /* nothing to do */}
     virtual void onValueApplied(std::shared_ptr<AbstractOptionWithValue> opt) { /* nothing to do */}
@@ -142,6 +146,8 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         already_joined_.clear();
         cur_positional_option_idx_ = 0;
         onNewOptionsUnlocked({options_});
+
+        initializeOptionsStorages(options_);
     }
 
     void eatValueIfCan(ArgGrammarParser& args, OptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
