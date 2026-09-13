@@ -97,13 +97,17 @@ inline std::string tolower(const std::string& src) {
     return lower;
 }
 
-inline std::vector<std::string> mysplit(const std::string& str) {
-    // TODO: revisit this function and optimize it
-    std::vector<std::string> res;
-    for (auto token : str | std::views::split(',')) {
-        res.push_back(std::string(std::string_view(token)));
+inline std::vector<std::string> mysplit(const std::string& input) {
+    std::vector<std::string> result;
+    
+    // std::views::split returns a range of subranges
+    for (auto&& subrange : input | std::views::split(',')) {
+        // Construct a std::string from the subrange iterators
+        result.emplace_back(subrange.begin(), subrange.end());
     }
-    return res;
+    
+    return result;
 }
+
 
 #endif
