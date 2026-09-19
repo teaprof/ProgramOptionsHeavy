@@ -77,7 +77,7 @@ class ValueStorage {
     std::vector<std::vector<std::string>> raw_values_;
 };
 
-class KeyValueStorage;
+/*class KeyValueStorage;
 
 class SetStorageVisitor : public AbstractOptionVisitor {
     public:    
@@ -97,10 +97,10 @@ class SetStorageVisitor : public AbstractOptionVisitor {
         visit(std::dynamic_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
-        opt->setValueStorage(storage_.getStorage(opt));
+        opt->setValueStorage(storage_->getStorage(opt));
     }
     void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override {
-        opt->setValueStorage(storage_.getStorage(opt));
+        opt->setValueStorage(storage_->getStorage(opt));
         visit(std::dynamic_pointer_cast<AbstractOption>(opt));
     }
     void visit(std::shared_ptr<OptionsGroup> opt) override {
@@ -121,18 +121,17 @@ class SetStorageVisitor : public AbstractOptionVisitor {
         }
     }
     private:
-        KeyValueStorage storage_;
-
-};
+        std::shared_ptr<KeyValueStorage> storage_;
+};*/
 
 
 /// key is an option name, value is object of type Value storage
 class KeyValueStorage {
    public:
-    void initializeOptionsStorages(std::shared_ptr<AbstractOption> option) {
+    /*void initializeOptionsStorages(std::shared_ptr<AbstractOption> option) {
         SetStorageVisitor visitor(*this);
         option->accept(visitor);
-    }
+    }*/
 
     void addValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& raw_value, const std::any value) {
         value_storage_[opt].add(raw_value, value);
@@ -154,9 +153,6 @@ class KeyValueStorage {
     }*/
     void clear() { value_storage_.clear(); }
     bool contains(std::shared_ptr<AbstractOptionWithValue> opt) const { return value_storage_.contains(opt); } // TODO: contains(opt) and size() > 0
-    std::shared_ptr<ValueStorage> getStorage(const std::shared_ptr<AbstractOption> opt) {
-        return value_storage_[opt];
-    }
     template <class T>
     void setExternalStorage(std::shared_ptr<AbstractOptionWithValue> opt, T* val_ptr) {
         external_pointers_[opt] = val_ptr;
@@ -166,9 +162,26 @@ class KeyValueStorage {
         return value_storage_[opt];
     }
     // TODO: add setExternalStorage for std::vector<T> support
+
+    void setSelectedAlternativeIndex(std::shared_ptr<OneOfPositional> oneOf, size_t idx) {
+        selectedAlternatives_[oneOf] = idx;
+
+    }
+    void setSelectedAlternativeIndex(std::shared_ptr<OneOfNamed> oneOf, size_t idx) {
+        selectedAlternatives_[oneOf] = idx;
+    }
+
+    std::optional<size_t> selectedAlternativeIndex(std::shared_ptr<AbstractOption> oneOf) {
+        if(selectedAlternatives_.contains(oneOf)) {
+            return selectedAlternatives_.at(oneOf);
+        }
+        return std::nullopt;
+    }
    private:
     std::map<std::shared_ptr<AbstractOptionWithValue>, ValueStorage> value_storage_;
     std::map<std::shared_ptr<AbstractOptionWithValue>, std::any> external_pointers_;
+
+    std::map<std::shared_ptr<AbstractOption>, size_t> selectedAlternatives_; 
 };
 
 // TODO: ValueStorage is responsible for splitting comma-separated string values to the list of strings

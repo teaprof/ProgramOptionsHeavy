@@ -14,6 +14,7 @@ class OptionMatcher : public AbstractOptionVisitor {
     bool match;
     std::optional<std::string> value;
     std::vector<std::shared_ptr<AbstractOption>> unlocks;
+    size_t selected_alternative{0};
     OptionMatcher(ArgGrammarParser& args) : grammar_parser_{args} {}
 
     void visit(std::shared_ptr<AbstractOption> opt) override {
@@ -117,10 +118,12 @@ class OptionMatcher : public AbstractOptionVisitor {
     void visit(std::shared_ptr<OneOfPositional> opt) override {
         match = false;
         unlocks.clear();
+        selected_alternative = 0;
         for (size_t n = 0; n < opt->alternativesSize(); n++) {
             auto alt = opt->alternative(n);
             alt->accept(*this);
             if (match) {
+                selected_alternative = n;
                 value = std::nullopt;
                 unlocks = opt->alternative(n)->unlocks();  // todo: avoid copying of a vector
                 return;
@@ -130,11 +133,13 @@ class OptionMatcher : public AbstractOptionVisitor {
     void visit(std::shared_ptr<OneOfNamed> opt) override {
         match = false;
         unlocks.clear();
+        selected_alternative = 0;
         for (size_t n = 0; n < opt->alternativesSize(); n++) {
             auto alt = opt->alternative(n);
             alt->accept(*this);
             if (match) {
                 value = std::nullopt;
+                selected_alternative = n;
                 unlocks = opt->alternative(n)->unlocks();  // todo: avoid copying of a vector
                 return;
             }

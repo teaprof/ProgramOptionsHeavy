@@ -108,6 +108,14 @@ class HeavyOptionsGroup : public OptionsEasy { // TODO: why OptionsEay?
 
         return opt;
     }
+    template <class T>
+    auto addPositional(std::string name, int max_occurrence, std::reference_wrapper<T> external_storage, const std::string& help_message) {
+        // TODO: name is unused
+        auto opt = makePositionalOption(external_storage, max_occurrence, help_message);
+        options->addUnlock(opt);
+
+        return opt;
+    }
     virtual void validate()  // TODO: remove it?
     {
         // nothing to do
@@ -130,10 +138,27 @@ class HeavyOptionsGroup : public OptionsEasy { // TODO: why OptionsEay?
         }
         return "";
     }
-    std::shared_ptr<OptionsGroup> options;
+    std::shared_ptr<OptionsGroup> options; // TODO: rename to options_group_
 
    private:
     std::string group_name_;
+};
+
+// Represents the collection of groups
+class HeavyOptionsGroups { 
+    public:
+        HeavyOptionsGroups() : program_description("empty_program_description") {};
+        HeavyOptionsGroups(const std::string& description) : program_description{description} {}
+        std::vector<std::shared_ptr<HeavyOptionsGroup>>& groups() {
+            return groups_;
+        }
+        void addGroup(std::shared_ptr<HeavyOptionsGroup> grp) {
+            groups_.push_back(grp);
+        }
+        std::string program_description; // todo: used as subCommandDescription, but no such class yet created
+    private:
+        std::vector<std::shared_ptr<HeavyOptionsGroup>> groups_;
+
 };
 
 } /* namespace program_options_heavy */

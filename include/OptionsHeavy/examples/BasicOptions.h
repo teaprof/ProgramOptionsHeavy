@@ -14,10 +14,10 @@ namespace program_options_heavy {
 class HelpOptions : public HeavyOptionsGroup {
    public:
     HelpOptions() : HeavyOptionsGroup("Help options") {
-        namespace po = boost::program_options;
+        //namespace po = boost::program_options;
         // addPartialVisible("help", po::bool_switch(&need_help), "produce this
         // help");
-        addPartial("help", std::ref(need_help_), "produce this help");
+        addPartial("help", std::ref(need_help_), "produce this help")->valueSemantics().setDefaultValue(true).setImplicitValue(false);
     }
     void update(const boost::program_options::variables_map& vm) override {
         // need_help = vm.count("help") > 0;
@@ -27,6 +27,18 @@ class HelpOptions : public HeavyOptionsGroup {
    private:
     bool need_help_;
 };
+
+/*class HelpOptionsGroups : public HeavyOptionsGroups {
+    public:
+        HelpOptionsGroups() {
+            help_options_group = std::make_shared<HelpOptions>();
+            addGroup(help_options_group);
+        }
+        bool needHelp() {
+            return help_options_group->needHelp();
+        }
+        std::shared_ptr<HelpOptions> help_options_group;
+};*/
 
 class MultithreadOptions : public HeavyOptionsGroup {
    public:

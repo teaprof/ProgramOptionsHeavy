@@ -6,7 +6,7 @@
 
 namespace program_options_heavy {
 
-namespace printers {
+namespace printers { // TODO: rename to formatters or remove
 
 class ProgramSubcommandsFormatter {
    public:
@@ -42,24 +42,25 @@ class ProgramSubcommandsFormatter {
     static std::string shortHelp(ParserWithSubcommands& parser, ParserWithSubcommands::SubcommandsT::iterator it) {
         std::stringstream str;
         str << parser.exename << " ";
-        if (it->first == parser.defaultSubcommandName()) {
+        /*if (it->first == parser.defaultSubcommandName()) {
             if (!parser.hideDefaultSubcommandName()) {
                 str << "[" << it->first << "] ";
             }
-        } else {
+        } else {*/
             str << it->first << " ";
-        }
-        const std::shared_ptr<DynamicParser> opts = it->second;
+        /*}*/
+        //TODO: uncomment this block
+        /*const std::shared_ptr<DynamicParser> opts = it->second;
         for (auto group : opts->groups()) {
             str << "[" << group->groupName() << "] ";
-        }
+        }*/
         return str.str();
     }
     static std::string subcommandDescription(ParserWithSubcommands& parser, ParserWithSubcommands::SubcommandsT::iterator it) {
         std::stringstream str;
-        if (it->first != parser.defaultSubcommandName() || !parser.hideDefaultSubcommandName()) {
+        //if (it->first != parser.defaultSubcommandName() || !parser.hideDefaultSubcommandName()) {
             str << it->first << " - ";
-        }
+        //}
         str << it->second->program_description;
         return str.str();
     }
@@ -73,6 +74,17 @@ class ProgramSubcommandsFormatter {
         }
         return res;
     }
+    std::vector<std::shared_ptr<Section>> print(HeavyOptionsGroups& options) {
+        std::vector<std::shared_ptr<Section>> res;
+        for (auto it : options.groups()) {
+            if (!options_groups_printed_already.contains(it->groupName())) {
+                res.push_back(print(*it));
+                options_groups_printed_already.insert(it->groupName());
+            }
+        }
+        return res;
+    }
+
     static std::shared_ptr<Section> print(HeavyOptionsGroup& grp) { 
         ProgramOptionsFormatter printer;
         return printer.print(grp); 

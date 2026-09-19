@@ -70,7 +70,7 @@ class OptionsValueStorage {
     }
 
     void initializeOptionsStorages(std::shared_ptr<AbstractOption> root) {
-        storage.initializeOptionsStorages(root);
+        //storage.initializeOptionsStorages(root);
     }
 
     virtual void onDefaultValueApplied(std::shared_ptr<AbstractOptionWithValue> opt) { /* nothing to do */}
@@ -121,6 +121,12 @@ class OptionsValueStorage {
             }
         }
         onValueApplied(opt);
+    }
+    void setSelectedAlternative(std::shared_ptr<OneOfPositional> opt, size_t selected_idx) {
+        storage.setSelectedAlternativeIndex(opt, selected_idx);
+    }
+    void setSelectedAlternative(std::shared_ptr<OneOfNamed> opt, size_t selected_idx) {
+        storage.setSelectedAlternativeIndex(opt, selected_idx);
     }
     virtual void onNewOptionsUnlocked(const std::vector<std::shared_ptr<AbstractOption>>& src_options) = 0;
 };
@@ -207,15 +213,21 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         if (matcher.match) {
             auto res = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
             assert(res);
+            if(auto oneOf = std::dynamic_pointer_cast<OneOfPositional>(opt)) {
+                setSelectedAlternative(oneOf, matcher.selected_alternative);
+            }
             return res;
         };
         return nullptr;
     }
 
     std::shared_ptr<AbstractOption> eatNextNamedOption(ArgGrammarParser& args, OptionMatcher& matcher) {
-        for (auto opt : remaining_options_) {
+        for (auto opt : remaining_options_) { // TODO: should we check if opt is AbstractNamedOption?
             opt->accept(matcher);
             if (matcher.match) {
+                if(auto oneOf = std::dynamic_pointer_cast<OneOfNamed>(opt)) {
+                    setSelectedAlternative(oneOf, matcher.selected_alternative);
+                }
                 return opt;
             };
         }

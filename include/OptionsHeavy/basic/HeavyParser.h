@@ -11,7 +11,8 @@ class HeavyParser : public Parser {
         void onDefaultValueApplied(std::shared_ptr<AbstractOptionWithValue> option) override {
             for(auto& opt : options_) {
                 if(opt->opt() ==  option) {
-                    opt->onDefaultValueApplied();
+                    //opt->onDefaultValueApplied();
+                    throw std::runtime_error("not implemented yet");
                     return;
                 }
             }

@@ -60,7 +60,8 @@ class OptionsEasy {
                                                                        const std::string& help_message) {
         auto res = std::make_shared<PositionalOptionWithValue<T>>();
         res->valueSemantics().setExternalStorage(external_storage);
-        res->valueSemantics().setMaxOccurrence(max_occurrence);        
+        assert(max_occurrence == 1);
+        //res->valueSemantics().setMaxOccurrence(max_occurrence); // inherited from boost::program_options
         help_ << res << help_message;
         root_->addUnlock(res);
         return res;
