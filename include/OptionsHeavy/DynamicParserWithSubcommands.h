@@ -69,6 +69,7 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
         }
         top_level_options->addUnlock(top_level_subcommands);
         top_level_options->addUnlock(free_options_group_->options);
+
         Parser parser(top_level_options);
         std::vector<std::string> args;
         for (int n = 1; n < argc; n++) {  // skip the name of executable
@@ -86,6 +87,7 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
         }
         return res;
     }
+
     void validate() override {}
     void update(const boost::program_options::variables_map& vm) override {}
     std::vector<SubcommandsT::iterator>& subcommandsOrder() { return subcommands_order_; }

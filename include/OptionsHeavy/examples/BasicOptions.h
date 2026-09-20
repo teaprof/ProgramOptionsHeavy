@@ -24,6 +24,10 @@ class HelpOptions : public HeavyOptionsGroup {
     }
     bool needHelp() const { return need_help_; }
 
+    // can be used in some parsers if argc == 1 (only exe name without arguments)
+    void setNeedHelp(bool value) {        
+        need_help_ = value;
+    }
    private:
     bool need_help_;
 };
