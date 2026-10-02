@@ -6,6 +6,7 @@ add_executable(poheavy_tests
     program_mode_options_test.cpp 
     #completer_test.cpp 
     CheckerTest.cpp
+    OptionsOccurrenceCounterTest.cpp
     ParserTest.cpp
     ArgumentsTokenizerTest.cpp
     ArgGrammarParserTest.cpp
