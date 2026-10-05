@@ -169,6 +169,7 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             if (arg_is_value) {
                 std::optional<std::string> value_opt = args.getValueOpt();
                 assert(value_opt.has_value());
+                // TODO: if value can't be accepted then we should set option value to implicit value
                 setOptionValue(opt, *value_opt);
                 return;
             };

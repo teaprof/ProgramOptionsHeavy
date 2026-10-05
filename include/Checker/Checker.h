@@ -18,6 +18,11 @@ class Checker {
     // - the same for implicit value
     // - positional option can't have the default value
     // - hidden names of positional options differes from other names
+
+    // TODO: if two options both unlock positional options, then the order
+    // of positional options is undefined. This should raise a checker error: during
+    // exploring a branch no new positional options should be added if we already have
+    // them
    public:
     Checker() {}
     void operator()(std::shared_ptr<AbstractOption> opt) {
