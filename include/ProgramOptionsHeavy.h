@@ -11,5 +11,6 @@
 #include <Printers/MarkdownPrinter.h>
 #include <Formatters/ProgramOptionsFormatter.h>
 #include <Formatters/ProgramSubcommandsFormatter.h>
+#include <Backend/Printer.h>
 // #include <completer.h>
 #endif

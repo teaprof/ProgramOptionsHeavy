@@ -11,13 +11,25 @@
 
 namespace program_options_heavy {
 
-class HelpOptions : public HeavyOptionsGroup {
+class CommonOptions : public HeavyOptionsGroup {
    public:
-    HelpOptions() : HeavyOptionsGroup("Help options") {
-        //namespace po = boost::program_options;
-        // addPartialVisible("help", po::bool_switch(&need_help), "produce this
-        // help");
-        addPartial("help", std::ref(need_help_), "produce this help")->valueSemantics().setDefaultValue(true).setImplicitValue(false);
+    enum CommonOptionsFlags {
+        HelpEnabled = 1 << 0,
+        AutoCompletionEnabled = 1 << 1,
+    };
+    CommonOptions(const CommonOptionsFlags& flags) : HeavyOptionsGroup("Common options") {
+        if(flags & HelpEnabled) {
+            addPartial("help", std::ref(need_help_), "produce this help")->
+                valueSemantics().setDefaultValue(false).setImplicitValue(true);
+        }
+        if(flags & AutoCompletionEnabled) {
+            // TODO: exclude this option from autocompletion
+            auto option = addPartial("autocomplete", std::ref(auto_completion_mode_), "Special option that is used to actiave autocomplete feature");
+            option->valueSemantics().setDefaultValue(false).setImplicitValue(true);
+            auto_completion_args = std::make_shared<PositionalOptionWithValue<std::string>>();
+            auto_completion_args->setNValues(AbstractOptionWithValue::NValuesRole::INFINITE);            
+            option->addUnlock(auto_completion_args);
+        }        
     }
     void update(const boost::program_options::variables_map& vm) override {
         // need_help = vm.count("help") > 0;
@@ -28,21 +40,23 @@ class HelpOptions : public HeavyOptionsGroup {
     void setNeedHelp(bool value) {        
         need_help_ = value;
     }
+    bool autoCompletionMode() {
+        return auto_completion_mode_;
+    }
+    std::vector<std::string> getAutoCompletionArgs(const KeyValueStorage& storage) {        
+        if(storage.contains(auto_completion_args)) {
+            const auto& value_storage = storage[auto_completion_args];
+            assert(value_storage.occurrenceCount() == 1);
+            return value_storage.rawValuesVec(0);
+        }
+        return {};
+    }
    private:
-    bool need_help_;
+    bool need_help_{false};
+    bool auto_completion_mode_{false};
+    std::shared_ptr<PositionalOptionWithValue<std::string>> auto_completion_args;
 };
 
-/*class HelpOptionsGroups : public HeavyOptionsGroups {
-    public:
-        HelpOptionsGroups() {
-            help_options_group = std::make_shared<HelpOptions>();
-            addGroup(help_options_group);
-        }
-        bool needHelp() {
-            return help_options_group->needHelp();
-        }
-        std::shared_ptr<HelpOptions> help_options_group;
-};*/
 
 class MultithreadOptions : public HeavyOptionsGroup {
    public:
@@ -68,6 +82,7 @@ class MultithreadOptions : public HeavyOptionsGroup {
     size_t concurency_;
     std::optional<size_t> nthreads_;
 };
+
 
 } /* namespace program_options_heavy */
 

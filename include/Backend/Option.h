@@ -108,13 +108,13 @@ class AbstractOptionWithValue {
     NValuesRole nValuesRole() const { return nvalues_role_; }
     size_t nValues() const { return nvalues_; }
 
-    void setValueStorage(std::shared_ptr<ValueStorage> value_storage) {
+    /*void setValueStorage(std::shared_ptr<ValueStorage> value_storage) {
         //this function is called by Parser 
         value_storage_ = value_storage;
     }
     std::shared_ptr<ValueStorage> valueStorage() {
         return value_storage_;
-    }
+    }*/
 
    private:
     /*! @brief: The pointer to the value storage which stores the values come from the last parsing process

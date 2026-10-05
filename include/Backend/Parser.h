@@ -174,10 +174,10 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             };
             args.ungetOption();
         }
-        // Try to apply default value
-        bool has_default_value = opt->baseValueSemantics().hasDefaultValue();
-        if (has_default_value) {
-            setDefaultValue(opt);
+        // Try to apply implicit value
+        bool has_implicit_value = opt->baseValueSemantics().hasImplicitValue();
+        if (has_implicit_value) {
+            setImplicitValue(opt);
             return;
         }
         throw ExpectedValue(opt);
@@ -349,19 +349,19 @@ class Parser : public OptionsEater {
 
     bool parse(ArgGrammarParser args) {
         OptionsEater::parse(args);
-        applyImplicitValues();
+        applyDefaultValues();
         checkUnusedRequiredOptions();
         return true;
     }
 
    private:
-    std::set<std::shared_ptr<AbstractOptionWithValue>> opts_with_implicit_value_;
+    std::set<std::shared_ptr<AbstractOptionWithValue>> opts_with_default_value_;
     bool isOptionSpecifiedOrImplied(std::shared_ptr<AbstractOption> opt) {
         if(optionEncountered(opt) > 0) {
             return true;
         }
         if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
-            if(opts_with_implicit_value_.contains(p)) {
+            if(opts_with_default_value_.contains(p)) {
                 return true;
             }
         }
@@ -389,17 +389,17 @@ class Parser : public OptionsEater {
         }
     }
 
-    void applyImplicitValues() {
+    void applyDefaultValues() {
         // applies default values for options that were not encountered
         for (auto opt : remaining_options_) {
             if (optionEncountered(opt) > 0) {
                 continue;
             }
             if (auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
-                if (p->baseValueSemantics().hasImplicitValue()) {
-                    setImplicitValue(p);
-                    opts_with_implicit_value_.insert(p);
-                    // todo: if implicit value unlocks some options these options should be proccessed
+                if (p->baseValueSemantics().hasDefaultValue()) {
+                    setDefaultValue(p);
+                    opts_with_default_value_.insert(p);
+                    // todo: if default value unlocks some options these options should be proccessed
                 } else {
                     if (opt->required()) {
                         throw RequiredOptionIsNotSet(opt);

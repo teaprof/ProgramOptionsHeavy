@@ -60,12 +60,15 @@ class ValueStorage {
         assert(!raw_values_.empty());
         return raw_values_.back().back();
     }
-    size_t lastOccurrenceSize() {
+    size_t lastOccurrenceSize() const {
         assert(!values_.empty());
         return values_.back().size();  // equals to raw_values_.back().size()
     }
-    size_t occurrenceCount() { return values_.size(); }
-    size_t occurrenceSize(size_t occurrence) { return values_[occurrence].size(); }
+    size_t occurrenceCount() const { return values_.size(); }
+    size_t occurrenceSize(size_t occurrence) const { return values_[occurrence].size(); }
+    const std::vector<std::string>& rawValuesVec(size_t occurrence) const {
+        return raw_values_[occurrence];
+    }
     // TODO: add setExternalStorage for std::vector<T> support
     // TODO: add hidden names for positional options
    private:
@@ -160,6 +163,10 @@ class KeyValueStorage {
     ValueStorage& operator[](std::shared_ptr<AbstractOptionWithValue> opt) {
         assert(value_storage_.count(opt) > 0);
         return value_storage_[opt];
+    }
+    const ValueStorage& operator[](std::shared_ptr<AbstractOptionWithValue> opt) const {
+        assert(value_storage_.count(opt) > 0);
+        return value_storage_.at(opt);
     }
     // TODO: add setExternalStorage for std::vector<T> support
 

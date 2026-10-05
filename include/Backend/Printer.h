@@ -11,6 +11,8 @@
 #include "Option.h"
 #include "ValueSemantics.h"
 
+namespace program_options_heavy {
+
 template <class T>
 std::ostream& operator<<(std::ostream& out, const std::optional<T>& v) {
     if (v.has_value()) {
@@ -121,5 +123,6 @@ class Printer : public AbstractOptionVisitor {
         // prn--;
     }
 };
+}
 
 #endif

@@ -3,6 +3,7 @@
 
 #include <boost/program_options.hpp>
 #include <filesystem>
+#include <cstdlib>
 
 namespace program_options_heavy {
 
@@ -20,7 +21,7 @@ class AbstractDynamicOptionsParser {
     virtual bool parse(int argc, const char* argv[]) = 0;
     virtual void validate() = 0;
     virtual void update(const boost::program_options::variables_map& vm) = 0;
-
+    
     std::string exename;
     std::string program_description;
 };

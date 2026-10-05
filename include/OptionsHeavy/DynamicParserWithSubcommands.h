@@ -3,6 +3,7 @@
 
 #include <OptionsHeavy/AbstractDynamicOptionsParser.h>
 #include <OptionsHeavy/basic/HeavyOption.h>
+#include <Backend/Printer.h>
 
 namespace program_options_heavy {
 
@@ -56,7 +57,23 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
     {
         return selected_subcommand_->first;
     }
+    std::shared_ptr<OptionsGroup> getOptionsGroup() {
+        assert(!subcommands_.empty());
+        auto top_level_options = std::make_shared<OptionsGroup>();
+        auto top_level_subcommands = std::make_shared<OneOfPositional>();
+        for (auto it : subcommands_) {
+            auto command = std::make_shared<LiteralString>(it.first);
+            for (auto grp : it.second->groups()) {
+                command->addUnlock(grp->options);
+            }
+            top_level_subcommands->addAlternative(command);
+        }
+        top_level_options->addUnlock(top_level_subcommands);
+        top_level_options->addUnlock(free_options_group_->options);
+        return top_level_options;
+    }
     bool parse(int argc, const char* argv[]) override {
+        // todo: call getOptionsGroup to initialize top_level_options
         assert(!subcommands_.empty());
         auto top_level_options = std::make_shared<OptionsGroup>();
         auto top_level_subcommands = std::make_shared<OneOfPositional>();
@@ -70,7 +87,7 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
         top_level_options->addUnlock(top_level_subcommands);
         top_level_options->addUnlock(free_options_group_->options);
 
-        Parser parser(top_level_options);
+        Parser parser(top_level_options);        
         std::vector<std::string> args;
         for (int n = 1; n < argc; n++) {  // skip the name of executable
             args.push_back(argv[n]);
@@ -85,15 +102,31 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
                 selected_subcommand_ = subcommands_order_[selected_idx.value()];
             };
         }
+        storage = parser.storage;
         return res;
     }
+    void autoCompletion(const std::vector<std::string>& args) {
+        auto top_level_options = getOptionsGroup();
+        Completer completer(top_level_options);
+        ArgGrammarParser args_parser(args);
+        auto variants = completer.getCompletionVariants(args_parser);
+        for(const auto& it : variants) {
+            std::cout<<it<<"\n";
+        }
+    }
 
+    void printOptions() {
+        auto top_level_options = getOptionsGroup();
+        Printer printer;
+        printer.visit(top_level_options);
+    }
     void validate() override {}
     void update(const boost::program_options::variables_map& vm) override {}
     std::vector<SubcommandsT::iterator>& subcommandsOrder() { return subcommands_order_; }
     //bool hideDefaultSubcommandName() const { return hide_default_subcommand_name_; }
 
-    //bool activated{false};  // becomes true when parse function succeeded
+    //bool activated{false};  // becomes true when parse function succeeded    
+    KeyValueStorage storage;
    private:
     SubcommandsT subcommands_;
     std::vector<SubcommandsT::iterator> subcommands_order_;  // order of subcommands_ for printing purpose
@@ -102,7 +135,7 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
     //std::string default_subcommand_name_{"default"};
     //bool hide_default_subcommand_name_{false};
     bool is_default_subcommand_enabled_{false};
-    friend class ProgramSubcommandsPrinter; // TODO: remove out of here
+    friend class ProgramSubcommandsPrinter; // TODO: remove out of here    
 };
 
 } /* namespace program_options_heavy */
