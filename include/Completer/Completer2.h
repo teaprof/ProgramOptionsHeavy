@@ -20,7 +20,10 @@ class NameCompleter : public AbstractOptionVisitor {
     void visit(std::shared_ptr<AbstractOption> /*unused*/) override {
         // nothing to do
     }
-    void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override { assert(false); }
+    void visit(std::shared_ptr<AbstractPositionalOptionWithValue> opt) override { 
+        // todo: not implemented
+        // if file name is expected we should scan all files and add them to the result        
+    }
     void visit(std::shared_ptr<LiteralString> opt) override {
         if (regex_.has_value()) {
             if (!std::regex_match(opt->str(), regex_.value())) {

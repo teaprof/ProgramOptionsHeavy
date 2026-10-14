@@ -17,7 +17,7 @@ int main() {
     top_level_options->addAlternative2(run_command);
     top_level_options->addAlternative2(gather_command);
 
-    Printer prn;
+    program_options_heavy::Printer prn;
     top_level_options->accept(prn);
     return 0;
 }

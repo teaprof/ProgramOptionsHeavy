@@ -14,10 +14,11 @@ namespace program_options_heavy {
 class CommonOptions : public HeavyOptionsGroup {
    public:
     enum CommonOptionsFlags {
+        noFlags = 0,
         HelpEnabled = 1 << 0,
         AutoCompletionEnabled = 1 << 1,
     };
-    CommonOptions(const CommonOptionsFlags& flags) : HeavyOptionsGroup("Common options") {
+    CommonOptions(const CommonOptionsFlags& flags = CommonOptionsFlags::noFlags) : HeavyOptionsGroup("Common options") {
         if(flags & HelpEnabled) {
             addPartial("help", std::ref(need_help_), "produce this help")->
                 valueSemantics().setDefaultValue(false).setImplicitValue(true);
@@ -27,7 +28,7 @@ class CommonOptions : public HeavyOptionsGroup {
             auto option = addPartial("autocomplete", std::ref(auto_completion_mode_), "Special option that is used to actiave autocomplete feature");
             option->valueSemantics().setDefaultValue(false).setImplicitValue(true);
             auto_completion_args = std::make_shared<PositionalOptionWithValue<std::string>>();
-            auto_completion_args->setNValues(AbstractOptionWithValue::NValuesRole::INFINITE);            
+            auto_completion_args->setMaxOccurreneCount(); // set to maxint
             option->addUnlock(auto_completion_args);
         }        
     }

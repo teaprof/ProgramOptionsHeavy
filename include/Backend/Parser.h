@@ -197,6 +197,10 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             }
             return idx;
         };
+        // TODO: error: do not scroll to the next positional option until the current option can accept new occurrences
+        if(cur_positional_option_idx_ == remaining_options_.size()) {
+            throw TooManyPositionalOptions("");
+        }
         cur_positional_option_idx_ = find_next_positional(cur_positional_option_idx_);        
         if(cur_positional_option_idx_ == remaining_options_.size()) {
             throw TooManyPositionalOptions("");
@@ -240,7 +244,8 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         // If DOUBLE_DASH then all next options will be treated as positionals
         if (args.current_result.token_type == ArgGrammarParser::TokenTypes::DOUBLE_DASH) {
             matcher.setPositionalOnlyFlag(true);
-            cur_positional_option_idx_++;
+            // TODO: double dash can be used to interrupt value list for the current positional option
+            //cur_positional_option_idx_++;
             return nullptr;
         }
         std::shared_ptr<AbstractOption> res = nullptr;
