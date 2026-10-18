@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(Boost_USE_STATIC_LIBS   ON)
-find_package(Boost 1.87.0 NO_MODULE REQUIRED COMPONENTS program_options)
+find_package(Boost 1.87.0 NO_MODULE REQUIRED COMPONENTS program_options log)
 include_directories(${Boost_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)

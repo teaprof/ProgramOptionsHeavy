@@ -12,23 +12,23 @@
 #include <set>
 #include <sstream>
 #include <string_view>
+#include <boost/log/trivial.hpp>
 #include <vector>
 
 #include "Exceptions.h"
 #include "Option.h"
 #include "OptionMatcher.h"
+#include "Printer.h"
 #include "ValueSemantics.h"
 #include "ValueStorage.h"
 
-#define PARSER_DEBUG
+using program_options_heavy::ShortPrinter;
 
 class OptionsOccurrenceCounter {
     public:
 
     void clear() {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsOccurrenceCounter::clear() - clearing counter map (size=" << opts_counter_.size() << ")\n";
-#endif
+        //BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::clear() - clearing counter map (size=" << opts_counter_.size() << ")\n";
         opts_counter_.clear();
     }
     /// how many times the specified option has been encountered in the already
@@ -38,29 +38,21 @@ class OptionsOccurrenceCounter {
         if (opts_counter_.contains(opt)) {
             counter = opts_counter_[opt];
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsOccurrenceCounter::optionEncountered() - counter=" << counter << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::optionEncountered() - opt=" << ShortPrinter::toString(opt) << ", counter=" << counter << "\n";
         return counter;
     }
     bool increaseOptionOccurrenceCounter(std::shared_ptr<AbstractOption> opt) {
         size_t counter = ++opts_counter_[opt];
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - counter=" << counter << ", max=" << opt->maxOccurrence() << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - opt=" << ShortPrinter::toString(opt) << ", counter=" << counter << ", max=" << opt->maxOccurrence() << "\n";
         if (counter == opt->maxOccurrence()) {
             return true;
         }
         if (counter > opt->maxOccurrence()) {
             if (auto p = std::dynamic_pointer_cast<OneOfPositional>(opt)) {
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - throwing OnlyOneChoiseIsAllowed\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - opt=" << ShortPrinter::toString(p) << ", throwing OnlyOneChoiseIsAllowed\n";
                 throw OnlyOneChoiseIsAllowed(p);  // todo: make separate checker for OneOfPositional
             }
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - throwing MaxOptionOccurrenceIsExceeded\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - opt=" << ShortPrinter::toString(opt) << ", throwing MaxOptionOccurrenceIsExceeded\n";
             throw MaxOptionOccurrenceIsExceeded(opt);
         }
         return false;
@@ -73,9 +65,7 @@ class OptionsOccurrenceCounter {
         }
         size_t max_count = opt->maxOccurrence();
         bool can_accept = (actual_count < max_count);
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsOccurrenceCounter::canAcceptNewOccurrence() - actual=" << actual_count << ", max=" << max_count << ", can_accept=" << can_accept << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::canAcceptNewOccurrence() - opt=" << ShortPrinter::toString(opt) << ", actual=" << actual_count << ", max=" << max_count << ", can_accept=" << can_accept << "\n";
         return can_accept;
     }
 
@@ -87,16 +77,12 @@ class OptionsValueStorage {
     KeyValueStorage storage;
 
     void clear() {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsValueStorage::clear()\n";
-#endif
+        //BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::clear()\n";
         storage.clear();
     }
 
     void initializeOptionsStorages(std::shared_ptr<AbstractOption> root) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsValueStorage::initializeOptionsStorages()\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::initializeOptionsStorages()\n";
         //storage.initializeOptionsStorages(root);
     }
 
@@ -105,9 +91,7 @@ class OptionsValueStorage {
     virtual void onValueApplied(std::shared_ptr<AbstractOptionWithValue> opt) { /* nothing to do */}
 
     void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsValueStorage::setDefaultValue() - setting default value for option\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setDefaultValue() - opt=" << ShortPrinter::toString(opt) << ", setting default value for option\n";
         std::any v = opt->baseValueSemantics().setToDefault();
         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
         onNewOptionsUnlocked(unlocked_by_value);
@@ -116,9 +100,7 @@ class OptionsValueStorage {
     }
 
     void setImplicitValue(std::shared_ptr<AbstractOptionWithValue> opt) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsValueStorage::setImplicitValue() - setting implicit value for option\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setImplicitValue() - opt=" << ShortPrinter::toString(opt) << ", setting implicit value for option\n";
         std::any v = opt->baseValueSemantics().setToImplicit();
         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
         onNewOptionsUnlocked(unlocked_by_value);
@@ -127,24 +109,18 @@ class OptionsValueStorage {
     }
 
     void setOptionValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsValueStorage::setOptionValue() - value=\"" << value << "\", tokens_count=" << mysplit(value).size() << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", value=\"" << value << "\", tokens_count=" << mysplit(value).size() << "\n";
         bool first = true;
         std::vector<std::string> tokens = mysplit(value);
         switch (opt->nValuesRole()) {
             case AbstractOptionWithValue::NValuesRole::EXACT:
                 if (opt->nValues() != tokens.size()) {
-#ifdef PARSER_DEBUG
-                    std::cerr << "[Parser::DEBUG] OptionsValueStorage::setOptionValue() - throwing ExpectedExactNumberOfValues\n";
-#endif
+                    BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", throwing ExpectedExactNumberOfValues\n";
                     throw ExpectedExactNumberOfValues(opt);
                 }
             case AbstractOptionWithValue::NValuesRole::UPTO:
                 if (tokens.size() > opt->nValues()) {
-#ifdef PARSER_DEBUG
-                    std::cerr << "[Parser::DEBUG] OptionsValueStorage::setOptionValue() - throwing TooManyValuesForOption\n";
-#endif
+                    BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", throwing TooManyValuesForOption\n";
                     throw TooManyValuesForOption(opt);
                 }
             case AbstractOptionWithValue::NValuesRole::INFINITE:
@@ -156,30 +132,22 @@ class OptionsValueStorage {
             std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
             onNewOptionsUnlocked(unlocked_by_value);
             if (first) {
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsValueStorage::setOptionValue() - adding first value token=\"" << token << "\"\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", adding first value token=\"" << token << "\"\n";
                 first = false;
                 storage.addValue(opt, token, val);
             } else {
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsValueStorage::setOptionValue() - adding additional value token=\"" << token << "\"\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", adding additional value token=\"" << token << "\"\n";
                 storage.addValueToCurrentOccurence(opt, token, val);
             }
         }
         onValueApplied(opt);
     }
     void setSelectedAlternative(std::shared_ptr<OneOfPositional> opt, size_t selected_idx) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsValueStorage::setSelectedAlternative(OneOfPositional) - selected_idx=" << selected_idx << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setSelectedAlternative(OneOfPositional) - opt=" << ShortPrinter::toString(opt) << ", selected_idx=" << selected_idx << "\n";
         storage.setSelectedAlternativeIndex(opt, selected_idx);
     }
     void setSelectedAlternative(std::shared_ptr<OneOfNamed> opt, size_t selected_idx) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsValueStorage::setSelectedAlternative(OneOfNamed) - selected_idx=" << selected_idx << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setSelectedAlternative(OneOfNamed) - opt=" << ShortPrinter::toString(opt) << ", selected_idx=" << selected_idx << "\n";
         storage.setSelectedAlternativeIndex(opt, selected_idx);
     }
     virtual void onNewOptionsUnlocked(const std::vector<std::shared_ptr<AbstractOption>>& src_options) = 0;
@@ -200,9 +168,7 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
     }
 
     void clear() {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::clear() - starting clear\n";
-#endif
+        //BOOST_LOG_TRIVIAL(debug) << "OptionsEater::clear() - starting clear\n";
         OptionsOccurrenceCounter::clear();
         OptionsValueStorage::clear();
         remaining_options_.clear();
@@ -211,20 +177,14 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         onNewOptionsUnlocked({options_});
 
         initializeOptionsStorages(options_);
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::clear() - completed, remaining_options_.size()=" << remaining_options_.size() << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::clear() - completed\n";
     }
 
     void eatValueIfCan(ArgGrammarParser& args, OptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::eatValueIfCan() - entering\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", entering\n";
         // first, try to eat matcher.value
         if (matcher.value.has_value()) {
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] OptionsEater::eatValueIfCan() - using matcher value=\"" << matcher.value.value() << "\"\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", using matcher value=\"" << matcher.value.value() << "\"\n";
             setOptionValue(opt, matcher.value.value());
             matcher.value = std::nullopt;
             return;
@@ -235,9 +195,7 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             if (arg_is_value) {
                 std::optional<std::string> value_opt = args.getValueOpt();
                 assert(value_opt.has_value());
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::eatValueIfCan() - got value from args=\"" << *value_opt << "\"\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", got value from args=\"" << *value_opt << "\"\n";
                 // TODO: if value can't be accepted then we should set option value to implicit value
                 setOptionValue(opt, *value_opt);
                 return;
@@ -247,22 +205,16 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         // Try to apply implicit value
         bool has_implicit_value = opt->baseValueSemantics().hasImplicitValue();
         if (has_implicit_value) {
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] OptionsEater::eatValueIfCan() - applying implicit value\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", applying implicit value\n";
             setImplicitValue(opt);
             return;
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::eatValueIfCan() - throwing ExpectedValue\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", throwing ExpectedValue\n";
         throw ExpectedValue(opt);
     }
 
     std::shared_ptr<AbstractPositionalOption> eatNextPositionalOption(ArgGrammarParser& args, OptionMatcher& matcher) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::eatNextPositionalOption() - entering, cur_positional_option_idx_=" << cur_positional_option_idx_ << ", remaining_options_.size()=" << remaining_options_.size() << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - entering, cur_positional_option_idx_=" << cur_positional_option_idx_ << ", remaining_options_.size()=" << remaining_options_.size() << "\n";
         auto find_next_positional = [&](size_t idx)->auto {
             std::shared_ptr<AbstractPositionalOption> p;
             while(idx < remaining_options_.size()) {
@@ -277,23 +229,17 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         };
         // TODO: error: do not scroll to the next positional option until the current option can accept new occurrences
         if(cur_positional_option_idx_ == remaining_options_.size()) {
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] OptionsEater::eatNextPositionalOption() - throwing TooManyPositionalOptions (all remaining exhausted)\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - throwing TooManyPositionalOptions (all remaining exhausted)\n";
             throw TooManyPositionalOptions("");
         }
         cur_positional_option_idx_ = find_next_positional(cur_positional_option_idx_);        
         if(cur_positional_option_idx_ == remaining_options_.size()) {
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] OptionsEater::eatNextPositionalOption() - throwing TooManyPositionalOptions (no positional found)\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - throwing TooManyPositionalOptions (no positional found)\n";
             throw TooManyPositionalOptions("");
         }
         auto opt = remaining_options_[cur_positional_option_idx_];
         if (!canAcceptNewOccurrence(opt)) {
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] OptionsEater::eatNextPositionalOption() - current positional exhausted, advancing\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - opt=" << ShortPrinter::toString(opt) << ", current positional exhausted, advancing\n";
             cur_positional_option_idx_++;
             cur_positional_option_idx_ = find_next_positional(cur_positional_option_idx_);        
             if(cur_positional_option_idx_ == remaining_options_.size()) {
@@ -306,54 +252,38 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             auto res = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
             assert(res);
             if(auto oneOf = std::dynamic_pointer_cast<OneOfPositional>(opt)) {
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::eatNextPositionalOption() - matched OneOfPositional, selected_alternative=" << matcher.selected_alternative << "\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - opt=" << ShortPrinter::toString(oneOf) << ", matched OneOfPositional, selected_alternative=" << matcher.selected_alternative << "\n";
                 setSelectedAlternative(oneOf, matcher.selected_alternative);
             }
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] OptionsEater::eatNextPositionalOption() - matched\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - opt=" << ShortPrinter::toString(res) << ", matched\n";
             return res;
         };
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::eatNextPositionalOption() - no match\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - opt=" << ShortPrinter::toString(opt) << ", no match\n";
         return nullptr;
     }
 
     std::shared_ptr<AbstractOption> eatNextNamedOption(ArgGrammarParser& args, OptionMatcher& matcher) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::eatNextNamedOption() - entering, remaining_options_.size()=" << remaining_options_.size() << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextNamedOption() - entering, remaining_options_.size()=" << remaining_options_.size() << "\n";
         for (auto opt : remaining_options_) { // TODO: should we check if opt is AbstractNamedOption?
             opt->accept(matcher);
             if (matcher.match) {
                 if(auto oneOf = std::dynamic_pointer_cast<OneOfNamed>(opt)) {
                     setSelectedAlternative(oneOf, matcher.selected_alternative);
                 }
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::eatNextNamedOption() - matched\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextNamedOption() - opt=" << ShortPrinter::toString(opt) << ", matched\n";
                 return opt;
             };
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::eatNextNamedOption() - no match found\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextNamedOption() - no match found\n";
         return nullptr;
     }
 
     std::shared_ptr<AbstractOption> eatNextOption(ArgGrammarParser& args, OptionMatcher& matcher) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::eatNextOption() - entering\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - entering\n";
         args.getNextOption();
         // If DOUBLE_DASH then all next options will be treated as positionals
         if (args.current_result.token_type == ArgGrammarParser::TokenTypes::DOUBLE_DASH) {
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] OptionsEater::eatNextOption() - DOUBLE_DASH detected, setting positional-only mode\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - DOUBLE_DASH detected, setting positional-only mode\n";
             matcher.setPositionalOnlyFlag(true);
             // TODO: double dash can be used to interrupt value list for the current positional option
             //cur_positional_option_idx_++;
@@ -366,27 +296,19 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             case ArgGrammarParser::TokenTypes::SHORT_OPTION:
             case ArgGrammarParser::TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
             case ArgGrammarParser::TokenTypes::SHORT_OPTION_EQ_VALUE:
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::eatNextOption() - processing named option, token=\"" << args.getRawOptionName() << "\"\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - processing named option, token=\"" << args.getRawOptionName() << "\"\n";
                 res = eatNextNamedOption(args, matcher);
                 if (res == 0) {
-#ifdef PARSER_DEBUG
-                    std::cerr << "[Parser::DEBUG] OptionsEater::eatNextOption() - throwing UnknownNamedOption\n";
-#endif
+                    BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - throwing UnknownNamedOption\n";
                     throw UnknownNamedOption("");
                 }
                 break;
             case ArgGrammarParser::TokenTypes::DOUBLE_DASH:
             case ArgGrammarParser::TokenTypes::VALUE:
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::eatNextOption() - processing positional option, value=\"" << args.current_result.value << "\"\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - processing positional option, value=\"" << args.current_result.value << "\"\n";
                 res = eatNextPositionalOption(args, matcher);
                 if (res == 0) {
-#ifdef PARSER_DEBUG
-                    std::cerr << "[Parser::DEBUG] OptionsEater::eatNextOption() - throwing UnexpectedValueForPositionalOption\n";
-#endif
+                    BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - throwing UnexpectedValueForPositionalOption\n";
                     throw UnexpectedValueForPositionalOption(args.current_result.value);
                 }
                 break;
@@ -394,24 +316,18 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         if (res) {
             return res;
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::eatNextOption() - throwing UnknownNamedOption (fallback)\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - throwing UnknownNamedOption (fallback)\n";
         throw UnknownNamedOption(args.getRawOptionName());
         return nullptr;
     }
 
     void parseNext(ArgGrammarParser& args) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::parseNext() - entering\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parseNext() - entering\n";
         OptionMatcher matcher(args);
         auto opt = eatNextOption(args, matcher);
         if (opt) {
             if (!already_joined_.contains(opt)) {
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::parseNext() - new option matched, processing unlocks\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parseNext() - opt=" << ShortPrinter::toString(opt) << ", new option matched, processing unlocks\n";
                 onNewOptionsUnlocked(matcher.unlocks);
                 already_joined_.insert(opt);
             }
@@ -436,50 +352,36 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             // TODO: callback newOptionOccurrenceFinished
 
             if (matcher.value.has_value()) {
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::parseNext() - throwing OptionDoesntAcceptValue (unconsumed matcher value)\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parseNext() - throwing OptionDoesntAcceptValue (unconsumed matcher value)\n";
                 throw OptionDoesntAcceptValue();
             }
         };
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::parseNext() - completed\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parseNext() - completed\n";
     }
 
     void parse(ArgGrammarParser args) { 
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::parse() - starting parse\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parse() - starting parse\n";
         clear();
         //OptionMatcher matcher(args); 
         while (!args.eof()) {
             parseNext(args);
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::parse() - parse completed\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parse() - parse completed\n";
     }
 
    protected:
     void onNewOptionsUnlocked(const std::vector<std::shared_ptr<AbstractOption>>& src_options) override {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::onNewOptionsUnlocked() - unlocking " << src_options.size() << " new options\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked() - unlocking " << src_options.size() << " new options\n";
         for (auto it : src_options) {
             if (auto p = std::dynamic_pointer_cast<OptionsGroup>(it)) {
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::onNewOptionsUnlocked() - expanding OptionsGroup\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked() - expanding OptionsGroup: " << ShortPrinter::toString(p) << "\n";
                 // TODO: why separate case for OptionsGroup
                 onNewOptionsUnlocked(p->unlocks());  // todo: avoid copying of a vector
             } else {
                 remaining_options_.push_back(it);
             }
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::onNewOptionsUnlocked() - remaining_options_.size() now = " << remaining_options_.size() << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked() - remaining_options_.size() now = " << remaining_options_.size() << "\n";
     }
     void ensureValueListIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {
         size_t actual = 0;
@@ -490,27 +392,19 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             size_t expected = opt->nValues();
             if (actual < expected) {
                 if(actual == 0) {
-#ifdef PARSER_DEBUG
-                    std::cerr << "[Parser::DEBUG] OptionsEater::ensureValueListIsCompleted() - throwing ExpectedValue\n";
-#endif
+                    BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() - opt=" << ShortPrinter::toString(opt) << ", throwing ExpectedValue\n";
                     throw ExpectedValue(opt);
                 }
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::ensureValueListIsCompleted() - throwing TooFewValuesForOption, actual=" << actual << ", expected=" << expected << "\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() - opt=" << ShortPrinter::toString(opt) << ", throwing TooFewValuesForOption, actual=" << actual << ", expected=" << expected << "\n";
                 throw TooFewValuesForOption(opt);  // todo print message
             }
         } else {
             if (actual == 0) {
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] OptionsEater::ensureValueListIsCompleted() - throwing ExpectedValue (no EXACT, but actual=0)\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() - opt=" << ShortPrinter::toString(opt) << ", throwing ExpectedValue (no EXACT, but actual=0)\n";
                 throw ExpectedValue(opt);
             }
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] OptionsEater::ensureValueListIsCompleted() - OK, actual=" << actual << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() - opt=" << ShortPrinter::toString(opt) << ", OK, actual=" << actual << "\n";
     }
 };
 
@@ -519,15 +413,11 @@ class Parser : public OptionsEater {
     Parser(std::shared_ptr<AbstractOption> options) : OptionsEater{options} {}
 
     bool parse(ArgGrammarParser args) {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] Parser::parse() - starting parse\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "Parser::parse() - starting parse\n";
         OptionsEater::parse(args);
         applyDefaultValues();
         checkUnusedRequiredOptions();
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] Parser::parse() - parse completed successfully\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "Parser::parse() - parse completed successfully\n";
         return true;
     }
 
@@ -535,28 +425,20 @@ class Parser : public OptionsEater {
     std::set<std::shared_ptr<AbstractOptionWithValue>> opts_with_default_value_;
     bool isOptionSpecifiedOrImplied(std::shared_ptr<AbstractOption> opt) {
         if(optionEncountered(opt) > 0) {
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] Parser::isOptionSpecifiedOrImplied() - option was encountered, returning true\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "Parser::isOptionSpecifiedOrImplied() - opt=" << ShortPrinter::toString(opt) << ", option was encountered, returning true\n";
             return true;
         }
         if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
             if(opts_with_default_value_.contains(p)) {
-#ifdef PARSER_DEBUG
-                std::cerr << "[Parser::DEBUG] Parser::isOptionSpecifiedOrImplied() - opt has default value, returning true\n";
-#endif
+                BOOST_LOG_TRIVIAL(debug) << "Parser::isOptionSpecifiedOrImplied() - opt=" << ShortPrinter::toString(opt) << ", opt has default value, returning true\n";
                 return true;
             }
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] Parser::isOptionSpecifiedOrImplied() - returning false\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "Parser::isOptionSpecifiedOrImplied() - opt=" << ShortPrinter::toString(opt) << ", returning false\n";
         return false;
     };
     void checkUnusedRequiredOptions() {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] Parser::checkUnusedRequiredOptions() - checking " << remaining_options_.size() << " remaining options\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "Parser::checkUnusedRequiredOptions() - checking " << remaining_options_.size() << " remaining options\n";
         // check that all required options are used
         bool too_few_pos_opts{false};
         bool required_opt_is_not_set{false};
@@ -571,28 +453,20 @@ class Parser : public OptionsEater {
                 missing_count++;
             }
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] Parser::checkUnusedRequiredOptions() - missing_count=" << missing_count << ", too_few_pos_opts=" << too_few_pos_opts << "\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "Parser::checkUnusedRequiredOptions() - missing_count=" << missing_count << ", too_few_pos_opts=" << too_few_pos_opts << "\n";
         if(required_opt_is_not_set) {
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] Parser::checkUnusedRequiredOptions() - throwing RequiredOptionIsNotSet\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "Parser::checkUnusedRequiredOptions() - throwing RequiredOptionIsNotSet\n";
             throw RequiredOptionIsNotSet(nullptr);
         }
         if(too_few_pos_opts) {
-#ifdef PARSER_DEBUG
-            std::cerr << "[Parser::DEBUG] Parser::checkUnusedRequiredOptions() - throwing TooFewPositionalOptions\n";
-#endif
+            BOOST_LOG_TRIVIAL(debug) << "Parser::checkUnusedRequiredOptions() - throwing TooFewPositionalOptions\n";
             /// TODO print how many pos options are expected
             throw TooFewPositionalOptions();
         }
     }
 
     void applyDefaultValues() {
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] Parser::applyDefaultValues() - processing " << remaining_options_.size() << " remaining options\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues() - processing " << remaining_options_.size() << " remaining options\n";
         // applies default values for options that were not encountered
         for (auto opt : remaining_options_) {
             if (optionEncountered(opt) > 0) {
@@ -600,26 +474,19 @@ class Parser : public OptionsEater {
             }
             if (auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
                 if (p->baseValueSemantics().hasDefaultValue()) {
-#ifdef PARSER_DEBUG
-                    std::cerr << "[Parser::DEBUG] Parser::applyDefaultValues() - applying default value\n";
-#endif
+                    BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues() - opt=" << ShortPrinter::toString(p) << ", applying default value\n";
                     setDefaultValue(p);
                     opts_with_default_value_.insert(p);
                     // todo: if default value unlocks some options these options should be proccessed
                 } else {
                     if (opt->required()) {
-#ifdef PARSER_DEBUG
-                        std::cerr << "[Parser::DEBUG] Parser::applyDefaultValues() - throwing RequiredOptionIsNotSet\n";
-#endif
+                        BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues() - opt=" << ShortPrinter::toString(opt) << ", throwing RequiredOptionIsNotSet\n";
                         throw RequiredOptionIsNotSet(opt);
                     }
                 }
             };
         }
-#ifdef PARSER_DEBUG
-        std::cerr << "[Parser::DEBUG] Parser::applyDefaultValues() - done, " << opts_with_default_value_.size() << " defaults applied\n";
-#endif
+        BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues() - done, " << opts_with_default_value_.size() << " defaults applied\n";
     }
 };
-
 #endif

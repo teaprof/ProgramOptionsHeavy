@@ -13,7 +13,7 @@ add_executable(poheavy_tests
     ValueSemanticsTest.cpp
     Completer2Test.cpp)
     
-target_link_libraries(poheavy_tests GTest::gtest_main Boost::program_options)
+target_link_libraries(poheavy_tests GTest::gtest_main Boost::program_options Boost::log)
 target_include_directories(poheavy_tests PUBLIC GTEST_INCLUDE_DIRS)
 
 gtest_discover_tests(poheavy_tests)

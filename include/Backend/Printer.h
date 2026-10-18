@@ -123,6 +123,59 @@ class Printer : public AbstractOptionVisitor {
         // prn--;
     }
 };
+class ShortPrinter : public AbstractOptionVisitor {
+   public:
+    void visit(std::shared_ptr<AbstractOption> /*opt*/) override {
+        result_ = "some option";
+    }
+    void visit(std::shared_ptr<AbstractPositionalOption> /*opt*/) override {
+        result_ = "<AbstractPositionalOption>";
+    }
+    void visit(std::shared_ptr<NamedOption> opt) override {
+        result_ = opt->displayName();
+    }
+    void visit(std::shared_ptr<LiteralString> opt) override {
+        result_ = opt->str() + "<literal>";
+    }
+    void visit(std::shared_ptr<AbstractNamedOptionWithValue> opt) override {
+        result_ = opt->displayName();
+    }
+    void visit(std::shared_ptr<AbstractPositionalOptionWithValue> /*opt*/) override {
+        result_ = "<AbstractPositionalOptionWithValue>";
+    }
+    void visit(std::shared_ptr<OptionsGroup> /*opt*/) override {
+        result_ = "<OptionsGroup>";
+    }
+    void visit(std::shared_ptr<OneOfPositional> /*opt*/) override {
+        result_ = "<OneOfPositional>";
+    }
+    void visit(std::shared_ptr<OneOfNamed> /*opt*/) override {
+        result_ = "<OneOfNamed>";
+    }
+
+    static std::string toString(std::shared_ptr<AbstractOption> opt) {
+        ShortPrinter printer;
+        opt->accept(printer);
+        return printer.result_;
+    }
+
+    // AbstractOptionWithValue is a mixin that is NOT derived from AbstractOption.
+    // Concrete options always derive from one of the AbstractOption derivations too,
+    // so downcast to those to reuse the visitor.
+    static std::string toString(std::shared_ptr<AbstractOptionWithValue> opt) {
+        if (auto p = std::dynamic_pointer_cast<AbstractNamedOptionWithValue>(opt)) {
+            return toString(std::shared_ptr<AbstractOption>(p));
+        }
+        if (auto p = std::dynamic_pointer_cast<AbstractPositionalOptionWithValue>(opt)) {
+            return toString(std::shared_ptr<AbstractOption>(p));
+        }
+        return "{AbstractOptionWithValue}";
+    }
+
+   private:
+    std::string result_;
+};
+
 }
 
 #endif
