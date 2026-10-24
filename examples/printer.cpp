@@ -8,7 +8,7 @@ int main() {
     auto run_options = std::make_shared<OptionsGroup>();
     run_options->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--dimension"));
     auto gather_options = std::make_shared<OptionsGroup>();
-    gather_options->addUnlock(std::make_shared<PositionalOptionWithValue<std::string>>());
+    gather_options->addUnlock(std::make_shared<PositionalOptionWithValue<std::string>>("gatherOptions"));
 
     auto run_command = std::make_shared<LiteralString>("run")->addUnlock(run_options)->addUnlock(common_options);
     auto gather_command = std::make_shared<LiteralString>("gather")->addUnlock(gather_options)->addUnlock(common_options);

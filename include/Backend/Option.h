@@ -45,29 +45,33 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
    public:
     // these objects should not be build directly, use std::make_shared to
     // create an instance
-    AbstractOption();
-    AbstractOption(bool required);
+    AbstractOption(const std::string& display_name = "");
+    AbstractOption(bool is_required, const std::string& display_name = "");
 
     std::vector<std::shared_ptr<AbstractOption>> unlocks() const;
     size_t unlocksCount() const;
     std::shared_ptr<AbstractOption> addUnlock(std::shared_ptr<AbstractOption> opt);
 
-    bool required() const;
+    bool isRequired() const;
     void setRequired(bool val);
 
     void setMaxOccurreneCount(size_t max_count = std::numeric_limits<size_t>::max());
     size_t maxOccurrence() const;
 
+    std::string displayName() const;
+    void setDisplayName(std::string display_name) { display_name_ = std::move(display_name);}
+
     virtual void accept(AbstractOptionVisitor& visitor);
    private:
-    bool required_{false};
+    bool is_required_{false};
     size_t max_occurence_{1};
+    std::string display_name_;
     std::vector<std::shared_ptr<AbstractOption>> unlocks_;
 };
 
 class NamedOption : public AbstractOption {  // rename, should it be AbstractNamedOption??
    public:
-    NamedOption() {}
+    NamedOption() {} /// TODO: remove this constructor since NamedOptions always should have name
     NamedOption(const std::string& undecorated_long_name);
     NamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name);
 
@@ -75,7 +79,6 @@ class NamedOption : public AbstractOption {  // rename, should it be AbstractNam
     // leading dashes are removed
     const std::optional<std::string>& longName() const;
     const std::optional<std::string>& shortName() const;
-    std::string displayName() const;
 
     void accept(AbstractOptionVisitor& visitor) override;
 
@@ -83,6 +86,8 @@ class NamedOption : public AbstractOption {  // rename, should it be AbstractNam
     void sanitizeNames();
     std::optional<std::string> undecorated_long_name_;   // long name without leading "--"
     std::optional<std::string> undecorated_short_name_;  // short name without leading "-"
+
+    std::string generateDisplayName() const;
 };
 
 class AbstractOptionWithValue {
@@ -128,13 +133,15 @@ class AbstractOptionWithValue {
 };
 
 class AbstractPositionalOption : public AbstractOption {
-   public:
+   public:  
+    AbstractPositionalOption(const std::string& display_name) : AbstractOption(display_name) {}
     void accept(AbstractOptionVisitor& visitor) override;
 };
 
 class LiteralString : public AbstractPositionalOption {
    public:
-    LiteralString(const std::string& str) : str_{str} {}
+    LiteralString(const std::string& str)
+        : AbstractPositionalOption(str), str_{str} {}
 
     const std::string& str() const;
     void accept(AbstractOptionVisitor& visitor) override;
@@ -145,7 +152,6 @@ class LiteralString : public AbstractPositionalOption {
 
 class AbstractNamedOptionWithValue : public NamedOption, public AbstractOptionWithValue {
    public:
-    AbstractNamedOptionWithValue() {}
     AbstractNamedOptionWithValue(const std::string& undecorated_long_name) : NamedOption(undecorated_long_name){};
     AbstractNamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name)
         : NamedOption(undecorated_long_name, undecorated_short_name) {}
@@ -166,7 +172,6 @@ class OptionWithValue {
 template <class T>
 class NamedOptionWithValue : public AbstractNamedOptionWithValue, public OptionWithValue<T> {
    public:
-    NamedOptionWithValue() {}
     NamedOptionWithValue(const std::string& undecorated_long_name) : AbstractNamedOptionWithValue(undecorated_long_name){};
     NamedOptionWithValue(const std::string& undecorated_long_name, const std::string& undecorated_short_name)
         : AbstractNamedOptionWithValue(undecorated_long_name, undecorated_short_name){};
@@ -177,31 +182,38 @@ class NamedOptionWithValue : public AbstractNamedOptionWithValue, public OptionW
 
 class AbstractPositionalOptionWithValue : public AbstractPositionalOption, public AbstractOptionWithValue {
    public:
+    AbstractPositionalOptionWithValue(const std::string& display_name)
+        : AbstractPositionalOption(display_name) {}
     void accept(AbstractOptionVisitor& visitor) override;
 };
 
 template <class T>
 class PositionalOptionWithValue : public AbstractPositionalOptionWithValue, public OptionWithValue<T> {
    public:
+    PositionalOptionWithValue(const std::string& display_name)
+        : AbstractPositionalOptionWithValue(display_name) {}
     // TODO: Positional option can't have default value, maybe use special ValueSemantics class without default value?
     const AbstractValueSemantics& baseValueSemantics() const override { return OptionWithValue<T>::valueSemantics(); }
     AbstractValueSemantics& baseValueSemantics() override { return OptionWithValue<T>::valueSemantics(); }
 };
 
 class OptionsGroup : public AbstractOption {
-    /// TODO what does `required_` mean in this case?
+    /// TODO what does `is_required_` mean in this case?
    public:
+    OptionsGroup(const std::string& display_name = "") : AbstractOption(display_name) {}
     void accept(AbstractOptionVisitor& visitor) override;
 };
 
 class OneOfPositional : public AbstractPositionalOption {
    public:
     std::vector<std::shared_ptr<AbstractPositionalOption>> alternatives;
-    OneOfPositional() {}
-    OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1, std::shared_ptr<AbstractPositionalOption> alt2);
+    OneOfPositional(const std::string& display_name = "") : AbstractPositionalOption(display_name) {}
+    OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1, std::shared_ptr<AbstractPositionalOption> alt2,
+                    const std::string& display_name = "");
     OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1,
                     std::shared_ptr<AbstractPositionalOption> alt2,
-                    std::shared_ptr<AbstractPositionalOption> alt3);
+                    std::shared_ptr<AbstractPositionalOption> alt3,
+                    const std::string& display_name = "");
 
     std::shared_ptr<AbstractPositionalOption> alternative(size_t idx) { return alternatives[idx]; }
     size_t alternativesSize() { return alternatives.size(); }
@@ -219,19 +231,21 @@ class OneOfNamed : public NamedOption {
     OneOfNamed(std::shared_ptr<NamedOption> alt1, std::shared_ptr<NamedOption> alt2, std::shared_ptr<NamedOption> alt3);
 
     std::shared_ptr<NamedOption> alternative(size_t idx) { return alternatives[idx]; }
-    size_t alternativesSize() { return alternatives.size(); }
+    size_t alternativesSize() const { return alternatives.size(); }
 
     std::shared_ptr<OneOfNamed> addAlternative(std::shared_ptr<NamedOption> opt);
     std::shared_ptr<OneOfNamed> addAlternative2(std::shared_ptr<AbstractOption> opt);
     void accept(AbstractOptionVisitor& visitor);
 };
 
-inline AbstractOption::AbstractOption() : required_{false} {
+inline AbstractOption::AbstractOption(const std::string& display_name) : is_required_{false}, display_name_{display_name} {
     // nothing to do
 }
-inline AbstractOption::AbstractOption(bool required) : required_{required} {
+inline AbstractOption::AbstractOption(bool is_required, const std::string& display_name) : is_required_{is_required}, display_name_{display_name} {
     // nothing to do
 }
+
+inline std::string AbstractOption::displayName() const { return display_name_; }
 
 inline std::vector<std::shared_ptr<AbstractOption>> AbstractOption::unlocks() const {
     return unlocks_;
@@ -245,12 +259,12 @@ inline std::shared_ptr<AbstractOption> AbstractOption::addUnlock(std::shared_ptr
     return shared_from_this();
 }
 
-inline bool AbstractOption::required() const {
-    return required_;
+inline bool AbstractOption::isRequired() const {
+    return is_required_;
 }
 
 inline void AbstractOption::setRequired(bool val) {
-    required_ = val;
+    is_required_ = val;
 }
 inline void AbstractOption::setMaxOccurreneCount(size_t max_count) {
     max_occurence_ = max_count;
@@ -265,10 +279,12 @@ inline const std::string& LiteralString::str() const {
 
 inline NamedOption::NamedOption(const std::string& undecorated_long_name) : undecorated_long_name_{undecorated_long_name} {
     sanitizeNames();
+    setDisplayName(generateDisplayName());
 }
 inline NamedOption::NamedOption(const std::string& undecorated_long_name, const std::string& undecorated_short_name)
-    : AbstractOption(false), undecorated_long_name_{undecorated_long_name}, undecorated_short_name_{undecorated_short_name} {
+    : undecorated_long_name_{undecorated_long_name}, undecorated_short_name_{undecorated_short_name} {
     sanitizeNames();
+    setDisplayName(generateDisplayName());
 }
 
 inline void NamedOption::sanitizeNames() {
@@ -292,23 +308,27 @@ inline const std::optional<std::string>& NamedOption::longName() const {
 inline const std::optional<std::string>& NamedOption::shortName() const {
     return undecorated_short_name_;
 }
-inline std::string NamedOption::displayName() const {  // TODO where is it used?
+inline std::string NamedOption::generateDisplayName() const {  // TODO where is it used?
     if (undecorated_long_name_.has_value()) {
         return std::string("--") + undecorated_long_name_.value();
     }
     assert(undecorated_short_name_.has_value());
-    return std::string("-") + undecorated_long_name_.value();
+    return std::string("-") + undecorated_short_name_.value();
 }
 
 inline OneOfPositional::OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1,
-                                        std::shared_ptr<AbstractPositionalOption> alt2) {
+                                        std::shared_ptr<AbstractPositionalOption> alt2,
+                                        const std::string& display_name)
+    : AbstractPositionalOption{display_name} {
     alternatives.push_back(alt1);
     alternatives.push_back(alt2);
 }
 
 inline OneOfPositional::OneOfPositional(std::shared_ptr<AbstractPositionalOption> alt1,
                                         std::shared_ptr<AbstractPositionalOption> alt2,
-                                        std::shared_ptr<AbstractPositionalOption> alt3) {
+                                        std::shared_ptr<AbstractPositionalOption> alt3,
+                                        const std::string& display_name)
+    : AbstractPositionalOption{display_name} {
     alternatives.push_back(alt1);
     alternatives.push_back(alt2);
     alternatives.push_back(alt3);

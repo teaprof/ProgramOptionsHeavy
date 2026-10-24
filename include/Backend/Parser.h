@@ -160,6 +160,8 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
     std::shared_ptr<AbstractOption> options_;
     size_t cur_positional_option_idx_{0};
 
+    bool last_processed_is_positional_{false}; // used to determine how DOUBLE DASH behave. If true, DOUBLE DASH finishes current positional option
+
    public:
 
     OptionsEater(std::shared_ptr<AbstractOption> options) : options_{options} {
@@ -282,11 +284,15 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - entering\n";
         args.getNextOption();
         // If DOUBLE_DASH then all next options will be treated as positionals
-        if (args.current_result.token_type == ArgGrammarParser::TokenTypes::DOUBLE_DASH) {
-            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - DOUBLE_DASH detected, setting positional-only mode\n";
-            matcher.setPositionalOnlyFlag(true);
-            // TODO: double dash can be used to interrupt value list for the current positional option
-            //cur_positional_option_idx_++;
+        if (args.current_result.token_type == ArgGrammarParser::TokenTypes::DOUBLE_DASH) {            
+            if(last_processed_is_positional_)  {
+                //double dash can be used to interrupt value list for the current positional option
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - DOUBLE_DASH detected, finish current positional option and ready to parse next positional\n";
+                cur_positional_option_idx_++;
+            } else {
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - DOUBLE_DASH detected, setting positional-only mode\n";
+                matcher.setPositionalOnlyFlag(true);
+            }
             return nullptr;
         }
         std::shared_ptr<AbstractOption> res = nullptr;
@@ -307,6 +313,7 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             case ArgGrammarParser::TokenTypes::VALUE:
                 BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - processing positional option, value=\"" << args.current_result.value << "\"\n";
                 res = eatNextPositionalOption(args, matcher);
+                last_processed_is_positional_ = true;
                 if (res == 0) {
                     BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - throwing UnexpectedValueForPositionalOption\n";
                     throw UnexpectedValueForPositionalOption(args.current_result.value);
@@ -444,7 +451,7 @@ class Parser : public OptionsEater {
         bool required_opt_is_not_set{false};
         size_t missing_count{0};
         for (auto opt : remaining_options_) {
-            if (opt->required() && !isOptionSpecifiedOrImplied(opt)) {
+            if (opt->isRequired() && !isOptionSpecifiedOrImplied(opt)) {
                 auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
                 if (!q) {
                     too_few_pos_opts = true;
@@ -479,7 +486,7 @@ class Parser : public OptionsEater {
                     opts_with_default_value_.insert(p);
                     // todo: if default value unlocks some options these options should be proccessed
                 } else {
-                    if (opt->required()) {
+                    if (opt->isRequired()) {
                         BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues() - opt=" << ShortPrinter::toString(opt) << ", throwing RequiredOptionIsNotSet\n";
                         throw RequiredOptionIsNotSet(opt);
                     }

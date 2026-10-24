@@ -13,7 +13,7 @@
 class OptionsEasy {
    public:
     OptionsEasy() {
-        root_ = std::make_shared<AbstractOption>();
+        root_ = std::make_shared<AbstractOption>("root");
     }
     template <class T>
     std::shared_ptr<NamedOptionWithValue<T>> makeOption(const std::string& names,
@@ -48,7 +48,7 @@ class OptionsEasy {
 
     template <class T>
     std::shared_ptr<PositionalOptionWithValue<T>> makeOption(std::reference_wrapper<T> storage, std::string& help_message) {
-        auto res = std::make_shared<PositionalOptionWithValue<T>>();
+        auto res = std::make_shared<PositionalOptionWithValue<T>>("noname");
         res->valueSemantics().setExternalStorage(storage);
         help_ << res << help_message;
         root_->addUnlock(res);
@@ -58,7 +58,7 @@ class OptionsEasy {
     template <class T>
     std::shared_ptr<PositionalOptionWithValue<T>> makePositionalOption(std::reference_wrapper<T> external_storage, size_t max_occurrence,
                                                                        const std::string& help_message) {
-        auto res = std::make_shared<PositionalOptionWithValue<T>>();
+        auto res = std::make_shared<PositionalOptionWithValue<T>>("noname");
         res->valueSemantics().setExternalStorage(external_storage);
         assert(max_occurrence == 1);
         //res->valueSemantics().setMaxOccurrence(max_occurrence); // inherited from boost::program_options

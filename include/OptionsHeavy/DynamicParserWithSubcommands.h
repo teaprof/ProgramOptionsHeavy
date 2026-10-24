@@ -69,7 +69,9 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
             top_level_subcommands->addAlternative(command);
         }
         top_level_options->addUnlock(top_level_subcommands);
-        top_level_options->addUnlock(free_options_group_->options);
+        if(free_options_group_ != nullptr) {
+            top_level_options->addUnlock(free_options_group_->options);
+        }
         return top_level_options;
     }
     bool parse(int argc, const char* argv[]) override {
@@ -85,8 +87,9 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
             top_level_subcommands->addAlternative(command);
         }
         top_level_options->addUnlock(top_level_subcommands);
-        top_level_options->addUnlock(free_options_group_->options);
-
+        if(free_options_group_ != nullptr) {
+            top_level_options->addUnlock(free_options_group_->options);
+        }
         Parser parser(top_level_options);        
         std::vector<std::string> args;
         for (int n = 1; n < argc; n++) {  // skip the name of executable

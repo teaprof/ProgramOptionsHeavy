@@ -76,7 +76,7 @@ class MatcherFixtureSimple : public ::testing::Test {
         root_opt_ = std::make_shared<OptionsGroup>();
         opt1_ = std::make_shared<NamedOption>("--opt1", "-1");
         opt2_ = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
-        opt3_ = std::make_shared<PositionalOptionWithValue<std::string>>();
+        opt3_ = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
         root_opt_->addUnlock(opt1_);
         root_opt_->addUnlock(opt2_);
         root_opt_->addUnlock(opt3_);
@@ -129,7 +129,7 @@ class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
         common_option_ = std::make_shared<NamedOption>("--common", "-c");
         root_opt_->addUnlock(common_option_);
 
-        command_ = std::make_shared<PositionalOptionWithValue<std::string>>();
+        command_ = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
         command_->valueSemantics().unlocks("run").push_back(std::make_shared<NamedOption>("--dim", "-d"));
         command_->valueSemantics().unlocks("gather").push_back(std::make_shared<NamedOption>("--gatheropt", "-g"));
         root_opt_->addUnlock(command_);
@@ -200,9 +200,10 @@ TEST(Parser, OptionRequired) {
     ASSERT_TRUE(parser.parse({"--opt1"}));
 }
 
-TEST(Parser, DefaultValue) {
+TEST(Parser, DefaultAndImplicitValues) {
     auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     opt->valueSemantics().setDefaultValue(10);
+    opt->valueSemantics().setImplicitValue(20);
 
     Parser parser(opt);
     int int_value{0};
@@ -210,91 +211,75 @@ TEST(Parser, DefaultValue) {
     parser.storage.setExternalStorage(opt, &int_value);
 
     ASSERT_TRUE(parser.parse({}));
-    EXPECT_EQ(int_value, 0); // unchanged
-
-    ASSERT_TRUE(parser.parse({"--opt1"}));
     EXPECT_EQ(int_value, 10); // default value
 
-    ASSERT_TRUE(parser.parse({"--opt1 20"}));
-    EXPECT_EQ(int_value, 20); // value from command line
+    ASSERT_TRUE(parser.parse({"--opt1"}));
+    EXPECT_EQ(int_value, 20); // implicit value
 
-    opt->setRequired(true);
+    ASSERT_TRUE(parser.parse({"--opt1 30"}));
+    EXPECT_EQ(int_value, 30); // value from command line
+
+    opt->setRequired(true); 
+    ASSERT_NO_THROW(parser.parse({})); // default value is applied
+    EXPECT_EQ(int_value, 10);
+}
+
+TEST(Parser, RequiredValue) {
+    auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    opt->setRequired(true); // TODO: this should be a separate test
+    Parser parser(opt);
     ASSERT_THROW(parser.parse({}), RequiredOptionIsNotSet);
 }
 
-TEST(Parser, Implicit) {
-    auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
-    opt->valueSemantics().setImplicitValue(10);
-
-    Parser parser(opt);
-    int int_value{0};
-    opt->valueSemantics().setExternalStorage(int_value);
-    parser.storage.setExternalStorage(opt, &int_value);
-
-    ASSERT_TRUE(parser.parse({}));
-    EXPECT_EQ(int_value, 10); // implicit value
-
-    ASSERT_TRUE(parser.parse({"--opt1 20"}));
-    EXPECT_EQ(int_value, 20); // value from command line
-
-    opt->valueSemantics().setDefaultValue(11);
-    ASSERT_TRUE(parser.parse({"--opt1"}));
-    EXPECT_EQ(int_value, 11); // default value
-
-    opt->setRequired(true);
-    ASSERT_TRUE(parser.parse({})); 
-    EXPECT_EQ(int_value, 10); // implicit value
-}
-
 TEST(Parser, MultipleOccurrenceOfNamedOption) {
-    auto opt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
-    opt->valueSemantics().setDefaultValue(10);
-    opt->valueSemantics().setImplicitValue(11);
-    opt->setMaxOccurreneCount(2);
+    auto opt1 = std::make_shared<NamedOptionWithValue<int>>("--opt1");
+    opt1->valueSemantics().setDefaultValue(10);
+    opt1->valueSemantics().setImplicitValue(11);
+    opt1->setMaxOccurreneCount(2);
 
-    Parser parser(opt);
+    Parser parser(opt1);
     int int_value{0};
-    opt->valueSemantics().setExternalStorage(int_value);
-    parser.storage.setExternalStorage(opt, &int_value);
+    opt1->valueSemantics().setExternalStorage(int_value);
+    parser.storage.setExternalStorage(opt1, &int_value);
     parser.parse({});
-    EXPECT_EQ(int_value, 11);  // implicit value
-
-    parser.parse({"--opt1"});
     EXPECT_EQ(int_value, 10);  // default value
 
+    parser.parse({"--opt1"});
+    EXPECT_EQ(int_value, 11);  // implicit value
+
     ASSERT_TRUE(parser.parse("--opt1 20"));
-    ASSERT_TRUE(parser.storage.contains(opt));
-    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
-    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
-    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
-    EXPECT_EQ(parser.storage[opt].rawValues(0), "20");
+    ASSERT_TRUE(parser.storage.contains(opt1));
+    ASSERT_EQ(parser.storage[opt1].occurrenceCount(), 1);
+    ASSERT_EQ(parser.storage[opt1].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt1].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt1].rawValues(0), "20");
     EXPECT_EQ(int_value, 20);
     ASSERT_TRUE(parser.parse("--opt1 20 --opt1 30"));
-    ASSERT_TRUE(parser.storage.contains(opt));
-    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 2);
-    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
-    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
-    EXPECT_EQ(parser.storage[opt].rawValues(1, 0), "30");
-    EXPECT_EQ(parser.storage[opt].rawValues(0), "30");
+    ASSERT_TRUE(parser.storage.contains(opt1));
+    ASSERT_EQ(parser.storage[opt1].occurrenceCount(), 2);
+    ASSERT_EQ(parser.storage[opt1].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt1].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt1].rawValues(1, 0), "30");
+    EXPECT_EQ(parser.storage[opt1].rawValues(0), "30");
     EXPECT_EQ(int_value, 30);
 
     ASSERT_TRUE(parser.parse("--opt1 20 --opt1"));
-    ASSERT_TRUE(parser.storage.contains(opt));
-    ASSERT_EQ(parser.storage[opt].occurrenceCount(), 2);
-    ASSERT_EQ(parser.storage[opt].lastOccurrenceSize(), 1);
-    EXPECT_EQ(parser.storage[opt].rawValues(0, 0), "20");
-    EXPECT_EQ(parser.storage[opt].valueAs<int>(1, 0), 10); // default value
-    EXPECT_EQ(parser.storage[opt].rawValues(1, 0), ""); // default value
-    EXPECT_EQ(parser.storage[opt].rawValues(0), ""); 
-    EXPECT_EQ(parser.storage[opt].valueAs<int>(0), 10); // default value
-    EXPECT_EQ(int_value, 10);
+    ASSERT_TRUE(parser.storage.contains(opt1));
+    ASSERT_EQ(parser.storage[opt1].occurrenceCount(), 2);
+    ASSERT_EQ(parser.storage[opt1].lastOccurrenceSize(), 1);
+    EXPECT_EQ(parser.storage[opt1].rawValues(0, 0), "20");
+    EXPECT_EQ(parser.storage[opt1].valueAs<int>(1, 0), 11); // implicit value
+    EXPECT_EQ(parser.storage[opt1].rawValues(1, 0), ""); // empty implicit value
+    EXPECT_EQ(parser.storage[opt1].rawValues(0), "");  // empty implicit value
+    EXPECT_EQ(parser.storage[opt1].valueAs<int>(0), 11); // implicit value
+    EXPECT_EQ(int_value, 11);
 
     ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1"), MaxOptionOccurrenceIsExceeded);
     ASSERT_THROW(parser.parse("--opt1 20 --opt1 30 --opt1 40"), MaxOptionOccurrenceIsExceeded);
 }
 
 TEST(Parser, MultipleOccurrenceOfPositionalOption) {
-    auto opt = std::make_shared<PositionalOptionWithValue<int>>();
+    auto opt = std::make_shared<PositionalOptionWithValue<int>>("displayname");
     opt->setMaxOccurreneCount(2);
 
     Parser parser(opt);
@@ -305,8 +290,7 @@ TEST(Parser, MultipleOccurrenceOfPositionalOption) {
     ASSERT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     opt->setRequired(false);
     ASSERT_TRUE(parser.parse({}));
-    //opt->valueSemantics().setDefaultValue(10); // TODO: Checker: positional options should not has default values, only implicit values are allowed
-    opt->valueSemantics().setImplicitValue(10);
+    opt->valueSemantics().setDefaultValue(10); // TODO: Checker: positional options should not has default values, only implicit values are allowed
     ASSERT_FALSE(parser.storage.contains(opt));
     ASSERT_TRUE(parser.parse({}));
     EXPECT_EQ(int_value, 10);
@@ -325,7 +309,7 @@ TEST(Parser, MultipleOccurrenceOfPositionalOption) {
     EXPECT_EQ(parser.storage[opt].rawValues(1, 0), "30");
     EXPECT_EQ(parser.storage[opt].rawValues(0), "30");
     EXPECT_EQ(int_value, 30);
-    ASSERT_THROW(parser.parse("20 30 40"), TooManyPositionalOptions);
+    ASSERT_THROW(parser.parse("20 30 40"), TooManyPositionalOptions);    
 }
 
 TEST(Parser, MultipleValuesOfNamedOptionExact) {
@@ -336,7 +320,7 @@ TEST(Parser, MultipleValuesOfNamedOptionExact) {
 
     ASSERT_THROW(parser.parse("--opt1"), ExpectedValue);
 
-    opt->valueSemantics().setImplicitValue(11);
+    opt->valueSemantics().setDefaultValue(11);
     opt->setMaxOccurreneCount(1);
     opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::EXACT, 2);
 
@@ -371,10 +355,10 @@ TEST(Parser, MultipleValuesOfNamedOptionUpTo) {
     opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
 
     ASSERT_TRUE(parser.parse({}));
-    EXPECT_EQ(int_value, 11); // implicit value
+    EXPECT_EQ(int_value, 10); // default value
 
     ASSERT_TRUE(parser.parse({"--opt1"}));
-    EXPECT_EQ(int_value, 10); // default value
+    EXPECT_EQ(int_value, 11); // implicit value
 
     ASSERT_TRUE(parser.parse("--opt1 20,30"));
     ASSERT_TRUE(parser.storage.contains(opt));
@@ -423,10 +407,10 @@ TEST(Parser, MultipleValuesOfNamedOptionInfinite) {
     opt->valueSemantics().setExternalStorage(int_value);
     parser.storage.setExternalStorage(opt, &int_value);
     ASSERT_TRUE(parser.parse({}));
-    EXPECT_EQ(int_value, 11); // implicit value
+    EXPECT_EQ(int_value, 10); // default value
 
     ASSERT_TRUE(parser.parse({"--opt1"}));
-    EXPECT_EQ(int_value, 10); // default value
+    EXPECT_EQ(int_value, 11); // implicit value
 
 
     ASSERT_TRUE(parser.parse("--opt1 20,30"));
@@ -440,7 +424,7 @@ TEST(Parser, MultipleValuesOfNamedOptionInfinite) {
 
 
 TEST(Parser, MultipleValuesOfPositionalOption) {
-    auto opt = std::make_shared<PositionalOptionWithValue<int>>();
+    auto opt = std::make_shared<PositionalOptionWithValue<int>>("displayname");
     opt->setMaxOccurreneCount(2);
     opt->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
 
@@ -452,10 +436,10 @@ TEST(Parser, MultipleValuesOfPositionalOption) {
     ASSERT_THROW(parser.parse({}), RequiredOptionIsNotSet);
     opt->setRequired(false);
     ASSERT_TRUE(parser.parse({}));
-    opt->valueSemantics().setImplicitValue(11);
+    opt->valueSemantics().setDefaultValue(10);
     ASSERT_FALSE(parser.storage.contains(opt));
     ASSERT_TRUE(parser.parse({}));
-    EXPECT_EQ(int_value, 11); // implicit value
+    EXPECT_EQ(int_value, 10); // default value
     ASSERT_TRUE(parser.parse("20"));
     ASSERT_TRUE(parser.storage.contains(opt));
     ASSERT_EQ(parser.storage[opt].occurrenceCount(), 1);
@@ -488,8 +472,8 @@ TEST(Parser, MultipleValuesOfPositionalOption) {
 }
 
 TEST(Parser, TwoPositionalOptions) {
-    auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
-    auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
+    auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
+    auto opt2 = std::make_shared<PositionalOptionWithValue<int>>("displayname");
     opt2->setMaxOccurreneCount(2);
     auto opt = std::make_shared<OptionsGroup>()->addUnlock(opt1)->addUnlock(opt2);
 
@@ -502,8 +486,8 @@ TEST(Parser, TwoPositionalOptions) {
 }
 
 TEST(Parser, TwoPositionalOptionsWithDoubleDash) {
-    auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>();
-    auto opt2 = std::make_shared<PositionalOptionWithValue<int>>();
+    auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>("opt1");
+    auto opt2 = std::make_shared<PositionalOptionWithValue<int>>("opt2");
     opt1->setMaxOccurreneCount(10);
     opt1->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 10);
     opt2->setNValues(AbstractNamedOptionWithValue::NValuesRole::UPTO, 2);
@@ -527,7 +511,7 @@ TEST(Parser, TwoPositionalOptionsWithDoubleDash) {
 TEST(Parser, DoubleDashTerminatesNamedOptions) {
     auto named_opt_1 = std::make_shared<NamedOptionWithValue<int>>("--arg1");
     auto named_opt_2 = std::make_shared<NamedOptionWithValue<int>>("--arg2");
-    auto pos_opt = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto pos_opt = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
     auto opt = std::make_shared<OptionsGroup>()->addUnlock(named_opt_1)->addUnlock(named_opt_2)->addUnlock(pos_opt);
 
     Parser parser(opt);
@@ -542,7 +526,7 @@ TEST(Parser, DoubleDashTerminatesNamedOptions) {
 }
 
 TEST(Parser, PositionalAndNamed) {
-    auto posopt = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto posopt = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
     auto namedopt = std::make_shared<NamedOptionWithValue<int>>("--opt1");
     posopt->setMaxOccurreneCount(2);
     namedopt->setMaxOccurreneCount(2);
@@ -608,14 +592,14 @@ TEST(Parser, NestedAlternativesWithEqualNames) {
 }
 
 TEST(MatcherWithUnlocksByValue, NestedAlternatives) {
-    auto alt_nested_1 = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto alt_nested_1 = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
     alt_nested_1->valueSemantics().unlocks("alt11").push_back(std::make_shared<NamedOption>("--opt11"));
     alt_nested_1->valueSemantics().unlocks("alt12").push_back(std::make_shared<NamedOption>("--opt12"));
     alt_nested_1->valueSemantics().setOnlyAllowedValues(true);
-    auto alt_nested_2 = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto alt_nested_2 = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
     alt_nested_2->valueSemantics().unlocks("alt21").push_back(std::make_shared<NamedOption>("--opt21"));
     alt_nested_2->valueSemantics().unlocks("alt22").push_back(std::make_shared<NamedOption>("--opt22"));
-    auto opts = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto opts = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
     opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
     opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
 
@@ -633,13 +617,13 @@ TEST(MatcherWithUnlocksByValue, NestedAlternatives) {
 }
 
 TEST(MatcherWithUnlocksByValue, NestedAlternativesWithEqualNames) {
-    auto alt_nested_1 = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto alt_nested_1 = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
     alt_nested_1->valueSemantics().unlocks("alt1").push_back(std::make_shared<NamedOption>("--opt1"));
     alt_nested_1->valueSemantics().unlocks("alt2").push_back(std::make_shared<NamedOption>("--opt2"));
-    auto alt_nested_2 = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto alt_nested_2 = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
     alt_nested_2->valueSemantics().unlocks("alt1").push_back(std::make_shared<NamedOption>("--opt1"));
     alt_nested_2->valueSemantics().unlocks("alt2").push_back(std::make_shared<NamedOption>("--opt2"));
-    auto opts = std::make_shared<PositionalOptionWithValue<std::string>>();
+    auto opts = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
     opts->valueSemantics().unlocks("alt1").push_back(alt_nested_1);
     opts->valueSemantics().unlocks("alt2").push_back(alt_nested_2);
 

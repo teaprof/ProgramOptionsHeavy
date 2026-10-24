@@ -27,7 +27,7 @@ class CommonOptions : public HeavyOptionsGroup {
             // TODO: exclude this option from autocompletion
             auto option = addPartial("autocomplete", std::ref(auto_completion_mode_), "Special option that is used to actiave autocomplete feature");
             option->valueSemantics().setDefaultValue(false).setImplicitValue(true);
-            auto_completion_args = std::make_shared<PositionalOptionWithValue<std::string>>();
+            auto_completion_args = std::make_shared<PositionalOptionWithValue<std::string>>("auto_completion_args");
             auto_completion_args->setMaxOccurreneCount(); // set to maxint
             option->addUnlock(auto_completion_args);
         }        
