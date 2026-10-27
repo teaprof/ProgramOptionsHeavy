@@ -22,7 +22,7 @@
 #include "ValueSemantics.h"
 #include "ValueStorage.h"
 
-using program_options_heavy::ShortPrinter;
+using program_options_heavy::ShortPrinter; // TODO: open namespace program_options_heavy here and remove this
 
 class OptionsOccurrenceCounter {
     public:
@@ -38,24 +38,24 @@ class OptionsOccurrenceCounter {
         if (opts_counter_.contains(opt)) {
             counter = opts_counter_[opt];
         }
-        BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::optionEncountered() - opt=" << ShortPrinter::toString(opt) << ", counter=" << counter << "\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::optionEncountered() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", counter=" << counter << "\n";
         return counter;
     }
-    bool increaseOptionOccurrenceCounter(std::shared_ptr<AbstractOption> opt) {
+    bool increaseOptionOccurrenceCounter(std::shared_ptr<AbstractOption> opt) {        
         size_t counter = ++opts_counter_[opt];
-        BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - opt=" << ShortPrinter::toString(opt) << ", counter=" << counter << ", max=" << opt->maxOccurrence() << "\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", counter=" << counter << ", max=" << opt->maxOccurrence() << "\n";
         if (counter == opt->maxOccurrence()) {
             return true;
         }
         if (counter > opt->maxOccurrence()) {
             if (auto p = std::dynamic_pointer_cast<OneOfPositional>(opt)) {
-                BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - opt=" << ShortPrinter::toString(p) << ", throwing OnlyOneChoiseIsAllowed\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - opt= displayName=\"" << ShortPrinter::optionDisplayName(p) << "\", throwing OnlyOneChoiseIsAllowed\n";
                 throw OnlyOneChoiseIsAllowed(p);  // todo: make separate checker for OneOfPositional
             }
-            BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() - opt=" << ShortPrinter::toString(opt) << ", throwing MaxOptionOccurrenceIsExceeded\n";
+            BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::increaseOptionOccurrenceCounter() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", throwing MaxOptionOccurrenceIsExceeded\n";
             throw MaxOptionOccurrenceIsExceeded(opt);
         }
-        return false;
+        return false;            
     }
 
     bool canAcceptNewOccurrence(std::shared_ptr<AbstractOption> opt) {
@@ -65,7 +65,7 @@ class OptionsOccurrenceCounter {
         }
         size_t max_count = opt->maxOccurrence();
         bool can_accept = (actual_count < max_count);
-        BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::canAcceptNewOccurrence() - opt=" << ShortPrinter::toString(opt) << ", actual=" << actual_count << ", max=" << max_count << ", can_accept=" << can_accept << "\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsOccurrenceCounter::canAcceptNewOccurrence() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", actual=" << actual_count << ", max=" << max_count << ", can_accept=" << can_accept << "\n";
         return can_accept;
     }
 
@@ -91,7 +91,7 @@ class OptionsValueStorage {
     virtual void onValueApplied(std::shared_ptr<AbstractOptionWithValue> opt) { /* nothing to do */}
 
     void setDefaultValue(std::shared_ptr<AbstractOptionWithValue> opt) {
-        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setDefaultValue() - opt=" << ShortPrinter::toString(opt) << ", setting default value for option\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setDefaultValue() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", setting default value for option\n";
         std::any v = opt->baseValueSemantics().setToDefault();
         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
         onNewOptionsUnlocked(unlocked_by_value);
@@ -100,7 +100,7 @@ class OptionsValueStorage {
     }
 
     void setImplicitValue(std::shared_ptr<AbstractOptionWithValue> opt) {
-        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setImplicitValue() - opt=" << ShortPrinter::toString(opt) << ", setting implicit value for option\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setImplicitValue() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", setting implicit value for option\n";
         std::any v = opt->baseValueSemantics().setToImplicit();
         std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
         onNewOptionsUnlocked(unlocked_by_value);
@@ -109,18 +109,18 @@ class OptionsValueStorage {
     }
 
     void setOptionValue(std::shared_ptr<AbstractOptionWithValue> opt, const std::string& value) {
-        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", value=\"" << value << "\", tokens_count=" << mysplit(value).size() << "\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", value=\"" << value << "\", tokens_count=" << mysplit(value).size() << "\n";
         bool first = true;
         std::vector<std::string> tokens = mysplit(value);
         switch (opt->nValuesRole()) {
             case AbstractOptionWithValue::NValuesRole::EXACT:
                 if (opt->nValues() != tokens.size()) {
-                    BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", throwing ExpectedExactNumberOfValues\n";
+                    BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", throwing ExpectedExactNumberOfValues\n";
                     throw ExpectedExactNumberOfValues(opt);
                 }
             case AbstractOptionWithValue::NValuesRole::UPTO:
                 if (tokens.size() > opt->nValues()) {
-                    BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", throwing TooManyValuesForOption\n";
+                    BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", throwing TooManyValuesForOption\n";
                     throw TooManyValuesForOption(opt);
                 }
             case AbstractOptionWithValue::NValuesRole::INFINITE:
@@ -132,22 +132,22 @@ class OptionsValueStorage {
             std::vector<std::shared_ptr<AbstractOption>> unlocked_by_value{opt->baseValueSemantics().getUnlocks()};
             onNewOptionsUnlocked(unlocked_by_value);
             if (first) {
-                BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", adding first value token=\"" << token << "\"\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", adding first value token=\"" << token << "\"\n";
                 first = false;
                 storage.addValue(opt, token, val);
             } else {
-                BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() - opt=" << ShortPrinter::toString(opt) << ", adding additional value token=\"" << token << "\"\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setOptionValue() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", adding additional value token=\"" << token << "\"\n";
                 storage.addValueToCurrentOccurence(opt, token, val);
             }
         }
         onValueApplied(opt);
     }
     void setSelectedAlternative(std::shared_ptr<OneOfPositional> opt, size_t selected_idx) {
-        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setSelectedAlternative(OneOfPositional) - opt=" << ShortPrinter::toString(opt) << ", selected_idx=" << selected_idx << "\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setSelectedAlternative(OneOfPositional) displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", selected_idx=" << selected_idx << "\n";
         storage.setSelectedAlternativeIndex(opt, selected_idx);
     }
     void setSelectedAlternative(std::shared_ptr<OneOfNamed> opt, size_t selected_idx) {
-        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setSelectedAlternative(OneOfNamed) - opt=" << ShortPrinter::toString(opt) << ", selected_idx=" << selected_idx << "\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsValueStorage::setSelectedAlternative(OneOfNamed) displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", selected_idx=" << selected_idx << "\n";
         storage.setSelectedAlternativeIndex(opt, selected_idx);
     }
     virtual void onNewOptionsUnlocked(const std::vector<std::shared_ptr<AbstractOption>>& src_options) = 0;
@@ -183,10 +183,10 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
     }
 
     void eatValueIfCan(ArgGrammarParser& args, OptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
-        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", entering\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", entering\n";
         // first, try to eat matcher.value
         if (matcher.value.has_value()) {
-            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", using matcher value=\"" << matcher.value.value() << "\"\n";
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", using matcher value=\"" << matcher.value.value() << "\"\n";
             setOptionValue(opt, matcher.value.value());
             matcher.value = std::nullopt;
             return;
@@ -197,7 +197,7 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             if (arg_is_value) {
                 std::optional<std::string> value_opt = args.getValueOpt();
                 assert(value_opt.has_value());
-                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", got value from args=\"" << *value_opt << "\"\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", got value from args=\"" << *value_opt << "\"\n";
                 // TODO: if value can't be accepted then we should set option value to implicit value
                 setOptionValue(opt, *value_opt);
                 return;
@@ -207,11 +207,11 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         // Try to apply implicit value
         bool has_implicit_value = opt->baseValueSemantics().hasImplicitValue();
         if (has_implicit_value) {
-            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", applying implicit value\n";
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", applying implicit value\n";
             setImplicitValue(opt);
             return;
         }
-        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() - opt=" << ShortPrinter::toString(opt) << ", throwing ExpectedValue\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatValueIfCan() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", throwing ExpectedValue\n";
         throw ExpectedValue(opt);
     }
 
@@ -241,7 +241,7 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         }
         auto opt = remaining_options_[cur_positional_option_idx_];
         if (!canAcceptNewOccurrence(opt)) {
-            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - opt=" << ShortPrinter::toString(opt) << ", current positional exhausted, advancing\n";
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", current positional exhausted, advancing\n";
             cur_positional_option_idx_++;
             cur_positional_option_idx_ = find_next_positional(cur_positional_option_idx_);        
             if(cur_positional_option_idx_ == remaining_options_.size()) {
@@ -254,13 +254,13 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             auto res = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
             assert(res);
             if(auto oneOf = std::dynamic_pointer_cast<OneOfPositional>(opt)) {
-                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - opt=" << ShortPrinter::toString(oneOf) << ", matched OneOfPositional, selected_alternative=" << matcher.selected_alternative << "\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - displayName=\"" << ShortPrinter::optionDisplayName(oneOf) << "\", matched OneOfPositional, selected_alternative=" << matcher.selected_alternative << "\n";
                 setSelectedAlternative(oneOf, matcher.selected_alternative);
             }
-            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - opt=" << ShortPrinter::toString(res) << ", matched\n";
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - displayName=\"" << ShortPrinter::optionDisplayName(res) << "\", matched\n";
             return res;
         };
-        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() - opt=" << ShortPrinter::toString(opt) << ", no match\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", no match\n";
         return nullptr;
     }
 
@@ -272,7 +272,7 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
                 if(auto oneOf = std::dynamic_pointer_cast<OneOfNamed>(opt)) {
                     setSelectedAlternative(oneOf, matcher.selected_alternative);
                 }
-                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextNamedOption() - opt=" << ShortPrinter::toString(opt) << ", matched\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextNamedOption() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", matched\n";
                 return opt;
             };
         }
@@ -283,6 +283,7 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
     std::shared_ptr<AbstractOption> eatNextOption(ArgGrammarParser& args, OptionMatcher& matcher) {
         BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - entering\n";
         args.getNextOption();
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextOption() - parsing \""<<args.arg(args.current_result.index)<<"\"\n";
         // If DOUBLE_DASH then all next options will be treated as positionals
         if (args.current_result.token_type == ArgGrammarParser::TokenTypes::DOUBLE_DASH) {            
             if(last_processed_is_positional_)  {
@@ -334,7 +335,7 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         auto opt = eatNextOption(args, matcher);
         if (opt) {
             if (!already_joined_.contains(opt)) {
-                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parseNext() - opt=" << ShortPrinter::toString(opt) << ", new option matched, processing unlocks\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parseNext() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", new option matched, processing unlocks\n";
                 onNewOptionsUnlocked(matcher.unlocks);
                 already_joined_.insert(opt);
             }
@@ -381,10 +382,11 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked() - unlocking " << src_options.size() << " new options\n";
         for (auto it : src_options) {
             if (auto p = std::dynamic_pointer_cast<OptionsGroup>(it)) {
-                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked() - expanding OptionsGroup: " << ShortPrinter::toString(p) << "\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked() - expanding OptionsGroup:  displayName=\"" << ShortPrinter::optionDisplayName(p) << "\"\n";
                 // TODO: why separate case for OptionsGroup
                 onNewOptionsUnlocked(p->unlocks());  // todo: avoid copying of a vector
             } else {
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked() adding displayName = \'" << ShortPrinter::optionDisplayName(it) << "\"\n";
                 remaining_options_.push_back(it);
             }
         }
@@ -399,19 +401,19 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
             size_t expected = opt->nValues();
             if (actual < expected) {
                 if(actual == 0) {
-                    BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() - opt=" << ShortPrinter::toString(opt) << ", throwing ExpectedValue\n";
+                    BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", throwing ExpectedValue\n";
                     throw ExpectedValue(opt);
                 }
-                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() - opt=" << ShortPrinter::toString(opt) << ", throwing TooFewValuesForOption, actual=" << actual << ", expected=" << expected << "\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", throwing TooFewValuesForOption, actual=" << actual << ", expected=" << expected << "\n";
                 throw TooFewValuesForOption(opt);  // todo print message
             }
         } else {
             if (actual == 0) {
-                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() - opt=" << ShortPrinter::toString(opt) << ", throwing ExpectedValue (no EXACT, but actual=0)\n";
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", throwing ExpectedValue (no EXACT, but actual=0)\n";
                 throw ExpectedValue(opt);
             }
         }
-        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() - opt=" << ShortPrinter::toString(opt) << ", OK, actual=" << actual << "\n";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::ensureValueListIsCompleted() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", OK, actual=" << actual << "\n";
     }
 };
 
@@ -432,16 +434,16 @@ class Parser : public OptionsEater {
     std::set<std::shared_ptr<AbstractOptionWithValue>> opts_with_default_value_;
     bool isOptionSpecifiedOrImplied(std::shared_ptr<AbstractOption> opt) {
         if(optionEncountered(opt) > 0) {
-            BOOST_LOG_TRIVIAL(debug) << "Parser::isOptionSpecifiedOrImplied() - opt=" << ShortPrinter::toString(opt) << ", option was encountered, returning true\n";
+            BOOST_LOG_TRIVIAL(debug) << "Parser::isOptionSpecifiedOrImplied() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", option was encountered, returning true\n";
             return true;
         }
         if(auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
             if(opts_with_default_value_.contains(p)) {
-                BOOST_LOG_TRIVIAL(debug) << "Parser::isOptionSpecifiedOrImplied() - opt=" << ShortPrinter::toString(opt) << ", opt has default value, returning true\n";
+                BOOST_LOG_TRIVIAL(debug) << "Parser::isOptionSpecifiedOrImplied() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", opt has default value, returning true\n";
                 return true;
             }
         }
-        BOOST_LOG_TRIVIAL(debug) << "Parser::isOptionSpecifiedOrImplied() - opt=" << ShortPrinter::toString(opt) << ", returning false\n";
+        BOOST_LOG_TRIVIAL(debug) << "Parser::isOptionSpecifiedOrImplied() displayName=\"" << ShortPrinter::optionDisplayName(opt) << "\", returning false\n";
         return false;
     };
     void checkUnusedRequiredOptions() {
@@ -481,13 +483,13 @@ class Parser : public OptionsEater {
             }
             if (auto p = std::dynamic_pointer_cast<AbstractOptionWithValue>(opt)) {
                 if (p->baseValueSemantics().hasDefaultValue()) {
-                    BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues() - opt=" << ShortPrinter::toString(p) << ", applying default value\n";
+                    BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues() - opt= displayName=\"" << ShortPrinter::optionDisplayName(p) << "\", applying default value\n";
                     setDefaultValue(p);
                     opts_with_default_value_.insert(p);
                     // todo: if default value unlocks some options these options should be proccessed
                 } else {
                     if (opt->isRequired()) {
-                        BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues() - opt=" << ShortPrinter::toString(opt) << ", throwing RequiredOptionIsNotSet\n";
+                        BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues() - opt= displayName=\"" << ShortPrinter::optionDisplayName(p) << ", throwing RequiredOptionIsNotSet\n";
                         throw RequiredOptionIsNotSet(opt);
                     }
                 }

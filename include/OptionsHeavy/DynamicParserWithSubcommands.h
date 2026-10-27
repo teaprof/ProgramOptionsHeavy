@@ -59,8 +59,8 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
     }
     std::shared_ptr<OptionsGroup> getOptionsGroup() {
         assert(!subcommands_.empty());
-        auto top_level_options = std::make_shared<OptionsGroup>();
-        auto top_level_subcommands = std::make_shared<OneOfPositional>();
+        auto top_level_options = std::make_shared<OptionsGroup>("TopLevelOptions");
+        auto top_level_subcommands = std::make_shared<OneOfPositional>("TopLevelSubcommands");
         for (auto it : subcommands_) {
             auto command = std::make_shared<LiteralString>(it.first);
             for (auto grp : it.second->groups()) {
@@ -77,8 +77,8 @@ class ParserWithSubcommands : public AbstractDynamicOptionsParser {
     bool parse(int argc, const char* argv[]) override {
         // todo: call getOptionsGroup to initialize top_level_options
         assert(!subcommands_.empty());
-        auto top_level_options = std::make_shared<OptionsGroup>();
-        auto top_level_subcommands = std::make_shared<OneOfPositional>();
+        auto top_level_options = std::make_shared<OptionsGroup>("TopLevelOptions");
+        auto top_level_subcommands = std::make_shared<OneOfPositional>("TopLevelSubcommands");
         for (auto it : subcommands_) {
             auto command = std::make_shared<LiteralString>(it.first);
             for (auto grp : it.second->groups()) {

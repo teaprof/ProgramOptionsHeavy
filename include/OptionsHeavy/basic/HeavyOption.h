@@ -91,7 +91,7 @@ class HeavyOptionsGroup : public OptionsEasy { // TODO: why OptionsEay?
    public:
     HeavyOptionsGroup(std::string group_name) {
         setGroupName(tolower(group_name));
-        options = std::make_shared<OptionsGroup>();
+        options = std::make_shared<OptionsGroup>(group_name);
     }
 
     template <class... Args>

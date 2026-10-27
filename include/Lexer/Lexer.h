@@ -152,8 +152,8 @@ class ArgGrammarParser { // todo: rename to Lexer?? but see class above
         assert(eof() == false);
         if (results_.empty()) {
             assert(idx_ < args_.size());
-            size_t cur_idx = idx_;
-            auto lex_result = ArgLexer::lex(args_[idx_++], match_only_positional);
+            size_t cur_idx = idx_++;
+            auto lex_result = ArgLexer::lex(args_[cur_idx], match_only_positional);
             switch (lex_result.type) {
                 case ArgLexer::LONG_OPTION:
                     results_.push_back(Result{TokenTypes::LONG_OPTION, lex_result.long_option_name, "", "", cur_idx});
@@ -202,11 +202,11 @@ class ArgGrammarParser { // todo: rename to Lexer?? but see class above
             case TokenTypes::SHORT_OPTION_WITHOUT_VALUE:
             case TokenTypes::SHORT_OPTION_EQ_VALUE:
             case TokenTypes::SHORT_OPTION:
-                return current_result.long_option_name;
+                return current_result.short_option_name;
 
             case TokenTypes::LONG_OPTION:
             case TokenTypes::LONG_OPTION_EQ_VALUE:
-                return current_result.short_option_name;
+                return current_result.long_option_name;
 
             case TokenTypes::DOUBLE_DASH:
                 return "--";
@@ -236,6 +236,9 @@ class ArgGrammarParser { // todo: rename to Lexer?? but see class above
         return idx_;
     }
     size_t size() { return args_.size(); }
+    const std::string& arg(size_t idx) {
+        return args_[idx];
+    }
 
    private:
     std::deque<Result> results_;  // todo: remove

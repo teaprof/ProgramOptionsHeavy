@@ -24,7 +24,7 @@ class DynamicParser : public AbstractDynamicOptionsParser {
     DynamicParser(int argc, const char* argv[]) : AbstractDynamicOptionsParser(argc, argv) {}
     virtual void addGroup(std::shared_ptr<HeavyOptionsGroup> options) { groups_.push_back(options); }
     bool parse(int argc, const char* argv[]) override {
-        auto options = std::make_shared<OptionsGroup>();
+        auto options = std::make_shared<OptionsGroup>("TopLevelGroup");
         for (auto grp : groups_) {
             options->addUnlock(grp->options);
         }

@@ -41,7 +41,7 @@ class CommonOptions : public HeavyOptionsGroup {
     void setNeedHelp(bool value) {        
         need_help_ = value;
     }
-    bool autoCompletionMode() {
+    bool autoCompletionMode() const {
         return auto_completion_mode_;
     }
     std::vector<std::string> getAutoCompletionArgs(const KeyValueStorage& storage) {        
@@ -55,6 +55,7 @@ class CommonOptions : public HeavyOptionsGroup {
    private:
     bool need_help_{false};
     bool auto_completion_mode_{false};
+    // TODO: add log level option
     std::shared_ptr<PositionalOptionWithValue<std::string>> auto_completion_args;
 };
 
