@@ -7,6 +7,8 @@
 #include <iostream>
 #include <regex>
 
+namespace program_options_heavy {
+
 class NameCompleter : public AbstractOptionVisitor {
     std::vector<std::string>& results_;
     std::optional<std::regex> regex_;
@@ -153,5 +155,7 @@ class Completer : public OptionsEater {
         return results;
     }
 };
+
+} /* namespace program_options_heavy */
 
 #endif

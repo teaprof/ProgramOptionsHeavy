@@ -10,6 +10,8 @@
 #include <Help/HelpStringsStorage.h>
 #include <utils/strutils.h>
 
+namespace program_options_heavy {
+
 class OptionsEasy {
    public:
     OptionsEasy() {
@@ -111,5 +113,7 @@ class OptionsEasy {
         return res;
     }
 };
+
+} /* namespace program_options_heavy */
 
 #endif

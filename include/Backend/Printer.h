@@ -107,6 +107,31 @@ class Printer : public AbstractOptionVisitor {
         printUnlocks(opt);
     }
 
+    static std::string alternativesToString(std::shared_ptr<OneOfPositional> opt) {
+        std::stringstream res;
+        res<<"[";
+        if(!opt->alternatives.empty()) {
+            for(const auto& item : opt->alternatives) {
+                res<<item->displayName()<<", ";
+            }
+            res.seekp(-2, std::ios_base::end); // remove last comma and space
+        }
+        res<<"]";
+        return res.str();
+    }
+    static std::string alternativesToString(std::shared_ptr<OneOfNamed> opt) {
+        std::stringstream res;
+        res<<"[";
+        if(!opt->alternatives.empty()) {
+            for(const auto& item : opt->alternatives) {
+                res<<item->displayName()<<", ";
+            }
+            res.seekp(-2, std::ios_base::end); // remove last comma and space
+        }
+        res<<"]";
+        return res.str();
+    }
+
    private:
     TabbedPrinter prn_;
     void printUnlocks(std::shared_ptr<AbstractOption> opt) {
@@ -143,6 +168,6 @@ struct ShortPrinter {
     }
 };
 
-}
+} /* namespace program_options_heavy */
 
 #endif

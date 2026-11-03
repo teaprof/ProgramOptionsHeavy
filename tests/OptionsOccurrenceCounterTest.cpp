@@ -1,6 +1,8 @@
 #include <Backend/Parser.h>
 #include <gtest/gtest.h>
 
+using namespace program_options_heavy;
+
 // Test initial state: no options have been encountered yet
 TEST(OptionsOccurrenceCounterTest, InitialState) {
     OptionsOccurrenceCounter counter;

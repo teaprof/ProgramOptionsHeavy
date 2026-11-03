@@ -1,6 +1,8 @@
 #include <OptionsEasy/OptionsEasy.h>
 #include <Help/TextExtractors.h>
 
+using program_options_heavy::OptionsEasy;
+
 int main(int argc, char* argv[]) {    
     OptionsEasy options_easy;
     int dim{0};

@@ -3,6 +3,8 @@
 #include <Backend/ValueSemantics.h>
 #include <gtest/gtest.h>
 
+using namespace program_options_heavy;
+
 /*
 TEST_F(MatcherFixtureSimple, Test1)
     RequiredOptionIsNotSet
@@ -73,7 +75,7 @@ class MatcherFixtureSimple : public ::testing::Test {
     std::shared_ptr<NamedOptionWithValue<int>> opt2_;
     std::shared_ptr<PositionalOptionWithValue<std::string>> opt3_;
     void SetUp() override {
-        root_opt_ = std::make_shared<OptionsGroup>();
+        root_opt_ = std::make_shared<OptionsGroup>("TopLevelGroup");
         opt1_ = std::make_shared<NamedOption>("--opt1", "-1");
         opt2_ = std::make_shared<NamedOptionWithValue<int>>("--opt2", "-2");
         opt3_ = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
@@ -98,7 +100,7 @@ class MatcherFixture : public ::testing::Test {
     std::shared_ptr<OneOfPositional> command_;
     void SetUp() override {
         common_option_ = std::make_shared<NamedOption>("--common", "-c");
-        root_opt_ = std::make_shared<OptionsGroup>();
+        root_opt_ = std::make_shared<OptionsGroup>("RootOptionsGroup");
         root_opt_->addUnlock(common_option_);
         auto run_options = std::make_shared<LiteralString>("run");
         run_options->addUnlock(std::make_shared<NamedOption>("--dim", "-d"));
@@ -124,7 +126,7 @@ class MatcherFixtureWithUnlocksByValue : public ::testing::Test {
     std::shared_ptr<PositionalOptionWithValue<std::string>> command_;
 
     void SetUp() override {
-        root_opt_ = std::make_shared<OptionsGroup>();
+        root_opt_ = std::make_shared<OptionsGroup>("TopLevelGroup");
 
         common_option_ = std::make_shared<NamedOption>("--common", "-c");
         root_opt_->addUnlock(common_option_);
@@ -475,7 +477,7 @@ TEST(Parser, TwoPositionalOptions) {
     auto opt1 = std::make_shared<PositionalOptionWithValue<std::string>>("displayname");
     auto opt2 = std::make_shared<PositionalOptionWithValue<int>>("displayname");
     opt2->setMaxOccurreneCount(2);
-    auto opt = std::make_shared<OptionsGroup>()->addUnlock(opt1)->addUnlock(opt2);
+    auto opt = std::make_shared<OptionsGroup>("TopLevelOpt")->addUnlock(opt1)->addUnlock(opt2);
 
     Parser parser(opt);
     ASSERT_TRUE(parser.parse({}));

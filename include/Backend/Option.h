@@ -200,7 +200,7 @@ class PositionalOptionWithValue : public AbstractPositionalOptionWithValue, publ
 class OptionsGroup : public AbstractOption {
     /// TODO what does `is_required_` mean in this case?
    public:
-    OptionsGroup(const std::string& display_name) : AbstractOption(display_name) {}
+    OptionsGroup(const std::string& display_name="") : AbstractOption(display_name) {}
     void accept(AbstractOptionVisitor& visitor) override;
 };
 
@@ -228,7 +228,7 @@ class OneOfPositional : public AbstractPositionalOption {
 class OneOfNamed : public NamedOption {
    public:
     std::vector<std::shared_ptr<NamedOption>> alternatives;
-    OneOfNamed() : NamedOption("OneOfNamed") {} // TODO: remove this constructor
+    OneOfNamed() : NamedOption("OneOfNamed") {}
     OneOfNamed(std::shared_ptr<NamedOption> alt1, std::shared_ptr<NamedOption> alt2);
     OneOfNamed(std::shared_ptr<NamedOption> alt1, std::shared_ptr<NamedOption> alt2, std::shared_ptr<NamedOption> alt3);
 
@@ -250,7 +250,7 @@ inline AbstractOption::AbstractOption(bool is_required, const std::string& displ
     // nothing to do
 }
 
-inline std::string AbstractOption::displayName() const { return display_name_; }
+inline std::string AbstractOption::displayName() const { return display_name_.size() > 0 ? display_name_ : "no name"; }
 
 inline std::vector<std::shared_ptr<AbstractOption>> AbstractOption::unlocks() const {
     return unlocks_;
@@ -354,12 +354,13 @@ inline std::shared_ptr<OneOfPositional> OneOfPositional::addAlternative2(std::sh
     return std::static_pointer_cast<OneOfPositional>(shared_from_this());
 }
 inline void OneOfPositional::updateDisplayName() {
+    return; // TODO: remove the following code
     std::stringstream display_name;
-    display_name<<"OneOfNamed[";
+    display_name<<"OneOfPositional[";
     for(const auto& it : alternatives) {
         display_name<<it->displayName()<<", ";
     };
-    display_name<<"]";
+    display_name<<"]";    
     setDisplayName(display_name.str());
 }
 
@@ -394,7 +395,7 @@ inline std::shared_ptr<OneOfNamed> OneOfNamed::addAlternative2(std::shared_ptr<A
     return std::static_pointer_cast<OneOfNamed>(shared_from_this());
 }
 
-void OneOfNamed::updateDisplayName() {
+inline void OneOfNamed::updateDisplayName() {
     std::stringstream display_name;
     display_name<<"OneOfNamed[";
     for(const auto& it : alternatives) {

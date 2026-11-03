@@ -2,16 +2,18 @@
 #include <Completer/Completer2.h>
 #include <gtest/gtest.h>
 
+using namespace program_options_heavy;
+
 class Completer2Fixture : public ::testing::Test {
    protected:
     std::shared_ptr<LiteralString> exename_with_options_;
     void SetUp() override {
-        auto run_options = std::make_shared<OptionsGroup>();
+        auto run_options = std::make_shared<OptionsGroup>("TopLevelGroup");
         run_options->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--dim", "-d"));
-        auto gather_options = std::make_shared<OptionsGroup>();
+        auto gather_options = std::make_shared<OptionsGroup>("gatherOptions");
         gather_options->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--gather", "-g"));
 
-        auto common_options = std::make_shared<OptionsGroup>();
+        auto common_options = std::make_shared<OptionsGroup>("CommonOptions");
         common_options->addUnlock(std::make_shared<NamedOption>("--common", "-c"));
         common_options->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--value", "-v"));
 

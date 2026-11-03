@@ -2,12 +2,12 @@
 #include <Backend/Printer.h>
 
 int main() {
-    auto common_options = std::make_shared<OptionsGroup>();
+    auto common_options = std::make_shared<OptionsGroup>("TopLevelOptionsGroup");
     common_options->addUnlock(std::make_shared<NamedOption>("--named"))
         ->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--valued"));
-    auto run_options = std::make_shared<OptionsGroup>();
+    auto run_options = std::make_shared<OptionsGroup>("RunOptionsGroup");
     run_options->addUnlock(std::make_shared<NamedOptionWithValue<int>>("--dimension"));
-    auto gather_options = std::make_shared<OptionsGroup>();
+    auto gather_options = std::make_shared<OptionsGroup>("GatheOptionsGroup");
     gather_options->addUnlock(std::make_shared<PositionalOptionWithValue<std::string>>("gatherOptions"));
 
     auto run_command = std::make_shared<LiteralString>("run")->addUnlock(run_options)->addUnlock(common_options);
