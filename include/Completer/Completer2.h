@@ -87,7 +87,7 @@ class Completer : public OptionsEater {
         std::vector<std::string> results;
         std::string regexstr;
 
-        clear();
+        initialize();
 
         // Cases
         // exename run -d 10 -> NO ERROR -> REMAINING_OPTIONS
@@ -147,7 +147,7 @@ class Completer : public OptionsEater {
         }
 
         NameCompleter visitor(results, regexstr);
-        for (auto& opt : this->remaining_options_) {
+        for (auto& opt : remainingOptions()) {
             if(canAcceptNewOccurrence(opt)) {
                 opt->accept(visitor);
             };

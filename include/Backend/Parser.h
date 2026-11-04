@@ -155,8 +155,9 @@ class OptionsValueStorage {
 };
 
 class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage {
-   protected:
-    std::vector<std::shared_ptr<AbstractOption>> remaining_options_;
+   protected:    
+    std::vector<std::shared_ptr<NamedOption>> remaining_named_options_;
+    std::vector<std::shared_ptr<AbstractOption>> remaining_positional_options_;
     std::set<std::shared_ptr<AbstractOption>> already_joined_;
     std::shared_ptr<AbstractOption> options_;
     size_t cur_positional_option_idx_{0};
@@ -170,17 +171,21 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
         // options->accept(checker);
     }
 
-    void clear() {
-        //BOOST_LOG_TRIVIAL(debug) << "OptionsEater::clear(): starting clear";
+    void initialize() {
+        //BOOST_LOG_TRIVIAL(debug) << "OptionsEater::initialize(): starting";
         OptionsOccurrenceCounter::clear();
         OptionsValueStorage::clear();
-        remaining_options_.clear();
+        remaining_named_options_.clear();
+        remaining_positional_options_.clear();
         already_joined_.clear();
         cur_positional_option_idx_ = 0;
         onNewOptionsUnlocked({options_});
 
+        //Printer prn;
+        //prn.print(options_);
+
         initializeOptionsStorages(options_);
-        //BOOST_LOG_TRIVIAL(debug) << "OptionsEater::clear(): completed";
+        //BOOST_LOG_TRIVIAL(debug) << "OptionsEater::initialize(): completed";
     }
 
     void eatValueIfCan(ArgGrammarParser& args, OptionMatcher& matcher, std::shared_ptr<AbstractOptionWithValue> opt) {
@@ -217,38 +222,21 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
     }
 
     std::shared_ptr<AbstractPositionalOption> eatNextPositionalOption(ArgGrammarParser& args, OptionMatcher& matcher) {
-        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption(): entering, cur_positional_option_idx_=" << cur_positional_option_idx_ << ", remaining_options_.size()=" << remaining_options_.size() << "";
-        auto find_next_positional = [&](size_t idx)->auto {
-            std::shared_ptr<AbstractPositionalOption> p;
-            while(idx < remaining_options_.size()) {
-                auto opt = remaining_options_[idx];
-                p = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
-                if (p != nullptr) {
-                    break;
-                }
-                idx++;
-            }
-            return idx;
-        };
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption(): entering, cur_positional_option_idx_=" << cur_positional_option_idx_ << ", remaining_positional_options_.size()=" << remaining_positional_options_.size() << "";
         // TODO: error: do not scroll to the next positional option until the current option can accept new occurrences
-        if(cur_positional_option_idx_ == remaining_options_.size()) {
-            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption(): throwing TooManyPositionalOptions (all remaining exhausted)";
+        if(cur_positional_option_idx_ == remaining_positional_options_.size()) {
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption(): throwing TooManyPositionalOptions, cur_positional_option_idx_ = "<<cur_positional_option_idx_;
             throw TooManyPositionalOptions("");
         }
-        cur_positional_option_idx_ = find_next_positional(cur_positional_option_idx_);        
-        if(cur_positional_option_idx_ == remaining_options_.size()) {
-            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption(): throwing TooManyPositionalOptions (no positional found)";
-            throw TooManyPositionalOptions("");
-        }
-        auto opt = remaining_options_[cur_positional_option_idx_];
-        if (!canAcceptNewOccurrence(opt)) {
-            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption(): \"" << ShortPrinter::optionDisplayName(opt) << "\", current positional exhausted, advancing";
+        auto opt = remaining_positional_options_[cur_positional_option_idx_];
+        while (!canAcceptNewOccurrence(opt)) {
+            BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption(): \"" << ShortPrinter::optionDisplayName(opt) << "\", current positional option exhausted, advancing";
             cur_positional_option_idx_++;
-            cur_positional_option_idx_ = find_next_positional(cur_positional_option_idx_);        
-            if(cur_positional_option_idx_ == remaining_options_.size()) {
+            if(cur_positional_option_idx_ == remaining_positional_options_.size()) {
+                BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextPositionalOption(): throwing TooManyPositionalOptions, cur_positional_option_idx_ = "<<cur_positional_option_idx_;
                 throw TooManyPositionalOptions("");
             }
-            opt = remaining_options_[cur_positional_option_idx_];
+            opt = remaining_positional_options_[cur_positional_option_idx_];
         }
         opt->accept(matcher);
         if (matcher.match) {
@@ -266,9 +254,9 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
     }
 
     std::shared_ptr<AbstractOption> eatNextNamedOption(ArgGrammarParser& args, OptionMatcher& matcher) {
-        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextNamedOption(): entering, remaining_options_.size()=" << remaining_options_.size() << "";
-        for (auto opt : remaining_options_) { // TODO: should we check if opt is AbstractNamedOption?
-            opt->accept(matcher);
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::eatNextNamedOption(): entering, remaining_named_options_.size()=" << remaining_named_options_.size() << "";
+        for (auto opt : remaining_named_options_) {
+            opt->accept(matcher);            
             if (matcher.match) {
                 if(auto one_of = std::dynamic_pointer_cast<OneOfNamed>(opt)) {
                     setSelectedAlternative(one_of, matcher.selected_alternative);
@@ -370,12 +358,20 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
 
     void parse(ArgGrammarParser args) { 
         BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parse(): starting parse";
-        clear();
+        initialize();
         //OptionMatcher matcher(args); 
         while (!args.eof()) {
             parseNext(args);
         }
         BOOST_LOG_TRIVIAL(debug) << "OptionsEater::parse(): parse completed";
+    }
+
+    std::vector<std::shared_ptr<AbstractOption>> remainingOptions() {
+        //TODO: use std::views::concat(remaining_named_options_, remaining_positional_options_)
+        std::vector<std::shared_ptr<AbstractOption>> res;
+        res.insert(res.end(), remaining_named_options_.begin(), remaining_named_options_.end());
+        res.insert(res.end(), remaining_positional_options_.begin(), remaining_positional_options_.end());
+        return res;
     }
 
    protected:
@@ -391,10 +387,17 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
                 // TODO: if it is a positional option than print the place at which it is added
                 // TODO: store separately positional and named options
                 BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked(): "<<str<<" adding displayName = \'" << ShortPrinter::optionDisplayName(it) << "\"";
-                remaining_options_.push_back(it);
+                if(auto p = std::dynamic_pointer_cast<AbstractPositionalOption>(it)) {
+                    remaining_positional_options_.push_back(p);
+                } else if(auto p = std::dynamic_pointer_cast<NamedOption>(it)) {
+                    remaining_named_options_.push_back(p);
+                } else {
+                    // should not be executed
+                    BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked(): "<<str<<" ERROR: cant add option \""<<ShortPrinter::optionDisplayName(it)<<"\"";
+                }
             }
         }
-        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked(): "<<str<<" finished, remaining_options_.size() now = " << remaining_options_.size() << "";
+        BOOST_LOG_TRIVIAL(debug) << "OptionsEater::onNewOptionsUnlocked(): "<<str<<" finished, named options: " << remaining_named_options_.size() << ", positional options: "<<remaining_positional_options_.size();
     }
     void ensureValueListIsCompleted(std::shared_ptr<AbstractOptionWithValue> opt) {
         size_t actual = 0;
@@ -451,12 +454,12 @@ class Parser : public OptionsEater {
         return false;
     };
     void checkUnusedRequiredOptions() {
-        BOOST_LOG_TRIVIAL(debug) << "Parser::checkUnusedRequiredOptions(): checking " << remaining_options_.size() << " remaining options";
+        BOOST_LOG_TRIVIAL(debug) << "Parser::checkUnusedRequiredOptions(): checking remaining options";
         // check that all required options are used
         bool too_few_pos_opts{false};
         bool required_opt_is_not_set{false};
         size_t missing_count{0};
-        for (auto opt : remaining_options_) {
+        for (auto opt : remainingOptions()) {
             if (opt->isRequired() && !isOptionSpecifiedOrImplied(opt)) {
                 auto q = std::dynamic_pointer_cast<AbstractPositionalOption>(opt);
                 if (!q) {
@@ -479,9 +482,9 @@ class Parser : public OptionsEater {
     }
 
     void applyDefaultValues() {
-        BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues(): processing " << remaining_options_.size() << " remaining options";
+        BOOST_LOG_TRIVIAL(debug) << "Parser::applyDefaultValues(): entering";
         // applies default values for options that were not encountered
-        for (auto opt : remaining_options_) {
+        for (auto opt : remainingOptions()) {
             if (optionEncountered(opt) > 0) {
                 continue;
             }

@@ -24,6 +24,7 @@ std::ostream& operator<<(std::ostream& out, const std::optional<T>& v) {
 }
 
 class TabbedPrinter {
+    // TODO: use custom iostream instead of std::cout
    public:
     void operator++(int dummy) {
         prefix_stack_.push(prefix_);
@@ -46,8 +47,6 @@ class TabbedPrinter {
 
 class Printer : public AbstractOptionVisitor {
    public:
-    std::string prefix;
-
     void visit(std::shared_ptr<AbstractOption> opt) override {
         prn_ << "AbstractOption" << "\n";
         printUnlocks(opt);
@@ -105,6 +104,11 @@ class Printer : public AbstractOptionVisitor {
         }
         prn_--;
         printUnlocks(opt);
+    }
+
+    static void print(std::shared_ptr<AbstractOption> opt) {
+        Printer printer;
+        opt->accept(printer);
     }
 
     static std::string alternativesToString(std::shared_ptr<OneOfPositional> opt) {

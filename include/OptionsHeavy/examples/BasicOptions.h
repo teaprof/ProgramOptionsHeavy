@@ -25,11 +25,11 @@ class CommonOptions : public HeavyOptionsGroup {
         }
         if(flags & AutoCompletionEnabled) {
             // TODO: exclude this option from autocompletion
-            auto option = addPartial("autocomplete", std::ref(auto_completion_mode_), "Special option that is used to actiave autocomplete feature");
+            auto option = addPartial("autocomplete", std::ref(auto_completion_mode_), "Special option that is used to activate autocomplete feature");
             option->valueSemantics().setDefaultValue(false).setImplicitValue(true);
-            auto_completion_args = std::make_shared<PositionalOptionWithValue<std::string>>("auto_completion_args");
-            auto_completion_args->setMaxOccurreneCount(); // set to maxint
-            option->addUnlock(auto_completion_args);
+            auto_completion_args_ = std::make_shared<PositionalOptionWithValue<std::string>>("auto_completion_args");
+            auto_completion_args_->setMaxOccurreneCount(); // set to maxint
+            option->addUnlock(auto_completion_args_);
         }        
     }
     void update(const boost::program_options::variables_map& vm) override {
@@ -45,8 +45,8 @@ class CommonOptions : public HeavyOptionsGroup {
         return auto_completion_mode_;
     }
     std::vector<std::string> getAutoCompletionArgs(const KeyValueStorage& storage) {        
-        if(storage.contains(auto_completion_args)) {
-            const auto& value_storage = storage[auto_completion_args];
+        if(storage.contains(auto_completion_args_)) {
+            const auto& value_storage = storage[auto_completion_args_];
             assert(value_storage.occurrenceCount() == 1);
             return value_storage.rawValuesVec(0);
         }
@@ -56,7 +56,7 @@ class CommonOptions : public HeavyOptionsGroup {
     bool need_help_{false};
     bool auto_completion_mode_{false};
     // TODO: add log level option
-    std::shared_ptr<PositionalOptionWithValue<std::string>> auto_completion_args;
+    std::shared_ptr<PositionalOptionWithValue<std::string>> auto_completion_args_;
 };
 
 
