@@ -424,8 +424,9 @@ class OptionsEater : public OptionsOccurrenceCounter, public OptionsValueStorage
     }
 };
 
-class Parser : public OptionsEater {
+class Parser : public OptionsEater {    
    public:
+    // TODO: add the ability to use custom OptionsMatcher (if user adds new option type the OptionsMatcher should be extended with this type)
     Parser(std::shared_ptr<AbstractOption> options): OptionsEater{options} {}
 
     bool parse(ArgGrammarParser args) {

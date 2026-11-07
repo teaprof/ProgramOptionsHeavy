@@ -13,6 +13,8 @@
 class AbstractNamedOptionWithValue;
 class AbstractPositionalOption;
 
+//TODO: rename to DYNAMIC STORAGE
+
 class ValueStorage {
    public:
     void startNewOccurrence() {

@@ -28,7 +28,7 @@ class CommonOptions : public HeavyOptionsGroup {
             auto option = addPartial("autocomplete", std::ref(auto_completion_mode_), "Special option that is used to activate autocomplete feature");
             option->valueSemantics().setDefaultValue(false).setImplicitValue(true);
             auto_completion_args_ = std::make_shared<PositionalOptionWithValue<std::string>>("auto_completion_args");
-            auto_completion_args_->setMaxOccurreneCount(); // set to maxint
+            auto_completion_args_->setMaxOccurrenceCount(); // set to maxint
             option->addUnlock(auto_completion_args_);
         }        
     }

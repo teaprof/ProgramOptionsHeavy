@@ -40,7 +40,7 @@ class TypedValueSemantics : public AbstractValueSemantics {
    public:
     TypedValueSemantics() {}
     TypedValueSemantics(T& ref) : external_ref_{ref} {}
-    void setExternalStorage(T& ref) { external_ref_ = ref; }
+    void setExternalStorage(T& ref) { external_ref_ = ref; }    
     TypedValueSemantics<T>& setDefaultValue(const T& v) { default_value_ = v; return *this; }
     bool hasDefaultValue() override { return default_value_.has_value(); }
     TypedValueSemantics<T>& setImplicitValue(const T& v) { implicit_value_ = v; return *this; }

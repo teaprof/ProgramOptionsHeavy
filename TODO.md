@@ -1,4 +1,4 @@
-TODO: add feature: generate and use config files
+TODO: add feature: generate and read config files
 TODO: the original request was to add support of TypedValueSemantics<vector<bool>>, but arrays are supported using ValueStorage (multiple occurrences and multiple values).
 So, we should make vector results accessable inplace from valueSemantics.
 But what is value semantics? It seems that we should not follow boost program_options and use `semantics`. In boost::program_options the semantics defines how the value of an option is interpreted, validated, and stored after it is syntactically parsed.

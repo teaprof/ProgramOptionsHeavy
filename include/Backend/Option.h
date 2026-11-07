@@ -56,7 +56,7 @@ class AbstractOption : public std::enable_shared_from_this<AbstractOption> {
     bool isRequired() const;
     void setRequired(bool val);
 
-    void setMaxOccurreneCount(size_t max_count = std::numeric_limits<size_t>::max());
+    void setMaxOccurrenceCount(size_t max_count = std::numeric_limits<size_t>::max());
     size_t maxOccurrence() const;
 
     std::string displayName() const;
@@ -271,7 +271,7 @@ inline bool AbstractOption::isRequired() const {
 inline void AbstractOption::setRequired(bool val) {
     is_required_ = val;
 }
-inline void AbstractOption::setMaxOccurreneCount(size_t max_count) {
+inline void AbstractOption::setMaxOccurrenceCount(size_t max_count) {
     max_occurence_ = max_count;
 }
 inline size_t AbstractOption::maxOccurrence() const {

@@ -13,10 +13,13 @@
 #include <string_view>
 #include <vector>
 
-/* Todo:
-1. support for escape character: "--a" is named option, but "\--a" is value
+/* Todo
+\todo: 1. support for escape character: "--a" is named option, but "\--a" is value
 converted to "--a"
-2. support for "--": all args after it are treated as positional
+\todo: 2. support for "--": all args after it are treated as positional
+\todo: 3. Lexer should be the part of backend, move to backend
+
+
 */
 
 class ArgLexer {

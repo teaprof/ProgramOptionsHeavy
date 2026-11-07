@@ -14,7 +14,7 @@ class HeavyOptionBase {
         HeavyOptionBase() = default;
 
         void setRequired(bool is_required) {}
-        void setMaxOccurreneCount(size_t count) {}
+        void setMaxOccurrenceCount(size_t count) {}
 
         virtual void onNewOccurenceFinished(std::vector<std::any>& values) = 0;
         virtual void onParseFinished() = 0;
@@ -93,10 +93,31 @@ class HeavyOptionsGroup : public OptionsEasy { // TODO: why OptionsEay?
         setGroupName(tolower(group_name));
         options = std::make_shared<OptionsGroup>(group_name);
     }
+        
+    template<class T>
+    auto addPartial(const std::string& names, const std::string& help_message) {
+        auto opt = makeNamedOption<T>(names, help_message);
+        options->addUnlock(opt);
 
-    template <class... Args>
-    auto addPartial(Args... args) {
-        auto opt = makeOption(args...);
+        return opt;
+    }
+    template<class T>
+    auto addPartial(const std::string& names, const ValueEasy<T>& storage, const std::string& help_message) {
+        auto opt = makeNamedOptionWithValue<T>(names, storage, help_message);
+        options->addUnlock(opt);
+
+        return opt;
+    }
+    template<class T>
+    auto addPartial(const std::string& names, std::reference_wrapper<T> storage, const std::string& help_message) {
+        auto opt = makeNamedOptionWithValue<T>(names, {storage}, help_message);
+        options->addUnlock(opt);
+
+        return opt;
+    }
+    template<class T>
+    auto addPartial(const std::string& names, std::reference_wrapper<std::optional<T>> storage, const std::string& help_message) {
+        auto opt = makeNamedOptionWithValue<T>(names, {storage}, help_message);
         options->addUnlock(opt);
 
         return opt;
@@ -111,7 +132,8 @@ class HeavyOptionsGroup : public OptionsEasy { // TODO: why OptionsEay?
     template <class T>
     auto addPositional(std::string name, int max_occurrence, std::reference_wrapper<T> external_storage, const std::string& help_message) {
         // TODO: name is unused
-        auto opt = makePositionalOption(external_storage, max_occurrence, help_message);
+        auto opt = makePositionalOptionWithValue<T>({external_storage}, help_message);
+        opt->setMaxOccurrenceCount(max_occurrence);
         options->addUnlock(opt);
 
         return opt;
